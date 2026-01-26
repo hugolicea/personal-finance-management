@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: personal_finance_management
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - personal_finance_network
+
+  backend:
+    build: ../backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ../backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      - DB_NAME=personal_finance_management
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks:
+      - personal_finance_network
+
+  frontend:
+    build: ../frontend
+    volumes:
+      - ../frontend:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - personal_finance_network
+
+volumes:
+  postgres_data:
+
+networks:
+  personal_finance_network:
+    driver: bridge
