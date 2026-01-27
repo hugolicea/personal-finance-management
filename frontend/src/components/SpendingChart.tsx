@@ -7,6 +7,17 @@ import {
     Tooltip,
 } from 'recharts';
 
+import { formatCurrency } from '../utils/formatters';
+
+interface PieLabelProps {
+    cx: number;
+    cy: number;
+    midAngle: number;
+    innerRadius: number;
+    outerRadius: number;
+    percent: number;
+}
+
 interface Transaction {
     id: number;
     date: string;
@@ -76,7 +87,7 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
         innerRadius,
         outerRadius,
         percent,
-    }: any) => {
+    }: PieLabelProps) => {
         if (percent < 0.05) return null; // Don't show labels for slices smaller than 5%
 
         const RADIAN = Math.PI / 180;
@@ -130,7 +141,7 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
                     </Pie>
                     <Tooltip
                         formatter={(value: number) => [
-                            `$${value.toFixed(2)}`,
+                            formatCurrency(value),
                             'Amount',
                         ]}
                     />

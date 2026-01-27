@@ -1,12 +1,18 @@
 import { useState } from 'react';
 
 import Navigation from '../components/Navigation';
+import AccountTransactions from '../pages/AccountTransactions';
 import Balance from '../pages/Balance';
 import Categories from '../pages/Categories';
+import CreditCardTransactions from '../pages/CreditCardTransactions';
 import Home from '../pages/Home';
-import Transactions from '../pages/Transactions';
 
-type ViewType = 'dashboard' | 'categories' | 'transactions' | 'balance';
+type ViewType =
+    | 'dashboard'
+    | 'categories'
+    | 'credit-card-transactions'
+    | 'account-transactions'
+    | 'balance';
 
 function MainLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -23,8 +29,10 @@ function MainLayout() {
                 return <Home />;
             case 'categories':
                 return <Categories />;
-            case 'transactions':
-                return <Transactions />;
+            case 'credit-card-transactions':
+                return <CreditCardTransactions />;
+            case 'account-transactions':
+                return <AccountTransactions />;
             case 'balance':
                 return <Balance />;
             default:
@@ -81,7 +89,16 @@ function SidebarContent({ currentView, onViewChange }: SidebarContentProps) {
     const menuItems = [
         { id: 'dashboard' as ViewType, label: 'Dashboard', icon: '📊' },
         { id: 'categories' as ViewType, label: 'Categories', icon: '🏷️' },
-        { id: 'transactions' as ViewType, label: 'Transactions', icon: '💳' },
+        {
+            id: 'credit-card-transactions' as ViewType,
+            label: 'Credit Card',
+            icon: '💳',
+        },
+        {
+            id: 'account-transactions' as ViewType,
+            label: 'Account',
+            icon: '🏦',
+        },
         { id: 'balance' as ViewType, label: 'Balance', icon: '⚖️' },
     ];
 

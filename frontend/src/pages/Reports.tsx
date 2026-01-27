@@ -24,6 +24,7 @@ import Navigation from '../components/Navigation';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCategories } from '../store/slices/categoriesSlice';
 import { fetchTransactions } from '../store/slices/transactionsSlice';
+import { formatCurrency } from '../utils/formatters';
 
 function Reports() {
     const dispatch = useAppDispatch();
@@ -166,7 +167,13 @@ function Reports() {
                             <select
                                 value={selectedPeriod}
                                 onChange={(e) =>
-                                    setSelectedPeriod(e.target.value as any)
+                                    setSelectedPeriod(
+                                        e.target.value as
+                                            | '3months'
+                                            | '6months'
+                                            | '1year'
+                                            | 'all'
+                                    )
                                 }
                                 className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
                             >
@@ -195,7 +202,9 @@ function Reports() {
                                                     Total Income
                                                 </dt>
                                                 <dd className='text-lg font-medium text-gray-900'>
-                                                    ${totalIncome.toFixed(2)}
+                                                    {formatCurrency(
+                                                        totalIncome
+                                                    )}
                                                 </dd>
                                             </dl>
                                         </div>
@@ -219,7 +228,9 @@ function Reports() {
                                                     Total Expenses
                                                 </dt>
                                                 <dd className='text-lg font-medium text-gray-900'>
-                                                    ${totalExpenses.toFixed(2)}
+                                                    {formatCurrency(
+                                                        totalExpenses
+                                                    )}
                                                 </dd>
                                             </dl>
                                         </div>
@@ -257,10 +268,7 @@ function Reports() {
                                                             : 'text-red-600'
                                                     }`}
                                                 >
-                                                    $
-                                                    {Math.abs(
-                                                        netBalance
-                                                    ).toFixed(2)}
+                                                    {formatCurrency(netBalance)}
                                                 </dd>
                                             </dl>
                                         </div>
@@ -311,7 +319,7 @@ function Reports() {
                                             <YAxis />
                                             <Tooltip
                                                 formatter={(value: number) => [
-                                                    `$${value.toFixed(2)}`,
+                                                    formatCurrency(value),
                                                     '',
                                                 ]}
                                             />
@@ -365,7 +373,7 @@ function Reports() {
                                             />
                                             <Tooltip
                                                 formatter={(value: number) => [
-                                                    `$${value.toFixed(2)}`,
+                                                    formatCurrency(value),
                                                     'Amount',
                                                 ]}
                                             />

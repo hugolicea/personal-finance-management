@@ -114,7 +114,7 @@ const transactionsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(uploadBankStatement.fulfilled, (state, _action) => {
+            .addCase(uploadBankStatement.fulfilled, (state) => {
                 state.loading = false;
                 // Refresh transactions after upload
                 // The actual refresh will be handled by dispatching fetchTransactions

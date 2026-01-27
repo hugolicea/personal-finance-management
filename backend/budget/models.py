@@ -28,10 +28,23 @@ class Category(models.Model):
 
 
 class Transaction(models.Model):
+    CREDIT_CARD = "credit_card"
+    ACCOUNT = "account"
+    TRANSACTION_TYPE_CHOICES = [
+        (CREDIT_CARD, "Credit Card"),
+        (ACCOUNT, "Account"),
+    ]
+
     date = models.DateField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    transaction_type = models.CharField(
+        max_length=20,
+        choices=TRANSACTION_TYPE_CHOICES,
+        default=ACCOUNT,
+        help_text="Type of transaction: credit card or account",
+    )
     # Bank statement import fields
     import_source = models.CharField(
         max_length=100, blank=True, null=True

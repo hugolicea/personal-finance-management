@@ -14,12 +14,26 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import { formatCurrency } from '../utils/formatters';
+
+interface Category {
+    id: number;
+    name: string;
+    classification: string;
+    monthly_budget: number;
+}
+
+interface Transaction {
+    id: number;
+    date: string;
+    amount: string;
+    description: string;
+    category: number;
+}
 
 function Home() {
     const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
-    );
+    const { categories } = useAppSelector((state) => state.categories);
     const { transactions, loading: transactionsLoading } = useAppSelector(
         (state) => state.transactions
     );
@@ -32,14 +46,20 @@ function Home() {
     const [filterByYear, setFilterByYear] = useState(false);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [showTransactionModal, setShowTransactionModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<any>(null);
-    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(
+        null
+    );
+    const [editingTransaction, setEditingTransaction] =
+        useState<Transaction | null>(null);
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
         useState(false);
     const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
         useState(false);
-    const [deletingCategory, setDeletingCategory] = useState<any>(null);
-    const [deletingTransaction, setDeletingTransaction] = useState<any>(null);
+    const [deletingCategory, setDeletingCategory] = useState<Category | null>(
+        null
+    );
+    const [deletingTransaction, setDeletingTransaction] =
+        useState<Transaction | null>(null);
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -71,29 +91,9 @@ function Home() {
         setShowCategoryModal(true);
     };
 
-    const handleEditCategory = (category: any) => {
-        setEditingCategory(category);
-        setShowCategoryModal(true);
-    };
-
     const handleAddTransaction = () => {
         setEditingTransaction(null);
         setShowTransactionModal(true);
-    };
-
-    const handleEditTransaction = (transaction: any) => {
-        setEditingTransaction(transaction);
-        setShowTransactionModal(true);
-    };
-
-    const handleDeleteCategory = (category: any) => {
-        setDeletingCategory(category);
-        setShowDeleteCategoryDialog(true);
-    };
-
-    const handleDeleteTransaction = (transaction: any) => {
-        setDeletingTransaction(transaction);
-        setShowDeleteTransactionDialog(true);
     };
 
     const confirmDeleteCategory = async () => {
@@ -342,12 +342,11 @@ function Home() {
                                                                         : 'text-green-600'
                                                                 }`}
                                                             >
-                                                                $
-                                                                {Math.abs(
+                                                                {formatCurrency(
                                                                     parseFloat(
                                                                         transaction.amount
                                                                     )
-                                                                ).toFixed(2)}
+                                                                )}
                                                             </p>
                                                         </div>
                                                     </div>
