@@ -13,26 +13,46 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import { formatCurrency } from '../utils/formatters';
 
-function Transactions() {
+interface Category {
+    id: number;
+    name: string;
+    classification: string;
+    monthly_budget: number;
+}
+
+interface Transaction {
+    id: number;
+    date: string;
+    amount: string;
+    description: string;
+    category: number;
+}
+
+function AccountTransactions() {
     const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
-    );
+    const { categories } = useAppSelector((state) => state.categories);
     const { transactions, loading: transactionsLoading } = useAppSelector(
         (state) => state.transactions
     );
 
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [showTransactionModal, setShowTransactionModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<any>(null);
-    const [editingTransaction, setEditingTransaction] = useState<any>(null);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(
+        null
+    );
+    const [editingTransaction, setEditingTransaction] =
+        useState<Transaction | null>(null);
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
         useState(false);
     const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
         useState(false);
-    const [deletingCategory, setDeletingCategory] = useState<any>(null);
-    const [deletingTransaction, setDeletingTransaction] = useState<any>(null);
+    const [deletingCategory, setDeletingCategory] = useState<Category | null>(
+        null
+    );
+    const [deletingTransaction, setDeletingTransaction] =
+        useState<Transaction | null>(null);
 
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,32 +68,17 @@ function Transactions() {
         dispatch(fetchTransactions());
     }, [dispatch]);
 
-    const handleAddCategory = () => {
-        setEditingCategory(null);
-        setShowCategoryModal(true);
-    };
-
-    const handleEditCategory = (category: any) => {
-        setEditingCategory(category);
-        setShowCategoryModal(true);
-    };
-
     const handleAddTransaction = () => {
         setEditingTransaction(null);
         setShowTransactionModal(true);
     };
 
-    const handleEditTransaction = (transaction: any) => {
+    const handleEditTransaction = (transaction: Transaction) => {
         setEditingTransaction(transaction);
         setShowTransactionModal(true);
     };
 
-    const handleDeleteCategory = (category: any) => {
-        setDeletingCategory(category);
-        setShowDeleteCategoryDialog(true);
-    };
-
-    const handleDeleteTransaction = (transaction: any) => {
+    const handleDeleteTransaction = (transaction: Transaction) => {
         setDeletingTransaction(transaction);
         setShowDeleteTransactionDialog(true);
     };
@@ -121,6 +126,9 @@ function Transactions() {
 
     // Filter transactions based on search and filters
     const filteredTransactions = transactions.filter((transaction) => {
+        // Only show account transactions
+        if (transaction.transaction_type !== 'account') return false;
+
         const matchesSearch = transaction.description
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
@@ -167,7 +175,7 @@ function Transactions() {
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='mb-6'>
                     <h1 className='text-2xl font-bold text-gray-900 mb-8'>
-                        Transactions
+                        Account Transactions
                     </h1>
 
                     {/* Filters */}
@@ -310,7 +318,7 @@ function Transactions() {
                                         Spends:{' '}
                                     </span>
                                     <span className='font-semibold text-red-600'>
-                                        ${Math.abs(totalSpends).toFixed(2)}
+                                        {formatCurrency(totalSpends)}
                                     </span>
                                 </div>
                                 <div>
@@ -318,7 +326,7 @@ function Transactions() {
                                         Incomes:{' '}
                                     </span>
                                     <span className='font-semibold text-green-600'>
-                                        ${totalIncomes.toFixed(2)}
+                                        {formatCurrency(totalIncomes)}
                                     </span>
                                 </div>
                                 <div>
@@ -330,7 +338,7 @@ function Transactions() {
                                                 : 'text-red-600'
                                         }`}
                                     >
-                                        ${Math.abs(totalAmount).toFixed(2)}
+                                        {formatCurrency(totalAmount)}
                                     </span>
                                 </div>
                             </div>
@@ -353,7 +361,7 @@ function Transactions() {
                                         💸 Spends
                                     </h3>
                                     <span className='text-sm font-semibold text-red-600'>
-                                        ${Math.abs(totalSpends).toFixed(2)}
+                                        {formatCurrency(totalSpends)}
                                     </span>
                                 </div>
                                 <p className='text-sm text-red-700 mt-1'>
@@ -397,12 +405,11 @@ function Transactions() {
                                                         </div>
                                                         <div className='text-right'>
                                                             <span className='text-lg font-semibold text-red-600'>
-                                                                $
-                                                                {Math.abs(
+                                                                {formatCurrency(
                                                                     parseFloat(
                                                                         transaction.amount
                                                                     )
-                                                                ).toFixed(2)}
+                                                                )}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -446,7 +453,7 @@ function Transactions() {
                                         💰 Incomes
                                     </h3>
                                     <span className='text-sm font-semibold text-green-600'>
-                                        ${totalIncomes.toFixed(2)}
+                                        {formatCurrency(totalIncomes)}
                                     </span>
                                 </div>
                                 <p className='text-sm text-green-700 mt-1'>
@@ -490,12 +497,11 @@ function Transactions() {
                                                         </div>
                                                         <div className='text-right'>
                                                             <span className='text-lg font-semibold text-green-600'>
-                                                                $
-                                                                {Math.abs(
+                                                                {formatCurrency(
                                                                     parseFloat(
                                                                         transaction.amount
                                                                     )
-                                                                ).toFixed(2)}
+                                                                )}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -619,4 +625,4 @@ function Transactions() {
     );
 }
 
-export default Transactions;
+export default AccountTransactions;

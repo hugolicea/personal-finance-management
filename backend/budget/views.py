@@ -128,6 +128,7 @@ def upload_bank_statement(request):
     """
     Upload and process a bank statement CSV file.
     Supports multiple CSV formats with flexible column names and date formats.
+    Handles both credit card and account transaction formats.
     """
     if "file" not in request.FILES:
         return Response(
@@ -145,6 +146,10 @@ def upload_bank_statement(request):
         file_data = file.read().decode("utf-8")
         csv_reader = csv.DictReader(io.StringIO(file_data))
 
+        # Detect CSV type based on headers
+        headers = csv_reader.fieldnames or []
+        is_account_csv = "Details" in headers and "Type" in headers
+
         transactions_created = []
         transactions_skipped = []
         errors = []
@@ -153,15 +158,26 @@ def upload_bank_statement(request):
             csv_reader, start=2
         ):  # Start at 2 because row 1 is headers
             try:
-                # Flexible column name mapping
-                date_str = get_column_value(
-                    row, ["Transaction Date", "Post Date", "date", "Date"]
-                )
-                description = get_column_value(
-                    row, ["Description", "description", "desc"]
-                )
-                amount_str = get_column_value(row, ["Amount", "amount", "amt"])
-                category_name = get_column_value(row, ["Category", "category", "cat"])
+                if is_account_csv:
+                    # Account CSV format: Details, Posting Date, Description, Amount, Type
+                    date_str = get_column_value(
+                        row, ["Posting Date", "Post Date", "date", "Date"]
+                    )
+                    description = get_column_value(
+                        row, ["Description", "description", "desc"]
+                    )
+                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
+                    category_name = get_column_value(row, ["Type", "type"])  # Use Type as category
+                else:
+                    # Credit card CSV format: flexible columns
+                    date_str = get_column_value(
+                        row, ["Transaction Date", "Post Date", "date", "Date"]
+                    )
+                    description = get_column_value(
+                        row, ["Description", "description", "desc"]
+                    )
+                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
+                    category_name = get_column_value(row, ["Category", "category", "cat"])
 
                 # Validate required fields
                 if not date_str or not description or not amount_str:
@@ -214,9 +230,16 @@ def upload_bank_statement(request):
                 # Get or create category
                 category = None
                 if category_name:
+                    # Determine classification based on amount
+                    classification = Category.INCOME if amount > 0 else Category.SPEND
                     category, created = Category.objects.get_or_create(
-                        name=category_name
+                        name=category_name,
+                        defaults={'classification': classification}
                     )
+                    # If category already exists but has wrong classification, update it
+                    if not created and category.classification != classification:
+                        category.classification = classification
+                        category.save()
                 else:
                     # Try to auto-categorize based on description keywords
                     category = auto_categorize_transaction(description)
@@ -233,6 +256,7 @@ def upload_bank_statement(request):
                     amount=amount,
                     description=description,
                     category=category,
+                    transaction_type=Transaction.ACCOUNT if is_account_csv else Transaction.CREDIT_CARD,
                     import_source="bank_statement",
                     reference_id=reference_id,
                 )
@@ -328,6 +352,11 @@ def auto_categorize_transaction(description):
             try:
                 return Category.objects.get(name=category_name)
             except Category.DoesNotExist:
-                return Category.objects.create(name=category_name)
+                # Set classification based on category type
+                classification = Category.INCOME if category_name == "Income" else Category.SPEND
+                return Category.objects.create(
+                    name=category_name,
+                    classification=classification
+                )
 
     return None

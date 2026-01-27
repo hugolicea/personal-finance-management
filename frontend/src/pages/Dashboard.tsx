@@ -15,6 +15,22 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import { formatCurrency } from '../utils/formatters';
+
+interface Category {
+    id: number;
+    name: string;
+    classification: string;
+    monthly_budget: number;
+}
+
+interface Transaction {
+    id: number;
+    date: string;
+    amount: string;
+    description: string;
+    category: number;
+}
 
 function Dashboard() {
     const dispatch = useAppDispatch();
@@ -28,16 +44,18 @@ function Dashboard() {
     const [showCategoryModal, setShowCategoryModal] = React.useState(false);
     const [showTransactionModal, setShowTransactionModal] =
         React.useState(false);
-    const [editingCategory, setEditingCategory] = React.useState<any>(null);
+    const [editingCategory, setEditingCategory] =
+        React.useState<Category | null>(null);
     const [editingTransaction, setEditingTransaction] =
-        React.useState<any>(null);
+        React.useState<Transaction | null>(null);
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
         React.useState(false);
     const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
         React.useState(false);
-    const [deletingCategory, setDeletingCategory] = React.useState<any>(null);
+    const [deletingCategory, setDeletingCategory] =
+        React.useState<Category | null>(null);
     const [deletingTransaction, setDeletingTransaction] =
-        React.useState<any>(null);
+        React.useState<Transaction | null>(null);
 
     // Filter states
     const [selectedYear, setSelectedYear] = React.useState(
@@ -58,7 +76,7 @@ function Dashboard() {
         setShowCategoryModal(true);
     };
 
-    const handleEditCategory = (category: any) => {
+    const handleEditCategory = (category: Category) => {
         setEditingCategory(category);
         setShowCategoryModal(true);
     };
@@ -68,17 +86,17 @@ function Dashboard() {
         setShowTransactionModal(true);
     };
 
-    const handleEditTransaction = (transaction: any) => {
+    const handleEditTransaction = (transaction: Transaction) => {
         setEditingTransaction(transaction);
         setShowTransactionModal(true);
     };
 
-    const handleDeleteCategory = (category: any) => {
+    const handleDeleteCategory = (category: Category) => {
         setDeletingCategory(category);
         setShowDeleteCategoryDialog(true);
     };
 
-    const handleDeleteTransaction = (transaction: any) => {
+    const handleDeleteTransaction = (transaction: Transaction) => {
         setDeletingTransaction(transaction);
         setShowDeleteTransactionDialog(true);
     };
@@ -360,13 +378,12 @@ function Dashboard() {
                                                                     <span
                                                                         className={`text-sm font-medium ${parseFloat(transaction.amount) < 0 ? 'text-red-600' : 'text-green-600'}`}
                                                                     >
-                                                                        $
-                                                                        {Math.abs(
-                                                                            parseFloat(
-                                                                                transaction.amount
+                                                                        {formatCurrency(
+                                                                            Math.abs(
+                                                                                parseFloat(
+                                                                                    transaction.amount
+                                                                                )
                                                                             )
-                                                                        ).toFixed(
-                                                                            2
                                                                         )}
                                                                     </span>
                                                                 </div>

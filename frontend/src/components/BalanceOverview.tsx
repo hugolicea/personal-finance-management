@@ -1,3 +1,5 @@
+import { formatCurrency } from '../utils/formatters';
+
 interface Transaction {
     id: number;
     date: string;
@@ -51,7 +53,7 @@ function BalanceOverview({ transactions }: BalanceOverviewProps) {
                                             : 'text-red-600'
                                     }`}
                                 >
-                                    ${Math.abs(totalBalance).toFixed(2)}
+                                    {formatCurrency(Math.abs(totalBalance))}
                                 </p>
                                 <p className='text-xs text-gray-500'>
                                     {totalBalance >= 0 ? 'surplus' : 'deficit'}
@@ -71,7 +73,7 @@ function BalanceOverview({ transactions }: BalanceOverviewProps) {
                             </div>
                             <div className='text-right'>
                                 <p className='text-lg font-semibold text-green-600'>
-                                    ${totalIncome.toFixed(2)}
+                                    {formatCurrency(totalIncome)}
                                 </p>
                                 <p className='text-xs text-green-500'>income</p>
                             </div>
@@ -89,7 +91,7 @@ function BalanceOverview({ transactions }: BalanceOverviewProps) {
                             </div>
                             <div className='text-right'>
                                 <p className='text-lg font-semibold text-red-600'>
-                                    ${totalExpenses.toFixed(2)}
+                                    {formatCurrency(totalExpenses)}
                                 </p>
                                 <p className='text-xs text-red-500'>expenses</p>
                             </div>

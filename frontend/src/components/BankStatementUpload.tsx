@@ -7,10 +7,20 @@ import {
 } from '../store/slices/transactionsSlice';
 import Modal from './Modal';
 
+interface TransactionResult {
+    id?: number;
+    row?: number;
+    date: string;
+    description: string;
+    amount: number;
+    category?: string;
+    reason?: string;
+}
+
 interface UploadResult {
     message: string;
-    transactions_created: any[];
-    transactions_skipped: any[];
+    transactions_created: TransactionResult[];
+    transactions_skipped: TransactionResult[];
     errors: string[];
     summary: {
         created: number;
@@ -91,11 +101,11 @@ const BankStatementUpload: React.FC = () => {
                 <div className='flex items-center justify-between'>
                     <div>
                         <h3 className='text-lg leading-6 font-medium text-gray-900'>
-                            Bank Statement Upload
+                            Transaction Upload
                         </h3>
                         <p className='mt-1 text-sm text-gray-500'>
                             Upload a CSV file to import transactions from your
-                            bank statement
+                            bank statements (credit card or account)
                         </p>
                     </div>
                 </div>
@@ -138,13 +148,16 @@ const BankStatementUpload: React.FC = () => {
                                 </p>
                             </div>
                             <div className='text-xs text-gray-400'>
-                                CSV format: Transaction
+                                <strong>Credit Card CSV:</strong> Transaction
                                 Date,Description,Amount,Category (optional)
+                                <br />
+                                <strong>Account CSV:</strong> Details,Posting
+                                Date,Description,Amount,Type
                                 <br />
                                 Supported date formats: MM/DD/YYYY, YYYY-MM-DD
                                 <br />
-                                Alternative column names: date, Post Date,
-                                amount, category, etc.
+                                Alternative column names supported for
+                                flexibility
                             </div>
                         </div>
                         <input
