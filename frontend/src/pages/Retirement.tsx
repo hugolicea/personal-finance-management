@@ -1,0 +1,620 @@
+import { useEffect, useState } from 'react';
+
+import Modal from '../components/Modal';
+import RetirementAccountForm from '../components/RetirementAccountForm';
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import {
+    deleteRetirementAccount,
+    fetchRetirementAccounts,
+} from '../store/slices/retirementAccountsSlice';
+import { formatCurrency } from '../utils/formatters';
+
+interface RetirementAccount {
+    id: number;
+    name: string;
+    account_type: string;
+    provider: string;
+    account_number: string | null;
+    current_balance: number;
+    monthly_contribution: number;
+    employer_match_percentage: number;
+    employer_match_limit: number;
+    risk_level: string;
+    target_retirement_age: number;
+    notes: string | null;
+    annual_contribution: number;
+    employer_match_amount: number;
+    total_annual_contribution: number;
+}
+
+function Retirement() {
+    const dispatch = useAppDispatch();
+    const { retirementAccounts, loading, deleting } = useAppSelector(
+        (state) => state.retirementAccounts
+    );
+
+    const [showRetirementAccountModal, setShowRetirementAccountModal] =
+        useState(false);
+    const [editingRetirementAccount, setEditingRetirementAccount] =
+        useState<RetirementAccount | null>(null);
+    const [
+        showDeleteRetirementAccountDialog,
+        setShowDeleteRetirementAccountDialog,
+    ] = useState(false);
+    const [deletingRetirementAccount, setDeletingRetirementAccount] =
+        useState<RetirementAccount | null>(null);
+
+    useEffect(() => {
+        dispatch(fetchRetirementAccounts());
+    }, [dispatch]);
+
+    const handleEditRetirementAccount = (
+        retirementAccount: RetirementAccount
+    ) => {
+        setEditingRetirementAccount(retirementAccount);
+        setShowRetirementAccountModal(true);
+    };
+
+    const handleDeleteRetirementAccount = (
+        retirementAccount: RetirementAccount
+    ) => {
+        setDeletingRetirementAccount(retirementAccount);
+        setShowDeleteRetirementAccountDialog(true);
+    };
+
+    const confirmDeleteRetirementAccount = async () => {
+        if (deletingRetirementAccount) {
+            await dispatch(
+                deleteRetirementAccount(deletingRetirementAccount.id)
+            );
+            setShowDeleteRetirementAccountDialog(false);
+            setDeletingRetirementAccount(null);
+        }
+    };
+
+    const closeModal = () => {
+        setShowRetirementAccountModal(false);
+        setEditingRetirementAccount(null);
+    };
+
+    const totalBalance = retirementAccounts.reduce(
+        (sum, account) =>
+            sum + (parseFloat(String(account.current_balance)) || 0),
+        0
+    );
+
+    const totalMonthlyContribution = retirementAccounts.reduce(
+        (sum, account) =>
+            sum + (parseFloat(String(account.monthly_contribution)) || 0),
+        0
+    );
+
+    const totalAnnualContribution = retirementAccounts.reduce(
+        (sum, account) =>
+            sum + (parseFloat(String(account.total_annual_contribution)) || 0),
+        0
+    );
+
+    const getAccountTypeDisplay = (accountType: string) => {
+        const types: { [key: string]: string } = {
+            traditional_401k: 'Traditional 401(k)',
+            roth_401k: 'Roth 401(k)',
+            traditional_ira: 'Traditional IRA',
+            roth_ira: 'Roth IRA',
+            sep_ira: 'SEP IRA',
+            simple_ira: 'SIMPLE IRA',
+            pension: 'Pension',
+            annuity: 'Annuity',
+            other: 'Other',
+        };
+        return types[accountType] || accountType;
+    };
+
+    const getRiskLevelDisplay = (riskLevel: string) => {
+        const levels: { [key: string]: string } = {
+            conservative: 'Conservative',
+            moderate: 'Moderate',
+            aggressive: 'Aggressive',
+            very_aggressive: 'Very Aggressive',
+        };
+        return levels[riskLevel] || riskLevel;
+    };
+
+    if (loading) {
+        return (
+            <div className='flex justify-center items-center h-64'>
+                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className='px-4 sm:px-6 lg:px-8'>
+            <div className='sm:flex sm:items-center'>
+                <div className='sm:flex-auto'>
+                    <h1 className='text-2xl font-semibold text-gray-900'>
+                        Retirement Accounts
+                    </h1>
+                    <p className='mt-2 text-sm text-gray-700'>
+                        Track and manage your retirement savings accounts
+                    </p>
+                </div>
+            </div>
+
+            {/* Add Account Button - Positioned below the header */}
+            <div className='mt-6 flex justify-center sm:justify-start'>
+                <button
+                    type='button'
+                    onClick={() => setShowRetirementAccountModal(true)}
+                    className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
+                >
+                    <svg
+                        className='-ml-1 mr-3 h-5 w-5'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                    >
+                        <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+                        />
+                    </svg>
+                    Add Retirement Account
+                </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                    <div className='p-5'>
+                        <div className='flex items-center'>
+                            <div className='flex-shrink-0'>
+                                <svg
+                                    className='h-6 w-6 text-gray-400'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                                    />
+                                </svg>
+                            </div>
+                            <div className='ml-5 w-0 flex-1'>
+                                <dl>
+                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                        Total Balance
+                                    </dt>
+                                    <dd className='text-lg font-medium text-gray-900'>
+                                        {formatCurrency(totalBalance)}
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                    <div className='p-5'>
+                        <div className='flex items-center'>
+                            <div className='flex-shrink-0'>
+                                <svg
+                                    className='h-6 w-6 text-gray-400'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M7 12l3-3 3 3 4-4'
+                                    />
+                                </svg>
+                            </div>
+                            <div className='ml-5 w-0 flex-1'>
+                                <dl>
+                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                        Monthly Contributions
+                                    </dt>
+                                    <dd className='text-lg font-medium text-gray-900'>
+                                        {formatCurrency(
+                                            totalMonthlyContribution
+                                        )}
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                    <div className='p-5'>
+                        <div className='flex items-center'>
+                            <div className='flex-shrink-0'>
+                                <svg
+                                    className='h-6 w-6 text-gray-400'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
+                                    />
+                                </svg>
+                            </div>
+                            <div className='ml-5 w-0 flex-1'>
+                                <dl>
+                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                        Annual Contributions
+                                    </dt>
+                                    <dd className='text-lg font-medium text-gray-900'>
+                                        {formatCurrency(
+                                            totalAnnualContribution
+                                        )}
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Retirement Accounts Table */}
+            <div className='mt-8 flex flex-col'>
+                <div className='-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8'>
+                    <div className='inline-block min-w-full py-2 align-middle md:px-6 lg:px-8'>
+                        <div className='overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg'>
+                            <table className='min-w-full divide-y divide-gray-300'>
+                                <thead className='bg-gray-50'>
+                                    <tr>
+                                        <th
+                                            scope='col'
+                                            className='py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6'
+                                        >
+                                            Account
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                        >
+                                            Type
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                        >
+                                            Provider
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                        >
+                                            Balance
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                        >
+                                            Monthly Contribution
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                        >
+                                            Risk Level
+                                        </th>
+                                        <th
+                                            scope='col'
+                                            className='relative py-3.5 pl-3 pr-4 sm:pr-6'
+                                        >
+                                            <span className='sr-only'>
+                                                Actions
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className='divide-y divide-gray-200 bg-white'>
+                                    {retirementAccounts.map((account) => (
+                                        <tr key={account.id}>
+                                            <td className='whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6'>
+                                                <div className='flex items-center'>
+                                                    <div className='flex-shrink-0 h-10 w-10'>
+                                                        <div className='h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center'>
+                                                            <svg
+                                                                className='h-5 w-5 text-blue-600'
+                                                                fill='none'
+                                                                stroke='currentColor'
+                                                                viewBox='0 0 24 24'
+                                                            >
+                                                                <path
+                                                                    strokeLinecap='round'
+                                                                    strokeLinejoin='round'
+                                                                    strokeWidth={
+                                                                        2
+                                                                    }
+                                                                    d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                    <div className='ml-4'>
+                                                        <div className='font-medium text-gray-900'>
+                                                            {account.name}
+                                                        </div>
+                                                        {account.account_number && (
+                                                            <div className='text-gray-500'>
+                                                                ****
+                                                                {
+                                                                    account.account_number
+                                                                }
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                                {getAccountTypeDisplay(
+                                                    account.account_type
+                                                )}
+                                            </td>
+                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                                {account.provider}
+                                            </td>
+                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-900'>
+                                                {formatCurrency(
+                                                    account.current_balance
+                                                )}
+                                            </td>
+                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-900'>
+                                                {formatCurrency(
+                                                    account.monthly_contribution
+                                                )}
+                                            </td>
+                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                                {getRiskLevelDisplay(
+                                                    account.risk_level
+                                                )}
+                                            </td>
+                                            <td className='relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6'>
+                                                <button
+                                                    onClick={() =>
+                                                        handleEditRetirementAccount(
+                                                            account
+                                                        )
+                                                    }
+                                                    className='inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mr-2'
+                                                >
+                                                    <svg
+                                                        className='w-4 h-4 mr-1.5'
+                                                        fill='none'
+                                                        stroke='currentColor'
+                                                        viewBox='0 0 24 24'
+                                                    >
+                                                        <path
+                                                            strokeLinecap='round'
+                                                            strokeLinejoin='round'
+                                                            strokeWidth={2}
+                                                            d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                                                        />
+                                                    </svg>
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        handleDeleteRetirementAccount(
+                                                            account
+                                                        )
+                                                    }
+                                                    className='inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200'
+                                                >
+                                                    <svg
+                                                        className='w-4 h-4 mr-1.5'
+                                                        fill='none'
+                                                        stroke='currentColor'
+                                                        viewBox='0 0 24 24'
+                                                    >
+                                                        <path
+                                                            strokeLinecap='round'
+                                                            strokeLinejoin='round'
+                                                            strokeWidth={2}
+                                                            d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                                                        />
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Add/Edit Modal */}
+            <Modal
+                isOpen={showRetirementAccountModal}
+                onClose={closeModal}
+                title={
+                    editingRetirementAccount
+                        ? 'Edit Retirement Account'
+                        : 'Add Retirement Account'
+                }
+            >
+                <RetirementAccountForm
+                    retirementAccount={editingRetirementAccount}
+                    onClose={closeModal}
+                />
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={showDeleteRetirementAccountDialog}
+                onClose={() =>
+                    !deleting && setShowDeleteRetirementAccountDialog(false)
+                }
+                title='Delete Retirement Account'
+            >
+                <div className='mt-2'>
+                    <div className='flex items-start'>
+                        <div className='flex-shrink-0'>
+                            <svg
+                                className='h-6 w-6 text-red-400'
+                                fill='none'
+                                viewBox='0 0 24 24'
+                                strokeWidth='1.5'
+                                stroke='currentColor'
+                            >
+                                <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
+                                />
+                            </svg>
+                        </div>
+                        <div className='ml-3 w-full'>
+                            <h3 className='text-sm font-medium text-gray-800'>
+                                Delete Retirement Account
+                            </h3>
+                            <div className='mt-2'>
+                                <p className='text-sm text-gray-500'>
+                                    You are about to permanently delete the
+                                    retirement account{' '}
+                                    <span className='font-semibold text-gray-700'>
+                                        "{deletingRetirementAccount?.name}"
+                                    </span>
+                                    . This action cannot be undone.
+                                </p>
+                            </div>
+                            {deletingRetirementAccount && (
+                                <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                                    <div className='text-sm'>
+                                        <div className='grid grid-cols-2 gap-4'>
+                                            <div>
+                                                <span className='font-medium text-gray-700'>
+                                                    Provider:
+                                                </span>{' '}
+                                                <span className='text-gray-900'>
+                                                    {
+                                                        deletingRetirementAccount.provider
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className='font-medium text-gray-700'>
+                                                    Type:
+                                                </span>{' '}
+                                                <span className='text-gray-900 capitalize'>
+                                                    {deletingRetirementAccount.account_type.replace(
+                                                        '_',
+                                                        ' '
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className='font-medium text-gray-700'>
+                                                    Current Balance:
+                                                </span>{' '}
+                                                <span className='text-gray-900 font-semibold'>
+                                                    {formatCurrency(
+                                                        deletingRetirementAccount.current_balance
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className='font-medium text-gray-700'>
+                                                    Monthly Contribution:
+                                                </span>{' '}
+                                                <span className='text-gray-900'>
+                                                    {formatCurrency(
+                                                        deletingRetirementAccount.monthly_contribution
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className='mt-3'>
+                                <p className='text-sm text-red-600 font-medium'>
+                                    ⚠️ This will permanently remove all data
+                                    associated with this retirement account.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className='mt-6 flex justify-end space-x-3'>
+                    <button
+                        onClick={() =>
+                            setShowDeleteRetirementAccountDialog(false)
+                        }
+                        disabled={deleting}
+                        className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={confirmDeleteRetirementAccount}
+                        disabled={deleting}
+                        className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                    >
+                        {deleting ? (
+                            <>
+                                <svg
+                                    className='w-4 h-4 mr-2 inline animate-spin'
+                                    fill='none'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <circle
+                                        className='opacity-25'
+                                        cx='12'
+                                        cy='12'
+                                        r='10'
+                                        stroke='currentColor'
+                                        strokeWidth='4'
+                                    />
+                                    <path
+                                        className='opacity-75'
+                                        fill='currentColor'
+                                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                                    />
+                                </svg>
+                                Deleting...
+                            </>
+                        ) : (
+                            <>
+                                <svg
+                                    className='w-4 h-4 mr-2 inline'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                                    />
+                                </svg>
+                                Delete Account
+                            </>
+                        )}
+                    </button>
+                </div>
+            </Modal>
+        </div>
+    );
+}
+
+export default Retirement;
