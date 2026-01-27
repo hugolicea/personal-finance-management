@@ -1,16 +1,15 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    CategoryViewSet,
-    TransactionViewSet,
-    balance_by_period,
-    category_spending_by_period,
-    upload_bank_statement,
-)
+from .views import (CategoryViewSet, HeritageViewSet, InvestmentViewSet,
+                    RetirementAccountViewSet, TransactionViewSet, balance_by_period,
+                    category_spending_by_period, upload_bank_statement)
 
 router = DefaultRouter()
 router.register(r"categories", CategoryViewSet)
+router.register(r"heritages", HeritageViewSet)
+router.register(r"investments", InvestmentViewSet)
+router.register(r"retirement-accounts", RetirementAccountViewSet)
 router.register(r"transactions", TransactionViewSet)
 
 urlpatterns = [
@@ -21,5 +20,6 @@ urlpatterns = [
         category_spending_by_period,
         name="category_spending_by_period",
     ),
-    path("upload-bank-statement/", upload_bank_statement, name="upload_bank_statement"),
+    path("upload-bank-statement/", upload_bank_statement,
+         name="upload_bank_statement"),
 ]

@@ -10,13 +10,29 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from .models import Category, Transaction
-from .serializers import CategorySerializer, TransactionSerializer
+from .models import Category, Heritage, Investment, RetirementAccount, Transaction
+from .serializers import (CategorySerializer, HeritageSerializer, InvestmentSerializer,
+                          RetirementAccountSerializer, TransactionSerializer)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+
+class InvestmentViewSet(viewsets.ModelViewSet):
+    queryset = Investment.objects.all()
+    serializer_class = InvestmentSerializer
+
+
+class HeritageViewSet(viewsets.ModelViewSet):
+    queryset = Heritage.objects.all()
+    serializer_class = HeritageSerializer
+
+
+class RetirementAccountViewSet(viewsets.ModelViewSet):
+    queryset = RetirementAccount.objects.all()
+    serializer_class = RetirementAccountSerializer
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -166,8 +182,10 @@ def upload_bank_statement(request):
                     description = get_column_value(
                         row, ["Description", "description", "desc"]
                     )
-                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
-                    category_name = get_column_value(row, ["Type", "type"])  # Use Type as category
+                    amount_str = get_column_value(
+                        row, ["Amount", "amount", "amt"])
+                    category_name = get_column_value(
+                        row, ["Type", "type"])  # Use Type as category
                 else:
                     # Credit card CSV format: flexible columns
                     date_str = get_column_value(
@@ -176,8 +194,10 @@ def upload_bank_statement(request):
                     description = get_column_value(
                         row, ["Description", "description", "desc"]
                     )
-                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
-                    category_name = get_column_value(row, ["Category", "category", "cat"])
+                    amount_str = get_column_value(
+                        row, ["Amount", "amount", "amt"])
+                    category_name = get_column_value(
+                        row, ["Category", "category", "cat"])
 
                 # Validate required fields
                 if not date_str or not description or not amount_str:
@@ -205,7 +225,8 @@ def upload_bank_statement(request):
                 try:
                     # Remove currency symbols, commas, and extra spaces
                     clean_amount = (
-                        amount_str.replace("$", "").replace(",", "").replace(" ", "")
+                        amount_str.replace("$", "").replace(
+                            ",", "").replace(" ", "")
                     )
                     amount = float(clean_amount)
                 except ValueError:

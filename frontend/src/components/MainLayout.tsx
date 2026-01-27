@@ -5,14 +5,20 @@ import AccountTransactions from '../pages/AccountTransactions';
 import Balance from '../pages/Balance';
 import Categories from '../pages/Categories';
 import CreditCardTransactions from '../pages/CreditCardTransactions';
+import Heritage from '../pages/Heritage';
 import Home from '../pages/Home';
+import Investments from '../pages/Investments';
+import Retirement from '../pages/Retirement';
 
 type ViewType =
     | 'dashboard'
     | 'categories'
     | 'credit-card-transactions'
     | 'account-transactions'
-    | 'balance';
+    | 'balance'
+    | 'investments'
+    | 'heritage'
+    | 'retirement';
 
 function MainLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -35,6 +41,12 @@ function MainLayout() {
                 return <AccountTransactions />;
             case 'balance':
                 return <Balance />;
+            case 'investments':
+                return <Investments />;
+            case 'heritage':
+                return <Heritage />;
+            case 'retirement':
+                return <Retirement />;
             default:
                 return <Home />;
         }
@@ -73,7 +85,13 @@ function MainLayout() {
 
                 {/* Main content */}
                 <div className='flex flex-1 flex-col lg:pl-64'>
-                    <main className='flex-1'>{renderCurrentView()}</main>
+                    <main className='flex-1'>
+                        <div className='py-6'>
+                            <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8'>
+                                {renderCurrentView()}
+                            </div>
+                        </div>
+                    </main>
                 </div>
             </div>
         </div>
@@ -100,6 +118,9 @@ function SidebarContent({ currentView, onViewChange }: SidebarContentProps) {
             icon: '🏦',
         },
         { id: 'balance' as ViewType, label: 'Balance', icon: '⚖️' },
+        { id: 'investments' as ViewType, label: 'Investments', icon: '📈' },
+        { id: 'heritage' as ViewType, label: 'Heritage', icon: '🏠' },
+        { id: 'retirement' as ViewType, label: 'Retirement', icon: '🏖️' },
     ];
 
     return (
