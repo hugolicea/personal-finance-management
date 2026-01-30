@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import CategoryForm from '../components/CategoryForm';
+import ConfirmModal from '../components/ConfirmModal';
 import HeritageChart from '../components/HeritageChart';
 import InvestmentsChart from '../components/InvestmentsChart';
 import Modal from '../components/Modal';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
 import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
-import TransactionForm from '../components/TransactionForm';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
     deleteCategory,
@@ -21,6 +21,7 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import type { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
 
@@ -55,12 +56,9 @@ function Home() {
     ); // JS months are 0-based
     const [filterByYear, setFilterByYear] = useState(false);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [showTransactionModal, setShowTransactionModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(
         null
     );
-    const [editingTransaction, setEditingTransaction] =
-        useState<Transaction | null>(null);
     const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
         useState(false);
     const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
@@ -108,10 +106,7 @@ function Home() {
         );
     });
 
-    const handleAddTransaction = () => {
-        setEditingTransaction(null);
-        setShowTransactionModal(true);
-    };
+    // No Add transaction from Home; button and modal removed.
 
     const confirmDeleteCategory = async () => {
         if (deletingCategory) {
@@ -145,11 +140,9 @@ function Home() {
 
     const closeModals = () => {
         setShowCategoryModal(false);
-        setShowTransactionModal(false);
         setShowDeleteCategoryDialog(false);
         setShowDeleteTransactionDialog(false);
         setEditingCategory(null);
-        setEditingTransaction(null);
         setDeletingCategory(null);
         setDeletingTransaction(null);
     };
@@ -344,14 +337,6 @@ function Home() {
                                                 <h3 className='text-lg leading-6 font-medium text-gray-900'>
                                                     Recent Transactions
                                                 </h3>
-                                                <button
-                                                    onClick={
-                                                        handleAddTransaction
-                                                    }
-                                                    className='bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500'
-                                                >
-                                                    + Add
-                                                </button>
                                             </div>
                                             <div className='space-y-3'>
                                                 {transactionsLoading ? (
@@ -398,18 +383,14 @@ function Home() {
                                                                 <div className='text-right'>
                                                                     <p
                                                                         className={`text-sm font-semibold ${
-                                                                            parseFloat(
-                                                                                transaction.amount
-                                                                            ) <
+                                                                            parseFloat(String(transaction.amount)) <
                                                                             0
                                                                                 ? 'text-red-600'
                                                                                 : 'text-green-600'
                                                                         }`}
                                                                     >
                                                                         {formatCurrency(
-                                                                            parseFloat(
-                                                                                transaction.amount
-                                                                            )
+                                                                            parseFloat(String(transaction.amount))
                                                                         )}
                                                                     </p>
                                                                 </div>
@@ -486,79 +467,47 @@ function Home() {
             {/* Modals */}
             <Modal isOpen={showCategoryModal} onClose={closeModals}>
                 <CategoryForm
-                    category={editingCategory}
+                    category={editingCategory ?? undefined}
                     onClose={closeModals}
                 />
             </Modal>
 
-            <Modal isOpen={showTransactionModal} onClose={closeModals}>
-                <TransactionForm
-                    transaction={editingTransaction}
-                    onClose={closeModals}
-                />
-            </Modal>
+            {/* Transaction modal removed: transactions are not added from Home view */}
 
             {/* Delete Confirmation Modals */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
                 onClose={() => setShowDeleteCategoryDialog(false)}
-            >
-                <div className='p-6'>
-                    <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                        Delete Category
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-4'>
+                onConfirm={confirmDeleteCategory}
+                title='Delete Category'
+                message={
+                    <>
                         Are you sure you want to delete the category "
-                        {deletingCategory?.name}"? This action cannot be undone.
-                    </p>
-                    <div className='flex justify-end space-x-3'>
-                        <button
-                            onClick={() => setShowDeleteCategoryDialog(false)}
-                            className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200'
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDeleteCategory}
-                            className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+                        <strong>{deletingCategory?.name}</strong>"? This action
+                        cannot be undone.
+                    </>
+                }
+                confirmLabel='Delete'
+                cancelLabel='Cancel'
+                isDanger
+            />
 
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteTransactionDialog}
                 onClose={() => setShowDeleteTransactionDialog(false)}
-            >
-                <div className='p-6'>
-                    <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                        Delete Transaction
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-4'>
+                onConfirm={confirmDeleteTransaction}
+                title='Delete Transaction'
+                message={
+                    <>
                         Are you sure you want to delete the transaction "
-                        {deletingTransaction?.description}"? This action cannot
-                        be undone.
-                    </p>
-                    <div className='flex justify-end space-x-3'>
-                        <button
-                            onClick={() =>
-                                setShowDeleteTransactionDialog(false)
-                            }
-                            className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200'
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDeleteTransaction}
-                            className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+                        <strong>{deletingTransaction?.description}</strong>"?
+                        This action cannot be undone.
+                    </>
+                }
+                confirmLabel='Delete'
+                cancelLabel='Cancel'
+                isDanger
+            />
         </div>
     );
 }

@@ -11,6 +11,8 @@ import {
 } from '@tanstack/react-table';
 
 import CategoryForm from '../components/CategoryForm';
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -136,44 +138,10 @@ function Categories() {
                 header: 'Actions',
                 cell: ({ row }) => (
                     <div className='relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6'>
-                        <button
-                            onClick={() => handleEditCategory(row.original)}
-                            className='inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 mr-2'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                                />
-                            </svg>
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteCategory(row.original)}
-                            className='inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                />
-                            </svg>
-                            Delete
-                        </button>
+                        <EditDeleteIconButtons
+                            onEdit={() => handleEditCategory(row.original)}
+                            onDelete={() => handleDeleteCategory(row.original)}
+                        />
                     </div>
                 ),
             },
@@ -266,7 +234,7 @@ function Categories() {
                             onClick={handleAddCategory}
                             className='bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 border-2 border-green-800'
                         >
-                            ➕ Add Category
+                            Add Category
                         </button>
                     </div>
 
@@ -307,26 +275,18 @@ function Categories() {
                                                         </span>
                                                     </div>
                                                     <div className='flex space-x-2'>
-                                                        <button
-                                                            onClick={() =>
+                                                        <EditDeleteIconButtons
+                                                            onEdit={() =>
                                                                 handleEditCategory(
                                                                     category
                                                                 )
                                                             }
-                                                            className='text-blue-600 hover:text-blue-800 text-sm'
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
+                                                            onDelete={() =>
                                                                 handleDeleteCategory(
                                                                     category
                                                                 )
                                                             }
-                                                            className='text-red-600 hover:text-red-800 text-sm'
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -616,35 +576,23 @@ function Categories() {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
                 onClose={() => setShowDeleteCategoryDialog(false)}
-            >
-                <div className='p-6'>
-                    <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                        Delete Category
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-4'>
+                onConfirm={confirmDeleteCategory}
+                title='Delete Category'
+                message={
+                    <>
                         Are you sure you want to delete the category "
-                        {deletingCategory?.name}"? This action cannot be undone
-                        and will affect all associated transactions.
-                    </p>
-                    <div className='flex justify-end space-x-3'>
-                        <button
-                            onClick={() => setShowDeleteCategoryDialog(false)}
-                            className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200'
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDeleteCategory}
-                            className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+                        <strong>{deletingCategory?.name}</strong>"? This action
+                        cannot be undone and will affect all associated
+                        transactions.
+                    </>
+                }
+                confirmLabel='Delete'
+                cancelLabel='Cancel'
+                isDanger
+            />
         </div>
     );
 }

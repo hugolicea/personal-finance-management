@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import BankStatementUpload from '../components/BankStatementUpload';
 import CategoryForm from '../components/CategoryForm';
 import CategorySelect from '../components/CategorySelect';
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
 import TransactionForm from '../components/TransactionForm';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -330,7 +332,7 @@ function AccountTransactions() {
                                                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                                         }`}
                                     >
-                                        📊 Table
+                                        Table
                                     </button>
                                 </div>
                             </div>
@@ -392,7 +394,7 @@ function AccountTransactions() {
                                         onClick={handleBulkDelete}
                                         className='bg-red-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 border-2 border-red-800'
                                     >
-                                        🗑️ Delete Selected (
+                                        Delete Selected (
                                         {selectedTransactions.length})
                                     </button>
                                 )}
@@ -400,7 +402,7 @@ function AccountTransactions() {
                                 onClick={handleAddTransaction}
                                 className='bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 border-2 border-green-800'
                             >
-                                ➕ Add Transaction
+                                Add Transaction
                             </button>
                         </div>
                     </div>
@@ -470,29 +472,19 @@ function AccountTransactions() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className='ml-4 flex space-x-2'>
-                                                            <button
-                                                                onClick={() =>
+                                                        <div className='ml-4'>
+                                                            <EditDeleteIconButtons
+                                                                onEdit={() =>
                                                                     handleEditTransaction(
                                                                         transaction
                                                                     )
                                                                 }
-                                                                className='text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors'
-                                                                title='Edit transaction'
-                                                            >
-                                                                ✏️
-                                                            </button>
-                                                            <button
-                                                                onClick={() =>
+                                                                onDelete={() =>
                                                                     handleDeleteTransaction(
                                                                         transaction
                                                                     )
                                                                 }
-                                                                className='text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors'
-                                                                title='Delete transaction'
-                                                            >
-                                                                🗑️
-                                                            </button>
+                                                            />
                                                         </div>
                                                     </div>
                                                 </li>
@@ -564,29 +556,19 @@ function AccountTransactions() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className='ml-4 flex space-x-2'>
-                                                            <button
-                                                                onClick={() =>
+                                                        <div className='ml-4'>
+                                                            <EditDeleteIconButtons
+                                                                onEdit={() =>
                                                                     handleEditTransaction(
                                                                         transaction
                                                                     )
                                                                 }
-                                                                className='text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors'
-                                                                title='Edit transaction'
-                                                            >
-                                                                ✏️
-                                                            </button>
-                                                            <button
-                                                                onClick={() =>
+                                                                onDelete={() =>
                                                                     handleDeleteTransaction(
                                                                         transaction
                                                                     )
                                                                 }
-                                                                className='text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors'
-                                                                title='Delete transaction'
-                                                            >
-                                                                🗑️
-                                                            </button>
+                                                            />
                                                         </div>
                                                     </div>
                                                 </li>
@@ -743,29 +725,19 @@ function AccountTransactions() {
                                                             </span>
                                                         </td>
                                                         <td className='px-6 py-4 whitespace-nowrap text-center text-sm font-medium'>
-                                                            <div className='flex justify-center space-x-2'>
-                                                                <button
-                                                                    onClick={() =>
+                                                            <div className='flex justify-center'>
+                                                                <EditDeleteIconButtons
+                                                                    onEdit={() =>
                                                                         handleEditTransaction(
                                                                             transaction
                                                                         )
                                                                     }
-                                                                    className='text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors'
-                                                                    title='Edit transaction'
-                                                                >
-                                                                    ✏️
-                                                                </button>
-                                                                <button
-                                                                    onClick={() =>
+                                                                    onDelete={() =>
                                                                         handleDeleteTransaction(
                                                                             transaction
                                                                         )
                                                                     }
-                                                                    className='text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors'
-                                                                    title='Delete transaction'
-                                                                >
-                                                                    🗑️
-                                                                </button>
+                                                                />
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -801,177 +773,104 @@ function AccountTransactions() {
             </Modal>
 
             {/* Delete Confirmation Modals */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
                 onClose={() => setShowDeleteCategoryDialog(false)}
-            >
-                <div className='p-6'>
-                    <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                        Delete Category
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-4'>
+                onConfirm={confirmDeleteCategory}
+                title='Delete Category'
+                message={
+                    <>
                         Are you sure you want to delete the category "
-                        {deletingCategory?.name}"? This action cannot be undone.
-                    </p>
-                    <div className='flex justify-end space-x-3'>
-                        <button
-                            onClick={() => setShowDeleteCategoryDialog(false)}
-                            className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200'
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDeleteCategory}
-                            className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal
-                isOpen={showDeleteTransactionDialog}
-                onClose={() =>
-                    !deleting && setShowDeleteTransactionDialog(false)
+                        <strong>{deletingCategory?.name}</strong>"? This action
+                        cannot be undone.
+                    </>
                 }
+                confirmLabel='Delete'
+                cancelLabel='Cancel'
+                isDanger
+            />
+
+            <ConfirmModal
+                isOpen={showDeleteTransactionDialog}
+                onClose={() => setShowDeleteTransactionDialog(false)}
+                onConfirm={confirmDeleteTransaction}
                 title='Delete Transaction'
-            >
-                <div className='mt-2'>
-                    <div className='flex items-start'>
-                        <div className='flex-shrink-0'>
-                            <svg
-                                className='h-6 w-6 text-red-400'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
-                                />
-                            </svg>
-                        </div>
-                        <div className='ml-3 w-full'>
-                            <h3 className='text-sm font-medium text-gray-800'>
-                                Delete Transaction
-                            </h3>
-                            <div className='mt-2'>
-                                <p className='text-sm text-gray-500'>
-                                    You are about to permanently delete the
-                                    transaction{' '}
-                                    <span className='font-semibold text-gray-700'>
-                                        "{deletingTransaction?.description}"
-                                    </span>
-                                    . This action cannot be undone.
-                                </p>
-                            </div>
-                            {deletingTransaction && (
-                                <div className='mt-3 p-3 bg-gray-50 rounded-md'>
-                                    <div className='text-sm'>
-                                        <div className='grid grid-cols-2 gap-4'>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Date:
-                                                </span>{' '}
-                                                <span className='text-gray-900'>
-                                                    {new Date(
-                                                        deletingTransaction.date
-                                                    ).toLocaleDateString()}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Amount:
-                                                </span>{' '}
-                                                <span className='text-gray-900 font-semibold'>
-                                                    {formatCurrency(
-                                                        deletingTransaction.amount
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div className='col-span-2'>
-                                                <span className='font-medium text-gray-700'>
-                                                    Description:
-                                                </span>{' '}
-                                                <span className='text-gray-900'>
-                                                    {
-                                                        deletingTransaction.description
-                                                    }
-                                                </span>
+                message={
+                    <>
+                        <div className='mt-2'>
+                            <div className='flex items-start'>
+                                <div className='ml-3 w-full'>
+                                    <h3 className='text-sm font-medium text-gray-800'>
+                                        Delete Transaction
+                                    </h3>
+                                    <div className='mt-2'>
+                                        <p className='text-sm text-gray-500'>
+                                            You are about to permanently delete
+                                            the transaction{' '}
+                                            <span className='font-semibold text-gray-700'>
+                                                "
+                                                {
+                                                    deletingTransaction?.description
+                                                }
+                                                "
+                                            </span>
+                                            . This action cannot be undone.
+                                        </p>
+                                    </div>
+                                    {deletingTransaction && (
+                                        <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                                            <div className='text-sm'>
+                                                <div className='grid grid-cols-2 gap-4'>
+                                                    <div>
+                                                        <span className='font-medium text-gray-700'>
+                                                            Date:
+                                                        </span>{' '}
+                                                        <span className='text-gray-900'>
+                                                            {new Date(
+                                                                deletingTransaction.date
+                                                            ).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className='font-medium text-gray-700'>
+                                                            Amount:
+                                                        </span>{' '}
+                                                        <span className='text-gray-900 font-semibold'>
+                                                            {formatCurrency(
+                                                                deletingTransaction.amount
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <div className='col-span-2'>
+                                                        <span className='font-medium text-gray-700'>
+                                                            Description:
+                                                        </span>{' '}
+                                                        <span className='text-gray-900'>
+                                                            {
+                                                                deletingTransaction.description
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
+                                    )}
+                                    <div className='mt-3'>
+                                        <p className='text-sm text-red-600 font-medium'>
+                                            ⚠️ This will permanently remove this
+                                            transaction from your records.
+                                        </p>
                                     </div>
                                 </div>
-                            )}
-                            <div className='mt-3'>
-                                <p className='text-sm text-red-600 font-medium'>
-                                    ⚠️ This will permanently remove this
-                                    transaction from your records.
-                                </p>
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div className='mt-6 flex justify-end space-x-3'>
-                    <button
-                        onClick={() => setShowDeleteTransactionDialog(false)}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={confirmDeleteTransaction}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        {deleting ? (
-                            <>
-                                <svg
-                                    className='w-4 h-4 mr-2 inline animate-spin'
-                                    fill='none'
-                                    viewBox='0 0 24 24'
-                                >
-                                    <circle
-                                        className='opacity-25'
-                                        cx='12'
-                                        cy='12'
-                                        r='10'
-                                        stroke='currentColor'
-                                        strokeWidth='4'
-                                    />
-                                    <path
-                                        className='opacity-75'
-                                        fill='currentColor'
-                                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                                    />
-                                </svg>
-                                Deleting...
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    className='w-4 h-4 mr-2 inline'
-                                    fill='none'
-                                    stroke='currentColor'
-                                    viewBox='0 0 24 24'
-                                >
-                                    <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth={2}
-                                        d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                    />
-                                </svg>
-                                Delete Transaction
-                            </>
-                        )}
-                    </button>
-                </div>
-            </Modal>
+                    </>
+                }
+                confirmLabel={deleting ? 'Deleting...' : 'Delete Transaction'}
+                cancelLabel='Cancel'
+                isDanger
+                isConfirming={deleting}
+            />
 
             {/* Bulk Delete Confirmation Modal */}
             <Modal

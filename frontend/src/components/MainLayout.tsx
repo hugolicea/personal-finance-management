@@ -104,19 +104,13 @@ interface SidebarContentProps {
 }
 
 function SidebarContent({ currentView, onViewChange }: SidebarContentProps) {
+    const [transactionsOpen, setTransactionsOpen] = useState(
+        currentView === 'credit-card-transactions' ||
+            currentView === 'account-transactions'
+    );
     const menuItems = [
         { id: 'dashboard' as ViewType, label: 'Dashboard', icon: '📊' },
         { id: 'categories' as ViewType, label: 'Categories', icon: '🏷️' },
-        {
-            id: 'credit-card-transactions' as ViewType,
-            label: 'Credit Card',
-            icon: '💳',
-        },
-        {
-            id: 'account-transactions' as ViewType,
-            label: 'Account',
-            icon: '🏦',
-        },
         { id: 'balance' as ViewType, label: 'Balance', icon: '⚖️' },
         { id: 'investments' as ViewType, label: 'Investments', icon: '📈' },
         { id: 'heritage' as ViewType, label: 'Heritage', icon: '🏠' },
@@ -130,7 +124,7 @@ function SidebarContent({ currentView, onViewChange }: SidebarContentProps) {
                     <button
                         key={item.id}
                         onClick={() => onViewChange(item.id)}
-                        className={`${
+                        className={`$${
                             currentView === item.id
                                 ? 'bg-red-50 border-red-500 text-red-700'
                                 : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
@@ -140,6 +134,84 @@ function SidebarContent({ currentView, onViewChange }: SidebarContentProps) {
                         {item.label}
                     </button>
                 ))}
+
+                {/* Transactions menu group */}
+                <div className='space-y-1'>
+                    <button
+                        type='button'
+                        onClick={() => setTransactionsOpen((open) => !open)}
+                        className={`flex w-full items-center rounded-md px-2 py-2 text-sm font-medium border-l-4 ${
+                            currentView === 'credit-card-transactions' ||
+                            currentView === 'account-transactions'
+                                ? 'bg-red-50 border-red-500 text-red-700'
+                                : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                        }`}
+                    >
+                        <span className='mr-3 text-lg'>💸</span>
+                        Transactions
+                        <span className='ml-auto'>
+                            {transactionsOpen ? (
+                                <svg
+                                    className='w-4 h-4 inline'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    strokeWidth='2'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        d='M19 9l-7 7-7-7'
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    className='w-4 h-4 inline'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    strokeWidth='2'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        d='M9 5l7 7-7 7'
+                                    />
+                                </svg>
+                            )}
+                        </span>
+                    </button>
+                    {transactionsOpen && (
+                        <div className='ml-6 space-y-1'>
+                            <button
+                                onClick={() =>
+                                    onViewChange('credit-card-transactions')
+                                }
+                                className={`flex w-full items-center rounded-md px-2 py-2 text-sm font-medium border-l-4 ${
+                                    currentView === 'credit-card-transactions'
+                                        ? 'bg-red-100 border-red-500 text-red-700'
+                                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                }`}
+                            >
+                                <span className='mr-3 text-lg'>💳</span>
+                                Credit Cards
+                            </button>
+                            <button
+                                onClick={() =>
+                                    onViewChange('account-transactions')
+                                }
+                                className={`flex w-full items-center rounded-md px-2 py-2 text-sm font-medium border-l-4 ${
+                                    currentView === 'account-transactions'
+                                        ? 'bg-red-100 border-red-500 text-red-700'
+                                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                                }`}
+                            >
+                                <span className='mr-3 text-lg'>🏦</span>
+                                Accounts
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </nav>
     );

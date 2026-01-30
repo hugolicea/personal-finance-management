@@ -12,6 +12,8 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteButtons from '../components/EditDeleteButtons';
 import InvestmentForm from '../components/InvestmentForm';
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
@@ -222,46 +224,10 @@ function Investments() {
                 id: 'actions',
                 header: 'Actions',
                 cell: ({ row }) => (
-                    <div className='flex space-x-2'>
-                        <button
-                            onClick={() => handleEditInvestment(row.original)}
-                            className='inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                                />
-                            </svg>
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteInvestment(row.original)}
-                            className='inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                />
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
+                    <EditDeleteButtons
+                        onEdit={() => handleEditInvestment(row.original)}
+                        onDelete={() => handleDeleteInvestment(row.original)}
+                    />
                 ),
             },
         ],
@@ -743,168 +709,88 @@ function Investments() {
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteInvestmentDialog}
                 onClose={() =>
                     !deleting && setShowDeleteInvestmentDialog(false)
                 }
+                onConfirm={confirmDeleteInvestment}
                 title='Delete Investment'
-            >
-                <div className='mt-2'>
-                    <div className='flex items-start'>
-                        <div className='flex-shrink-0'>
-                            <svg
-                                className='h-6 w-6 text-red-400'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
-                                />
-                            </svg>
-                        </div>
-                        <div className='ml-3 w-full'>
-                            <h3 className='text-sm font-medium text-gray-800'>
-                                Delete Investment
-                            </h3>
-                            <div className='mt-2'>
-                                <p className='text-sm text-gray-500'>
-                                    You are about to permanently delete the
-                                    investment{' '}
-                                    <span className='font-semibold text-gray-700'>
-                                        "{deletingInvestment?.name}"
-                                    </span>
-                                    . This action cannot be undone.
-                                </p>
-                            </div>
-                            {deletingInvestment && (
-                                <div className='mt-3 p-3 bg-gray-50 rounded-md'>
-                                    <div className='text-sm'>
-                                        <div className='grid grid-cols-2 gap-4'>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Symbol:
-                                                </span>{' '}
-                                                <span className='text-gray-900'>
-                                                    {deletingInvestment.symbol}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Type:
-                                                </span>{' '}
-                                                <span className='text-gray-900 capitalize'>
-                                                    {deletingInvestment.investment_type.replace(
-                                                        '_',
-                                                        ' '
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Current Value:
-                                                </span>{' '}
-                                                <span className='text-gray-900 font-semibold'>
-                                                    {formatCurrency(
-                                                        deletingInvestment.current_value
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Gain/Loss:
-                                                </span>{' '}
-                                                <span
-                                                    className={`font-semibold ${
-                                                        deletingInvestment.gain_loss >=
-                                                        0
-                                                            ? 'text-green-600'
-                                                            : 'text-red-600'
-                                                    }`}
-                                                >
-                                                    {deletingInvestment.gain_loss >=
-                                                    0
-                                                        ? '+'
-                                                        : ''}
-                                                    {formatCurrency(
-                                                        deletingInvestment.gain_loss
-                                                    )}
-                                                </span>
-                                            </div>
+                message={
+                    <>
+                        <p className='text-sm text-gray-500'>
+                            You are about to permanently delete the investment{' '}
+                            <span className='font-semibold text-gray-700'>
+                                "{deletingInvestment?.name}"
+                            </span>
+                            . This action cannot be undone.
+                        </p>
+                        {deletingInvestment && (
+                            <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                                <div className='text-sm'>
+                                    <div className='grid grid-cols-2 gap-4'>
+                                        <div>
+                                            <span className='font-medium text-gray-700'>
+                                                Symbol:
+                                            </span>{' '}
+                                            <span className='text-gray-900'>
+                                                {deletingInvestment.symbol}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className='font-medium text-gray-700'>
+                                                Type:
+                                            </span>{' '}
+                                            <span className='text-gray-900 capitalize'>
+                                                {deletingInvestment.investment_type.replace(
+                                                    '_',
+                                                    ' '
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className='font-medium text-gray-700'>
+                                                Current Value:
+                                            </span>{' '}
+                                            <span className='text-gray-900 font-semibold'>
+                                                {formatCurrency(
+                                                    deletingInvestment.current_value
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className='font-medium text-gray-700'>
+                                                Gain/Loss:
+                                            </span>{' '}
+                                            <span
+                                                className={`font-semibold ${deletingInvestment.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                            >
+                                                {deletingInvestment.gain_loss >=
+                                                0
+                                                    ? '+'
+                                                    : ''}
+                                                {formatCurrency(
+                                                    deletingInvestment.gain_loss
+                                                )}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                            )}
-                            <div className='mt-3'>
-                                <p className='text-sm text-red-600 font-medium'>
-                                    ⚠️ This will permanently remove all data
-                                    associated with this investment.
-                                </p>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div className='mt-6 flex justify-end space-x-3'>
-                    <button
-                        onClick={() => setShowDeleteInvestmentDialog(false)}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={confirmDeleteInvestment}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        {deleting ? (
-                            <>
-                                <svg
-                                    className='w-4 h-4 mr-2 inline animate-spin'
-                                    fill='none'
-                                    viewBox='0 0 24 24'
-                                >
-                                    <circle
-                                        className='opacity-25'
-                                        cx='12'
-                                        cy='12'
-                                        r='10'
-                                        stroke='currentColor'
-                                        strokeWidth='4'
-                                    />
-                                    <path
-                                        className='opacity-75'
-                                        fill='currentColor'
-                                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                                    />
-                                </svg>
-                                Deleting...
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    className='w-4 h-4 mr-2 inline'
-                                    fill='none'
-                                    stroke='currentColor'
-                                    viewBox='0 0 24 24'
-                                >
-                                    <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth={2}
-                                        d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                    />
-                                </svg>
-                                Delete Investment
-                            </>
                         )}
-                    </button>
-                </div>
-            </Modal>
+                        <div className='mt-3'>
+                            <p className='text-sm text-red-600 font-medium'>
+                                ⚠️ This will permanently remove all data
+                                associated with this investment.
+                            </p>
+                        </div>
+                    </>
+                }
+                confirmLabel={deleting ? 'Deleting...' : 'Delete Investment'}
+                cancelLabel='Cancel'
+                isDanger
+                isConfirming={deleting}
+            />
         </div>
     );
 }
