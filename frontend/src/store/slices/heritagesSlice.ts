@@ -1,6 +1,24 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+interface HeritageApiResponse {
+    id: number;
+    name: string;
+    heritage_type: string;
+    address: string;
+    area: string | null;
+    area_unit: string;
+    purchase_price: string;
+    current_value: string | null;
+    purchase_date: string;
+    monthly_rental_income: string;
+    notes: string | null;
+    gain_loss: string;
+    gain_loss_percentage: string;
+    annual_rental_income: string;
+    rental_yield_percentage: string;
+}
+
 interface Heritage {
     id: number;
     name: string;
@@ -37,7 +55,46 @@ export const fetchHeritages = createAsyncThunk(
     'heritages/fetchHeritages',
     async () => {
         const response = await axios.get('/api/heritages/');
-        return response.data;
+        // Transform string fields to numbers with error handling
+        return response.data.map((heritage: HeritageApiResponse) => ({
+            ...heritage,
+            area: heritage.area
+                ? isNaN(parseFloat(heritage.area))
+                    ? null
+                    : parseFloat(heritage.area)
+                : null,
+            purchase_price: isNaN(parseFloat(heritage.purchase_price))
+                ? 0
+                : parseFloat(heritage.purchase_price),
+            current_value:
+                heritage.current_value &&
+                !isNaN(parseFloat(heritage.current_value))
+                    ? parseFloat(heritage.current_value)
+                    : null,
+            monthly_rental_income: isNaN(
+                parseFloat(heritage.monthly_rental_income)
+            )
+                ? 0
+                : parseFloat(heritage.monthly_rental_income),
+            gain_loss: isNaN(parseFloat(heritage.gain_loss))
+                ? 0
+                : parseFloat(heritage.gain_loss),
+            gain_loss_percentage: isNaN(
+                parseFloat(heritage.gain_loss_percentage)
+            )
+                ? 0
+                : parseFloat(heritage.gain_loss_percentage),
+            annual_rental_income: isNaN(
+                parseFloat(heritage.annual_rental_income)
+            )
+                ? 0
+                : parseFloat(heritage.annual_rental_income),
+            rental_yield_percentage: isNaN(
+                parseFloat(heritage.rental_yield_percentage)
+            )
+                ? 0
+                : parseFloat(heritage.rental_yield_percentage),
+        }));
     }
 );
 

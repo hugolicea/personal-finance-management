@@ -39,16 +39,21 @@ interface SpendingChartProps {
 function SpendingChart({ transactions, categories }: SpendingChartProps) {
     // Calculate spending by category (only expenses)
     const spendingByCategory = transactions
-        .filter((t) => parseFloat(t.amount) < 0)
+        .filter((t) => {
+            const amount = parseFloat(t.amount);
+            return !isNaN(amount) && amount < 0;
+        })
         .reduce(
             (acc, transaction) => {
                 const categoryId = transaction.category;
                 const amount = Math.abs(parseFloat(transaction.amount));
 
-                if (!acc[categoryId]) {
-                    acc[categoryId] = 0;
+                if (!isNaN(amount)) {
+                    if (!acc[categoryId]) {
+                        acc[categoryId] = 0;
+                    }
+                    acc[categoryId] += amount;
                 }
-                acc[categoryId] += amount;
                 return acc;
             },
             {} as Record<number, number>
@@ -120,7 +125,12 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
 
     return (
         <div className='h-64'>
-            <ResponsiveContainer width='100%' height='100%'>
+            <ResponsiveContainer
+                width='100%'
+                height='100%'
+                minWidth={200}
+                minHeight={200}
+            >
                 <PieChart>
                     <Pie
                         data={chartData}

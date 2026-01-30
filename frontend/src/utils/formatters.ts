@@ -1,9 +1,12 @@
 /**
  * Format a number as currency with commas for thousands separators
  * @param amount - The number to format
- * @returns Formatted string like "$1,234.56"
+ * @returns Formatted string like "$1,234.56" or "$0.00" for invalid values
  */
 export const formatCurrency = (amount: number): string => {
+    if (isNaN(amount) || !isFinite(amount)) {
+        return '$0.00';
+    }
     const absAmount = Math.abs(amount);
     const formatted = absAmount.toLocaleString('en-US', {
         minimumFractionDigits: 2,

@@ -1,6 +1,23 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+interface InvestmentApiResponse {
+    id: number;
+    symbol: string;
+    name: string;
+    investment_type: string;
+    quantity: string;
+    purchase_price: string;
+    current_price: string | null;
+    purchase_date: string;
+    notes: string | null;
+    total_invested: string;
+    current_value: string;
+    gain_loss: string;
+    gain_loss_percentage: string;
+    due_date: string | null;
+}
+
 interface Investment {
     id: number;
     symbol: string;
@@ -36,7 +53,50 @@ export const fetchInvestments = createAsyncThunk(
     'investments/fetchInvestments',
     async () => {
         const response = await axios.get('/api/investments/');
-        return response.data;
+        // Transform string fields to numbers with error handling
+        return response.data.map((investment: InvestmentApiResponse) => ({
+            ...investment,
+            quantity: isNaN(parseFloat(investment.quantity))
+                ? 0
+                : parseFloat(investment.quantity),
+            purchase_price: isNaN(parseFloat(investment.purchase_price))
+                ? 0
+                : parseFloat(investment.purchase_price),
+            current_price:
+                investment.current_price &&
+                !isNaN(parseFloat(investment.current_price))
+                    ? parseFloat(investment.current_price)
+                    : null,
+            total_invested: isNaN(parseFloat(investment.total_invested))
+                ? 0
+                : parseFloat(investment.total_invested),
+            current_value: isNaN(parseFloat(investment.current_value))
+                ? 0
+                : parseFloat(investment.current_value),
+            gain_loss: isNaN(parseFloat(investment.gain_loss))
+                ? 0
+                : parseFloat(investment.gain_loss),
+            gain_loss_percentage: isNaN(
+                parseFloat(investment.gain_loss_percentage)
+            )
+                ? 0
+                : parseFloat(investment.gain_loss_percentage),
+            principal_amount:
+                investment.principal_amount &&
+                !isNaN(parseFloat(investment.principal_amount))
+                    ? parseFloat(investment.principal_amount)
+                    : null,
+            interest_rate:
+                investment.interest_rate &&
+                !isNaN(parseFloat(investment.interest_rate))
+                    ? parseFloat(investment.interest_rate)
+                    : null,
+            term_years:
+                investment.term_years &&
+                !isNaN(parseFloat(investment.term_years))
+                    ? parseFloat(investment.term_years)
+                    : null,
+        }));
     }
 );
 

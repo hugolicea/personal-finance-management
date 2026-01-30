@@ -17,7 +17,6 @@ interface TransactionFormProps {
         description: string;
         date: string;
         category: number;
-        type: 'income' | 'expense';
     };
     onClose: () => void;
 }

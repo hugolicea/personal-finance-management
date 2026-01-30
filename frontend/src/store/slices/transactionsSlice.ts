@@ -4,20 +4,23 @@ import axios from 'axios';
 interface Transaction {
     id: number;
     date: string;
-    amount: string;
+    amount: number;
     description: string;
     category: number;
+    transaction_type: 'credit_card' | 'account';
 }
 
 interface TransactionsState {
     transactions: Transaction[];
     loading: boolean;
+    deleting: boolean;
     error: string | null;
 }
 
 const initialState: TransactionsState = {
     transactions: [],
     loading: false,
+    deleting: false,
     error: null,
 };
 
@@ -87,7 +90,26 @@ const transactionsSlice = createSlice({
             })
             .addCase(fetchTransactions.fulfilled, (state, action) => {
                 state.loading = false;
-                state.transactions = action.payload;
+                state.transactions = action.payload.map(
+                    (transaction: {
+                        id: number;
+                        date: string;
+                        amount: string | number;
+                        description: string;
+                        category: string | number;
+                        transaction_type: string;
+                    }) => ({
+                        ...transaction,
+                        amount:
+                            typeof transaction.amount === 'string'
+                                ? parseFloat(transaction.amount)
+                                : transaction.amount,
+                        category:
+                            typeof transaction.category === 'string'
+                                ? parseInt(transaction.category)
+                                : transaction.category,
+                    })
+                );
             })
             .addCase(fetchTransactions.rejected, (state, action) => {
                 state.loading = false;
@@ -95,20 +117,48 @@ const transactionsSlice = createSlice({
                     action.error.message || 'Failed to fetch transactions';
             })
             .addCase(createTransaction.fulfilled, (state, action) => {
-                state.transactions.push(action.payload);
+                const transaction = {
+                    ...action.payload,
+                    amount:
+                        typeof action.payload.amount === 'string'
+                            ? parseFloat(action.payload.amount)
+                            : action.payload.amount,
+                    category:
+                        typeof action.payload.category === 'string'
+                            ? parseInt(action.payload.category)
+                            : action.payload.category,
+                };
+                state.transactions.push(transaction);
             })
             .addCase(updateTransaction.fulfilled, (state, action) => {
                 const index = state.transactions.findIndex(
                     (tx) => tx.id === action.payload.id
                 );
                 if (index !== -1) {
-                    state.transactions[index] = action.payload;
+                    state.transactions[index] = {
+                        ...action.payload,
+                        amount:
+                            typeof action.payload.amount === 'string'
+                                ? parseFloat(action.payload.amount)
+                                : action.payload.amount,
+                        category:
+                            typeof action.payload.category === 'string'
+                                ? parseInt(action.payload.category)
+                                : action.payload.category,
+                    };
                 }
             })
+            .addCase(deleteTransaction.pending, (state) => {
+                state.deleting = true;
+            })
             .addCase(deleteTransaction.fulfilled, (state, action) => {
+                state.deleting = false;
                 state.transactions = state.transactions.filter(
                     (tx) => tx.id !== action.payload
                 );
+            })
+            .addCase(deleteTransaction.rejected, (state) => {
+                state.deleting = false;
             })
             .addCase(uploadBankStatement.pending, (state) => {
                 state.loading = true;

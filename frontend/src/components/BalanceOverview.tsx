@@ -13,18 +13,24 @@ interface BalanceOverviewProps {
 }
 
 function BalanceOverview({ transactions }: BalanceOverviewProps) {
-    const totalBalance = transactions.reduce(
-        (sum, t) => sum + parseFloat(t.amount),
-        0
-    );
+    const totalBalance = transactions.reduce((sum, t) => {
+        const amount = parseFloat(t.amount);
+        return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
     const totalIncome = transactions
-        .filter((t) => parseFloat(t.amount) > 0)
+        .filter((t) => {
+            const amount = parseFloat(t.amount);
+            return !isNaN(amount) && amount > 0;
+        })
         .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
     const totalExpenses = Math.abs(
         transactions
-            .filter((t) => parseFloat(t.amount) < 0)
+            .filter((t) => {
+                const amount = parseFloat(t.amount);
+                return !isNaN(amount) && amount < 0;
+            })
             .reduce((sum, t) => sum + parseFloat(t.amount), 0)
     );
 
