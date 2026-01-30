@@ -14,29 +14,14 @@ import {
 
 import InvestmentForm from '../components/InvestmentForm';
 import Modal from '../components/Modal';
+import Paginator from '../components/Paginator';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
     deleteInvestment,
     fetchInvestments,
 } from '../store/slices/investmentsSlice';
+import { Investment } from '../types/investments';
 import { formatCurrency } from '../utils/formatters';
-
-interface Investment {
-    id: number;
-    symbol: string;
-    name: string;
-    investment_type: string;
-    quantity: number;
-    purchase_price: number;
-    current_price: number | null;
-    purchase_date: string;
-    notes: string | null;
-    total_invested: number;
-    current_value: number;
-    gain_loss: number;
-    gain_loss_percentage: number;
-    due_date: string | null;
-}
 
 function Investments() {
     const dispatch = useAppDispatch();
@@ -61,15 +46,21 @@ function Investments() {
         dispatch(fetchInvestments());
     }, [dispatch]);
 
-    const handleEditInvestment = useCallback((investment: Investment) => {
-        setEditingInvestment(investment);
-        setShowInvestmentModal(true);
-    }, []);
+    const handleEditInvestment = useCallback(
+        (investment: Partial<Investment>) => {
+            setEditingInvestment(investment as Investment);
+            setShowInvestmentModal(true);
+        },
+        []
+    );
 
-    const handleDeleteInvestment = useCallback((investment: Investment) => {
-        setDeletingInvestment(investment);
-        setShowDeleteInvestmentDialog(true);
-    }, []);
+    const handleDeleteInvestment = useCallback(
+        (investment: Partial<Investment>) => {
+            setDeletingInvestment(investment as Investment);
+            setShowDeleteInvestmentDialog(true);
+        },
+        []
+    );
 
     const confirmDeleteInvestment = useCallback(async () => {
         if (deletingInvestment) {
@@ -84,7 +75,7 @@ function Investments() {
         setEditingInvestment(null);
     }, []);
 
-    const columns = useMemo<ColumnDef<Investment>[]>(
+    const columns = useMemo<ColumnDef<Investment, unknown>[]>(
         () => [
             {
                 accessorKey: 'symbol',
@@ -277,7 +268,7 @@ function Investments() {
         [handleEditInvestment, handleDeleteInvestment]
     );
 
-    const table = useReactTable({
+    const table = useReactTable<Investment>({
         data: investments,
         columns,
         getCoreRowModel: getCoreRowModel(),
@@ -673,8 +664,8 @@ function Investments() {
                 {/* Desktop Table Layout */}
                 <div className='hidden lg:block bg-white shadow overflow-hidden sm:rounded-md'>
                     <div className='overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
-                        <div className='inline-block min-w-full align-middle'>
-                            <table className='min-w-full divide-y divide-gray-200'>
+                        <div className='inline-block w-full align-middle'>
+                            <table className='w-full table-auto divide-y divide-gray-200'>
                                 <thead className='bg-gray-50'>
                                     {table
                                         .getHeaderGroups()
@@ -684,7 +675,7 @@ function Investments() {
                                                     (header) => (
                                                         <th
                                                             key={header.id}
-                                                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -719,7 +710,7 @@ function Investments() {
                                                 .map((cell) => (
                                                     <td
                                                         key={cell.id}
-                                                        className='px-6 py-4 whitespace-nowrap'
+                                                        className='px-4 py-2 whitespace-nowrap'
                                                     >
                                                         {flexRender(
                                                             cell.column
@@ -735,100 +726,7 @@ function Investments() {
                         </div>
                     </div>
 
-                    {/* Pagination */}
-                    <div className='bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6'>
-                        <div className='flex-1 flex justify-between sm:hidden'>
-                            <button
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                                className='relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                                className='ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                            >
-                                Next
-                            </button>
-                        </div>
-                        <div className='hidden sm:flex-1 sm:flex sm:items-center sm:justify-between'>
-                            <div>
-                                <p className='text-sm text-gray-700'>
-                                    Showing{' '}
-                                    <span className='font-medium'>
-                                        {table.getState().pagination.pageIndex *
-                                            table.getState().pagination
-                                                .pageSize +
-                                            1}
-                                    </span>{' '}
-                                    to{' '}
-                                    <span className='font-medium'>
-                                        {Math.min(
-                                            (table.getState().pagination
-                                                .pageIndex +
-                                                1) *
-                                                table.getState().pagination
-                                                    .pageSize,
-                                            table.getFilteredRowModel().rows
-                                                .length
-                                        )}
-                                    </span>{' '}
-                                    of{' '}
-                                    <span className='font-medium'>
-                                        {
-                                            table.getFilteredRowModel().rows
-                                                .length
-                                        }
-                                    </span>{' '}
-                                    results
-                                </p>
-                            </div>
-                            <div>
-                                <nav className='relative z-0 inline-flex rounded-md shadow-sm -space-x-px'>
-                                    <button
-                                        onClick={() => table.previousPage()}
-                                        disabled={!table.getCanPreviousPage()}
-                                        className='relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    >
-                                        <span className='sr-only'>
-                                            Previous
-                                        </span>
-                                        <svg
-                                            className='h-5 w-5'
-                                            viewBox='0 0 20 20'
-                                            fill='currentColor'
-                                        >
-                                            <path
-                                                fillRule='evenodd'
-                                                d='M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z'
-                                                clipRule='evenodd'
-                                            />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={() => table.nextPage()}
-                                        disabled={!table.getCanNextPage()}
-                                        className='relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    >
-                                        <span className='sr-only'>Next</span>
-                                        <svg
-                                            className='h-5 w-5'
-                                            viewBox='0 0 20 20'
-                                            fill='currentColor'
-                                        >
-                                            <path
-                                                fillRule='evenodd'
-                                                d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z'
-                                                clipRule='evenodd'
-                                            />
-                                        </svg>
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
+                    <Paginator table={table} />
                 </div>
             </div>
 
@@ -839,7 +737,7 @@ function Investments() {
                 title={editingInvestment ? 'Edit Investment' : 'Add Investment'}
             >
                 <InvestmentForm
-                    investment={editingInvestment}
+                    investment={editingInvestment ?? undefined}
                     onClose={handleCloseModal}
                 />
             </Modal>

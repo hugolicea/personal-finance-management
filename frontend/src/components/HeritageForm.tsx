@@ -5,21 +5,10 @@ import * as Yup from 'yup';
 
 import { useAppDispatch } from '../hooks/redux';
 import { createHeritage, updateHeritage } from '../store/slices/heritagesSlice';
+import { Heritage } from '../types/heritage';
 
 interface HeritageFormProps {
-    heritage?: {
-        id: number;
-        name: string;
-        heritage_type: string;
-        address: string;
-        area: number | null;
-        area_unit: string;
-        purchase_price: number;
-        current_value: number | null;
-        purchase_date: string;
-        monthly_rental_income: number;
-        notes: string | null;
-    };
+    heritage?: Heritage;
     onClose: () => void;
 }
 

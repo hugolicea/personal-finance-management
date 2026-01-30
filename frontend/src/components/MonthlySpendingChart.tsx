@@ -7,15 +7,8 @@ import {
     YAxis,
 } from 'recharts';
 
+import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
-
-interface Transaction {
-    id: number;
-    date: string;
-    amount: string;
-    description: string;
-    category: number;
-}
 
 interface MonthlySpendingChartProps {
     transactions: Transaction[];
@@ -40,33 +33,27 @@ function MonthlySpendingChart({
 
     const monthlySpending = transactions
         .filter((transaction) => {
-            try {
-                const transactionDate = new Date(transaction.date);
-                const amount = parseFloat(transaction.amount);
-                return (
-                    transactionDate.getFullYear() === selectedYear && amount < 0
-                );
-            } catch (error) {
-                return false; // Skip invalid transactions
-            }
+            const transactionDate = new Date(transaction.date);
+            if (isNaN(transactionDate.getTime())) return false;
+            return (
+                transactionDate.getFullYear() === selectedYear &&
+                typeof transaction.amount === 'number' &&
+                transaction.amount < 0
+            );
         })
         .reduce(
             (acc, transaction) => {
-                try {
-                    const date = new Date(transaction.date);
-                    const monthKey = date.toLocaleString('default', {
-                        month: 'short',
-                    });
-                    const amount = Math.abs(parseFloat(transaction.amount)); // Convert to positive for spending
+                const date = new Date(transaction.date);
+                const monthKey = date.toLocaleString('default', {
+                    month: 'short',
+                });
+                const amount = Math.abs(transaction.amount as number);
 
-                    if (!acc[monthKey]) {
-                        acc[monthKey] = 0;
-                    }
-                    acc[monthKey] += amount;
-                    return acc;
-                } catch (error) {
-                    return acc; // Skip invalid transactions
+                if (!acc[monthKey]) {
+                    acc[monthKey] = 0;
                 }
+                acc[monthKey] += amount;
+                return acc;
             },
             {} as Record<string, number>
         );

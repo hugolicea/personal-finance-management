@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import BankStatementUpload from '../components/BankStatementUpload';
 import CategoryForm from '../components/CategoryForm';
+import CategorySelect from '../components/CategorySelect';
 import Modal from '../components/Modal';
 import TransactionForm from '../components/TransactionForm';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -13,23 +14,9 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import { Category } from '../types/categories';
+import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
-
-interface Category {
-    id: number;
-    name: string;
-    classification: string;
-    monthly_budget: number;
-}
-
-interface Transaction {
-    id: number;
-    date: string;
-    amount: number;
-    description: string;
-    category: number;
-    transaction_type: string;
-}
 
 function CreditCardTransactions() {
     const dispatch = useAppDispatch();
@@ -257,23 +244,15 @@ function CreditCardTransactions() {
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>
                                     Category
                                 </label>
-                                <select
+                                <CategorySelect
+                                    categories={categories}
+                                    placeholder='All Categories'
                                     value={selectedCategory}
                                     onChange={(e) =>
                                         setSelectedCategory(e.target.value)
                                     }
                                     className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
-                                >
-                                    <option value=''>All Categories</option>
-                                    {categories.map((category) => (
-                                        <option
-                                            key={category.id}
-                                            value={category.id}
-                                        >
-                                            {category.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>

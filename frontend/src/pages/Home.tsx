@@ -21,22 +21,8 @@ import {
     deleteTransaction,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
-
-interface Category {
-    id: number;
-    name: string;
-    classification: string;
-    monthly_budget: number;
-}
-
-interface Transaction {
-    id: number;
-    date: string;
-    amount: string;
-    description: string;
-    category: number;
-}
 
 function Home() {
     const dispatch = useAppDispatch();

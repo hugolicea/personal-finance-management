@@ -58,7 +58,7 @@ function MainLayout() {
 
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
-                <div className='fixed inset-0 z-40 lg:hidden'>
+                <div className='fixed inset-0 z-40 xl:hidden'>
                     <div
                         className='fixed inset-0 bg-gray-600 bg-opacity-75'
                         onClick={() => setSidebarOpen(false)}
@@ -74,7 +74,7 @@ function MainLayout() {
 
             <div className='flex'>
                 {/* Desktop sidebar */}
-                <div className='hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col'>
+                <div className='hidden xl:fixed xl:inset-y-0 xl:flex xl:w-64 xl:flex-col'>
                     <div className='flex flex-grow flex-col overflow-y-auto bg-white pt-16 shadow'>
                         <SidebarContent
                             currentView={currentView}
@@ -84,10 +84,10 @@ function MainLayout() {
                 </div>
 
                 {/* Main content */}
-                <div className='flex flex-1 flex-col lg:pl-64'>
+                <div className='flex flex-1 flex-col xl:pl-64'>
                     <main className='flex-1'>
                         <div className='py-6'>
-                            <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8'>
+                            <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 xl:px-8'>
                                 {renderCurrentView()}
                             </div>
                         </div>

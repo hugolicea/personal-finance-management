@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+import { Investment } from '../../types/investments';
+
 interface InvestmentApiResponse {
     id: number;
     symbol: string;
@@ -16,23 +18,11 @@ interface InvestmentApiResponse {
     gain_loss: string;
     gain_loss_percentage: string;
     due_date: string | null;
-}
-
-interface Investment {
-    id: number;
-    symbol: string;
-    name: string;
-    investment_type: string;
-    quantity: number;
-    purchase_price: number;
-    current_price: number | null;
-    purchase_date: string;
-    notes: string | null;
-    total_invested: number;
-    current_value: number;
-    gain_loss: number;
-    gain_loss_percentage: number;
-    due_date: string | null;
+    // Optional fixed-income related fields returned by the API
+    principal_amount?: string | null;
+    interest_rate?: string | null;
+    term_years?: string | null;
+    compounding_frequency?: string | null;
 }
 
 interface InvestmentsState {

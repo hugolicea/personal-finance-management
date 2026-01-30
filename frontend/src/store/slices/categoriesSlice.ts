@@ -1,21 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-interface Category {
-    id: number;
-    name: string;
-    classification: string;
-    monthly_budget: number;
-}
-
-interface CategorySpending {
-    id: number;
-    name: string;
-    budget: number;
-    spending: number;
-    balance: number;
-    percentage_used: number;
-}
+import { Category, CategorySpending } from '../../types/categories';
 
 interface CategoriesState {
     categories: Category[];

@@ -1,14 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-interface Transaction {
-    id: number;
-    date: string;
-    amount: number;
-    description: string;
-    category: number;
-    transaction_type: 'credit_card' | 'account';
-}
+import type { Transaction } from '../../types/transactions';
 
 interface TransactionsState {
     transactions: Transaction[];

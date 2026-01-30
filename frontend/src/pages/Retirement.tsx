@@ -271,50 +271,50 @@ function Retirement() {
             {/* Retirement Accounts Table */}
             <div className='mt-8 flex flex-col'>
                 <div className='-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8'>
-                    <div className='inline-block min-w-full py-2 align-middle md:px-6 lg:px-8'>
+                    <div className='inline-block w-full py-2 align-middle md:px-6 lg:px-8'>
                         <div className='overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg'>
-                            <table className='min-w-full divide-y divide-gray-300'>
+                            <table className='w-full table-auto divide-y divide-gray-300'>
                                 <thead className='bg-gray-50'>
                                     <tr>
                                         <th
                                             scope='col'
-                                            className='py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Account
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Type
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Provider
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Balance
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Monthly Contribution
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
                                         >
                                             Risk Level
                                         </th>
                                         <th
                                             scope='col'
-                                            className='relative py-3.5 pl-3 pr-4 sm:pr-6'
+                                            className='relative px-4 py-2'
                                         >
                                             <span className='sr-only'>
                                                 Actions
@@ -325,7 +325,7 @@ function Retirement() {
                                 <tbody className='divide-y divide-gray-200 bg-white'>
                                     {retirementAccounts.map((account) => (
                                         <tr key={account.id}>
-                                            <td className='whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm'>
                                                 <div className='flex items-center'>
                                                     <div className='flex-shrink-0 h-10 w-10'>
                                                         <div className='h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center'>
@@ -361,30 +361,30 @@ function Retirement() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
                                                 {getAccountTypeDisplay(
                                                     account.account_type
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
                                                 {account.provider}
                                             </td>
-                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-900'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900'>
                                                 {formatCurrency(
                                                     account.current_balance
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-900'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900'>
                                                 {formatCurrency(
                                                     account.monthly_contribution
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
                                                 {getRiskLevelDisplay(
                                                     account.risk_level
                                                 )}
                                             </td>
-                                            <td className='relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6'>
+                                            <td className='relative whitespace-nowrap px-4 py-2 text-right text-sm font-medium'>
                                                 <button
                                                     onClick={() =>
                                                         handleEditRetirementAccount(
