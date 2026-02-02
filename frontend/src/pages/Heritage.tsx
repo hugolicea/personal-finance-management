@@ -12,29 +12,15 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteButtons from '../components/EditDeleteButtons';
 import HeritageForm from '../components/HeritageForm';
 import Modal from '../components/Modal';
+import Paginator from '../components/Paginator';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { deleteHeritage, fetchHeritages } from '../store/slices/heritagesSlice';
+import type { Heritage } from '../types/heritage';
 import { formatCurrency } from '../utils/formatters';
-
-interface Heritage {
-    id: number;
-    name: string;
-    heritage_type: string;
-    address: string;
-    area: number | null;
-    area_unit: string;
-    purchase_price: number;
-    current_value: number | null;
-    purchase_date: string;
-    monthly_rental_income: number;
-    notes: string | null;
-    gain_loss: number;
-    gain_loss_percentage: number;
-    annual_rental_income: number;
-    rental_yield_percentage: number;
-}
 
 function Heritage() {
     const dispatch = useAppDispatch();
@@ -219,46 +205,10 @@ function Heritage() {
                 id: 'actions',
                 header: 'Actions',
                 cell: ({ row }) => (
-                    <div className='flex space-x-2'>
-                        <button
-                            onClick={() => handleEditHeritage(row.original)}
-                            className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
-                                />
-                            </svg>
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteHeritage(row.original)}
-                            className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200'
-                        >
-                            <svg
-                                className='w-4 h-4 mr-1.5'
-                                fill='none'
-                                stroke='currentColor'
-                                viewBox='0 0 24 24'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                                />
-                            </svg>
-                            Delete
-                        </button>
-                    </div>
+                    <EditDeleteButtons
+                        onEdit={() => handleEditHeritage(row.original)}
+                        onDelete={() => handleDeleteHeritage(row.original)}
+                    />
                 ),
             },
         ],
@@ -650,8 +600,8 @@ function Heritage() {
                 {/* Desktop Table Layout */}
                 <div className='hidden lg:block bg-white shadow overflow-hidden sm:rounded-md'>
                     <div className='overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
-                        <div className='inline-block min-w-full align-middle'>
-                            <table className='min-w-full divide-y divide-gray-200'>
+                        <div className='inline-block w-full align-middle'>
+                            <table className='w-full table-auto divide-y divide-gray-200'>
                                 <thead className='bg-gray-50'>
                                     {table
                                         .getHeaderGroups()
@@ -661,7 +611,7 @@ function Heritage() {
                                                     (header) => (
                                                         <th
                                                             key={header.id}
-                                                            className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -696,7 +646,7 @@ function Heritage() {
                                                 .map((cell) => (
                                                     <td
                                                         key={cell.id}
-                                                        className='px-6 py-4 whitespace-nowrap'
+                                                        className='px-4 py-2 whitespace-nowrap'
                                                     >
                                                         {flexRender(
                                                             cell.column
@@ -712,100 +662,7 @@ function Heritage() {
                         </div>
                     </div>
 
-                    {/* Pagination */}
-                    <div className='bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6'>
-                        <div className='flex-1 flex justify-between sm:hidden'>
-                            <button
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                                className='relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                            >
-                                Previous
-                            </button>
-                            <button
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                                className='ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                            >
-                                Next
-                            </button>
-                        </div>
-                        <div className='hidden sm:flex-1 sm:flex sm:items-center sm:justify-between'>
-                            <div>
-                                <p className='text-sm text-gray-700'>
-                                    Showing{' '}
-                                    <span className='font-medium'>
-                                        {table.getState().pagination.pageIndex *
-                                            table.getState().pagination
-                                                .pageSize +
-                                            1}
-                                    </span>{' '}
-                                    to{' '}
-                                    <span className='font-medium'>
-                                        {Math.min(
-                                            (table.getState().pagination
-                                                .pageIndex +
-                                                1) *
-                                                table.getState().pagination
-                                                    .pageSize,
-                                            table.getFilteredRowModel().rows
-                                                .length
-                                        )}
-                                    </span>{' '}
-                                    of{' '}
-                                    <span className='font-medium'>
-                                        {
-                                            table.getFilteredRowModel().rows
-                                                .length
-                                        }
-                                    </span>{' '}
-                                    results
-                                </p>
-                            </div>
-                            <div>
-                                <nav className='relative z-0 inline-flex rounded-md shadow-sm -space-x-px'>
-                                    <button
-                                        onClick={() => table.previousPage()}
-                                        disabled={!table.getCanPreviousPage()}
-                                        className='relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    >
-                                        <span className='sr-only'>
-                                            Previous
-                                        </span>
-                                        <svg
-                                            className='h-5 w-5'
-                                            viewBox='0 0 20 20'
-                                            fill='currentColor'
-                                        >
-                                            <path
-                                                fillRule='evenodd'
-                                                d='M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z'
-                                                clipRule='evenodd'
-                                            />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={() => table.nextPage()}
-                                        disabled={!table.getCanNextPage()}
-                                        className='relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    >
-                                        <span className='sr-only'>Next</span>
-                                        <svg
-                                            className='h-5 w-5'
-                                            viewBox='0 0 20 20'
-                                            fill='currentColor'
-                                        >
-                                            <path
-                                                fillRule='evenodd'
-                                                d='M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z'
-                                                clipRule='evenodd'
-                                            />
-                                        </svg>
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
+                    <Paginator table={table} />
                 </div>
             </div>
 
@@ -816,190 +673,142 @@ function Heritage() {
                 title={editingHeritage ? 'Edit Property' : 'Add Property'}
             >
                 <HeritageForm
-                    heritage={editingHeritage}
+                    heritage={editingHeritage ?? undefined}
                     onClose={handleCloseModal}
                 />
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteHeritageDialog}
                 onClose={() => !deleting && setShowDeleteHeritageDialog(false)}
+                onConfirm={confirmDeleteHeritage}
                 title='Delete Property'
-            >
-                <div className='mt-2'>
-                    <div className='flex items-start'>
-                        <div className='flex-shrink-0'>
-                            <svg
-                                className='h-6 w-6 text-red-400'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
-                                />
-                            </svg>
-                        </div>
-                        <div className='ml-3 w-full'>
-                            <h3 className='text-sm font-medium text-gray-800'>
-                                Delete Property
-                            </h3>
-                            <div className='mt-2'>
-                                <p className='text-sm text-gray-500'>
-                                    You are about to permanently delete the
-                                    property{' '}
-                                    <span className='font-semibold text-gray-700'>
-                                        "{deletingHeritage?.name}"
-                                    </span>
-                                    . This action cannot be undone.
-                                </p>
-                            </div>
-                            {deletingHeritage && (
-                                <div className='mt-3 p-3 bg-gray-50 rounded-md'>
-                                    <div className='text-sm'>
-                                        <div className='grid grid-cols-2 gap-4'>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Type:
-                                                </span>{' '}
-                                                <span className='text-gray-900 capitalize'>
-                                                    {deletingHeritage.heritage_type.replace(
-                                                        '_',
-                                                        ' '
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Address:
-                                                </span>{' '}
-                                                <span className='text-gray-900'>
-                                                    {deletingHeritage.address}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Current Value:
-                                                </span>{' '}
-                                                <span className='text-gray-900 font-semibold'>
-                                                    {formatCurrency(
-                                                        deletingHeritage.current_value ||
-                                                            deletingHeritage.purchase_price
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Monthly Rental Income:
-                                                </span>{' '}
-                                                <span className='text-gray-900'>
-                                                    {formatCurrency(
-                                                        deletingHeritage.monthly_rental_income
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Gain/Loss:
-                                                </span>{' '}
-                                                <span
-                                                    className={`font-semibold ${deletingHeritage.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
-                                                >
-                                                    {formatCurrency(
-                                                        deletingHeritage.gain_loss
-                                                    )}{' '}
-                                                    (
-                                                    {deletingHeritage.gain_loss_percentage.toFixed(
-                                                        2
-                                                    )}
-                                                    %)
-                                                </span>
-                                            </div>
-                                            <div>
-                                                <span className='font-medium text-gray-700'>
-                                                    Rental Yield:
-                                                </span>{' '}
-                                                <span className='text-gray-900 font-semibold text-blue-600'>
-                                                    {deletingHeritage.rental_yield_percentage.toFixed(
-                                                        2
-                                                    )}
-                                                    %
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            <div className='mt-3'>
-                                <p className='text-sm text-red-600 font-medium'>
-                                    ⚠️ This will permanently remove all data
-                                    associated with this property.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className='mt-6 flex justify-end space-x-3'>
-                    <button
-                        onClick={() => setShowDeleteHeritageDialog(false)}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={confirmDeleteHeritage}
-                        disabled={deleting}
-                        className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-                    >
-                        {deleting ? (
-                            <>
+                message={
+                    <>
+                        <div className='flex items-start'>
+                            <div className='flex-shrink-0'>
                                 <svg
-                                    className='w-4 h-4 mr-2 inline animate-spin'
+                                    className='h-6 w-6 text-red-400'
                                     fill='none'
                                     viewBox='0 0 24 24'
-                                >
-                                    <circle
-                                        className='opacity-25'
-                                        cx='12'
-                                        cy='12'
-                                        r='10'
-                                        stroke='currentColor'
-                                        strokeWidth='4'
-                                    />
-                                    <path
-                                        className='opacity-75'
-                                        fill='currentColor'
-                                        d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                                    />
-                                </svg>
-                                Deleting...
-                            </>
-                        ) : (
-                            <>
-                                <svg
-                                    className='w-4 h-4 mr-2 inline'
-                                    fill='none'
+                                    strokeWidth='1.5'
                                     stroke='currentColor'
-                                    viewBox='0 0 24 24'
                                 >
                                     <path
                                         strokeLinecap='round'
                                         strokeLinejoin='round'
-                                        strokeWidth={2}
-                                        d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                                        d='M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'
                                     />
                                 </svg>
-                                Delete Property
-                            </>
-                        )}
-                    </button>
-                </div>
-            </Modal>
+                            </div>
+                            <div className='ml-3 w-full'>
+                                <h3 className='text-sm font-medium text-gray-800'>
+                                    Delete Property
+                                </h3>
+                                <div className='mt-2'>
+                                    <p className='text-sm text-gray-500'>
+                                        You are about to permanently delete the
+                                        property{' '}
+                                        <span className='font-semibold text-gray-700'>
+                                            "{deletingHeritage?.name}"
+                                        </span>
+                                        . This action cannot be undone.
+                                    </p>
+                                </div>
+                                {deletingHeritage && (
+                                    <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                                        <div className='text-sm'>
+                                            <div className='grid grid-cols-2 gap-4'>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Type:
+                                                    </span>{' '}
+                                                    <span className='text-gray-900 capitalize'>
+                                                        {deletingHeritage.heritage_type.replace(
+                                                            '_',
+                                                            ' '
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Address:
+                                                    </span>{' '}
+                                                    <span className='text-gray-900'>
+                                                        {
+                                                            deletingHeritage.address
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Current Value:
+                                                    </span>{' '}
+                                                    <span className='text-gray-900 font-semibold'>
+                                                        {formatCurrency(
+                                                            deletingHeritage.current_value ||
+                                                                deletingHeritage.purchase_price
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Monthly Rental Income:
+                                                    </span>{' '}
+                                                    <span className='text-gray-900'>
+                                                        {formatCurrency(
+                                                            deletingHeritage.monthly_rental_income
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Gain/Loss:
+                                                    </span>{' '}
+                                                    <span
+                                                        className={`font-semibold ${deletingHeritage.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                    >
+                                                        {formatCurrency(
+                                                            deletingHeritage.gain_loss
+                                                        )}{' '}
+                                                        (
+                                                        {deletingHeritage.gain_loss_percentage.toFixed(
+                                                            2
+                                                        )}
+                                                        %)
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className='font-medium text-gray-700'>
+                                                        Rental Yield:
+                                                    </span>{' '}
+                                                    <span className='text-gray-900 font-semibold text-blue-600'>
+                                                        {deletingHeritage.rental_yield_percentage.toFixed(
+                                                            2
+                                                        )}
+                                                        %
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className='mt-3'>
+                                    <p className='text-sm text-red-600 font-medium'>
+                                        ⚠️ This will permanently remove all data
+                                        associated with this property.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                }
+                confirmLabel='Delete Property'
+                cancelLabel='Cancel'
+                isDanger
+                isConfirming={deleting}
+            />
         </div>
     );
 }

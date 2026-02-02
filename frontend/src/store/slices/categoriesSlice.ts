@@ -1,21 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-interface Category {
-    id: number;
-    name: string;
-    classification: string;
-    monthly_budget: number;
-}
-
-interface CategorySpending {
-    id: number;
-    name: string;
-    budget: number;
-    spending: number;
-    balance: number;
-    percentage_used: number;
-}
+import { Category, CategorySpending } from '../../types/categories';
 
 interface CategoriesState {
     categories: Category[];
@@ -34,8 +20,8 @@ const initialState: CategoriesState = {
 export const fetchCategories = createAsyncThunk(
     'categories/fetchCategories',
     async () => {
-        const response = await axios.get('/api/categories/');
-        return response.data;
+        const response = await axios.get('/api/v1/categories/?page_size=10000');
+        return response.data.results || response.data;
     }
 );
 
@@ -46,7 +32,7 @@ export const createCategory = createAsyncThunk(
         classification: string;
         monthly_budget: number;
     }) => {
-        const response = await axios.post('/api/categories/', data);
+        const response = await axios.post('/api/v1/categories/', data);
         return response.data;
     }
 );
@@ -64,7 +50,7 @@ export const updateCategory = createAsyncThunk(
         classification: string;
         monthly_budget: number;
     }) => {
-        const response = await axios.put(`/api/categories/${id}/`, {
+        const response = await axios.put(`/api/v1/categories/${id}/`, {
             name,
             classification,
             monthly_budget,
@@ -76,7 +62,7 @@ export const updateCategory = createAsyncThunk(
 export const deleteCategory = createAsyncThunk(
     'categories/deleteCategory',
     async (id: number) => {
-        await axios.delete(`/api/categories/${id}/`);
+        await axios.delete(`/api/v1/categories/${id}/`);
         return id;
     }
 );
@@ -84,7 +70,9 @@ export const deleteCategory = createAsyncThunk(
 export const fetchCategorySpending = createAsyncThunk(
     'categories/fetchCategorySpending',
     async (period: string) => {
-        const response = await axios.get(`/api/category-spending/${period}/`);
+        const response = await axios.get(
+            `/api/v1/category-spending/${period}/`
+        );
         return response.data;
     }
 );

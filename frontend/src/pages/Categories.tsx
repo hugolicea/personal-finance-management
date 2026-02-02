@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
-    ColumnFiltersState,
-    SortingState,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -13,20 +11,17 @@ import {
 } from '@tanstack/react-table';
 
 import CategoryForm from '../components/CategoryForm';
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
+import Paginator from '../components/Paginator';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
     deleteCategory,
     fetchCategories,
 } from '../store/slices/categoriesSlice';
+import { Category } from '../types/categories';
 import { formatCurrency } from '../utils/formatters';
-
-interface Category {
-    id: number;
-    name: string;
-    classification: string;
-    monthly_budget: number;
-}
 
 function Categories() {
     const dispatch = useAppDispatch();
@@ -42,9 +37,9 @@ function Categories() {
         null
     );
     const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-    const [globalFilter, setGlobalFilter] = useState('');
+
+    const [spendGlobalFilter, setSpendGlobalFilter] = useState('');
+    const [incomeGlobalFilter, setIncomeGlobalFilter] = useState('');
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -86,18 +81,6 @@ function Categories() {
         setDeletingCategory(null);
     };
 
-    // Prepare table data
-    const tableData = useMemo(() => {
-        const spendCategories = categories
-            .filter((category) => category.classification === 'spend')
-            .sort((a, b) => a.name.localeCompare(b.name));
-        const incomeCategories = categories
-            .filter((category) => category.classification === 'income')
-            .sort((a, b) => a.name.localeCompare(b.name));
-
-        return [...spendCategories, ...incomeCategories];
-    }, [categories]);
-
     // Separate categories for card view
     const spendCategories = useMemo(
         () =>
@@ -115,8 +98,10 @@ function Categories() {
         [categories]
     );
 
-    // Define table columns
-    const columns = useMemo<ColumnDef<Category>[]>(
+    // Per-table columns are defined in `spendColumns` / `incomeColumns` below
+
+    // Per-table column sets: omit classification since each table is already scoped
+    const spendColumns = useMemo<ColumnDef<Category>[]>(
         () => [
             {
                 accessorKey: 'name',
@@ -126,27 +111,6 @@ function Categories() {
                         {getValue<string>()}
                     </div>
                 ),
-            },
-            {
-                accessorKey: 'classification',
-                header: 'Type',
-                cell: ({ getValue }) => {
-                    const classification = getValue<string>();
-                    return (
-                        <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                classification === 'spend'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-green-100 text-green-800'
-                            }`}
-                        >
-                            {classification === 'spend'
-                                ? '💸 Spend'
-                                : '💰 Income'}
-                        </span>
-                    );
-                },
-                filterFn: 'equals',
             },
             {
                 accessorKey: 'monthly_budget',
@@ -173,19 +137,11 @@ function Categories() {
                 id: 'actions',
                 header: 'Actions',
                 cell: ({ row }) => (
-                    <div className='flex space-x-2'>
-                        <button
-                            onClick={() => handleEditCategory(row.original)}
-                            className='text-blue-600 hover:text-blue-800 text-sm'
-                        >
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteCategory(row.original)}
-                            className='text-red-600 hover:text-red-800 text-sm'
-                        >
-                            Delete
-                        </button>
+                    <div className='relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-6'>
+                        <EditDeleteIconButtons
+                            onEdit={() => handleEditCategory(row.original)}
+                            onDelete={() => handleDeleteCategory(row.original)}
+                        />
                     </div>
                 ),
             },
@@ -193,44 +149,52 @@ function Categories() {
         [handleEditCategory, handleDeleteCategory]
     );
 
-    // Create table instance
-    const table = useReactTable({
-        data: tableData,
-        columns,
+    const incomeColumns = spendColumns; // identical columns for income table
+
+    // Combined table instance removed — using per-table instances below
+
+    // Per-table pagination state
+    const [spendPagination, setSpendPagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+
+    const [incomePagination, setIncomePagination] = useState({
+        pageIndex: 0,
+        pageSize: 10,
+    });
+
+    const spendTable = useReactTable({
+        data: spendCategories,
+        columns: spendColumns,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        onGlobalFilterChange: setGlobalFilter,
+        onPaginationChange: setSpendPagination,
+        onGlobalFilterChange: setSpendGlobalFilter,
+        state: { pagination: spendPagination, globalFilter: spendGlobalFilter },
+        initialState: { pagination: { pageSize: 5 } },
+    });
+
+    const incomeTable = useReactTable({
+        data: incomeCategories,
+        columns: incomeColumns,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onPaginationChange: setIncomePagination,
+        onGlobalFilterChange: setIncomeGlobalFilter,
         state: {
-            sorting,
-            columnFilters,
-            globalFilter,
+            pagination: incomePagination,
+            globalFilter: incomeGlobalFilter,
         },
-        initialState: {
-            pagination: {
-                pageSize: 10,
-            },
-        },
+        initialState: { pagination: { pageSize: 5 } },
     });
 
     // Memoized values for performance (after table creation)
-    const filteredRows = table.getFilteredRowModel().rows;
-    const currentColumnFilters = table.getState().columnFilters;
-
-    const filteredRowCount = useMemo(
-        () => filteredRows.length,
-        [filteredRows.length]
-    );
-
-    const currentClassificationFilter = useMemo(
-        () =>
-            currentColumnFilters.find((f) => f.id === 'classification')
-                ?.value || '',
-        [currentColumnFilters]
-    );
+    // (removed unused filteredRows/currentColumnFilters)
 
     return (
         <div className='pt-20 pb-6'>
@@ -270,48 +234,11 @@ function Categories() {
                             onClick={handleAddCategory}
                             className='bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 border-2 border-green-800'
                         >
-                            ➕ Add Category
+                            Add Category
                         </button>
                     </div>
 
                     {/* Global Search and Filters - Only show in table view */}
-                    {viewMode === 'table' && (
-                        <div className='mb-4 flex flex-col sm:flex-row gap-4'>
-                            <div className='flex-1'>
-                                <input
-                                    type='text'
-                                    placeholder='Search categories...'
-                                    value={globalFilter}
-                                    onChange={(e) =>
-                                        setGlobalFilter(e.target.value)
-                                    }
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                />
-                            </div>
-                            <div className='flex gap-2'>
-                                <select
-                                    value={currentClassificationFilter}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (value) {
-                                            table
-                                                .getColumn('classification')
-                                                ?.setFilterValue(value);
-                                        } else {
-                                            table
-                                                .getColumn('classification')
-                                                ?.setFilterValue(undefined);
-                                        }
-                                    }}
-                                    className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                                >
-                                    <option value=''>All Types</option>
-                                    <option value='spend'>💸 Spend</option>
-                                    <option value='income'>💰 Income</option>
-                                </select>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Categories Display */}
                     {viewMode === 'card' ? (
@@ -348,26 +275,18 @@ function Categories() {
                                                         </span>
                                                     </div>
                                                     <div className='flex space-x-2'>
-                                                        <button
-                                                            onClick={() =>
+                                                        <EditDeleteIconButtons
+                                                            onEdit={() =>
                                                                 handleEditCategory(
                                                                     category
                                                                 )
                                                             }
-                                                            className='text-blue-600 hover:text-blue-800 text-sm'
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
+                                                            onDelete={() =>
                                                                 handleDeleteCategory(
                                                                     category
                                                                 )
                                                             }
-                                                            className='text-red-600 hover:text-red-800 text-sm'
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -379,11 +298,8 @@ function Categories() {
                                                         </span>
                                                         <span className='text-lg font-semibold text-blue-600'>
                                                             {formatCurrency(
-                                                                category.monthly_budget
-                                                                    ? parseFloat(
-                                                                          category.monthly_budget
-                                                                      )
-                                                                    : 0
+                                                                category.monthly_budget ??
+                                                                    0
                                                             )}
                                                         </span>
                                                     </div>
@@ -457,11 +373,8 @@ function Categories() {
                                                         </span>
                                                         <span className='text-lg font-semibold text-blue-600'>
                                                             {formatCurrency(
-                                                                category.monthly_budget
-                                                                    ? parseFloat(
-                                                                          category.monthly_budget
-                                                                      )
-                                                                    : 0
+                                                                category.monthly_budget ??
+                                                                    0
                                                             )}
                                                         </span>
                                                     </div>
@@ -473,172 +386,182 @@ function Categories() {
                             </div>
                         </div>
                     ) : (
-                        /* Advanced Table View with TanStack Table */
-                        <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-                            <div className='px-6 py-4 bg-gray-50 border-b border-gray-200'>
-                                <h3 className='text-lg font-medium text-gray-900'>
-                                    📊 All Categories ({filteredRowCount})
-                                </h3>
-                            </div>
-                            <div className='overflow-x-auto'>
-                                <table className='min-w-full divide-y divide-gray-200'>
-                                    <thead className='bg-gray-50'>
-                                        {table
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <tr key={headerGroup.id}>
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <th
-                                                                key={header.id}
-                                                                className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
-                                                                onClick={header.column.getToggleSortingHandler()}
-                                                            >
-                                                                <div className='flex items-center space-x-1'>
-                                                                    <span>
-                                                                        {header.isPlaceholder
-                                                                            ? null
-                                                                            : flexRender(
-                                                                                  header
-                                                                                      .column
-                                                                                      .columnDef
-                                                                                      .header,
-                                                                                  header.getContext()
-                                                                              )}
-                                                                    </span>
-                                                                    {{
-                                                                        asc: ' 🔼',
-                                                                        desc: ' 🔽',
-                                                                    }[
-                                                                        header.column.getIsSorted() as string
-                                                                    ] ?? null}
-                                                                </div>
-                                                            </th>
-                                                        )
-                                                    )}
-                                                </tr>
-                                            ))}
-                                    </thead>
-                                    <tbody className='bg-white divide-y divide-gray-200'>
-                                        {table.getRowModel().rows.map((row) => (
-                                            <tr
-                                                key={row.id}
-                                                className='hover:bg-gray-50'
-                                            >
-                                                {row
-                                                    .getVisibleCells()
-                                                    .map((cell) => (
-                                                        <td
-                                                            key={cell.id}
-                                                            className='px-6 py-4 whitespace-nowrap'
-                                                        >
-                                                            {flexRender(
-                                                                cell.column
-                                                                    .columnDef
-                                                                    .cell,
-                                                                cell.getContext()
-                                                            )}
-                                                        </td>
-                                                    ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Pagination */}
-                            <div className='px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between'>
-                                <div className='flex items-center space-x-2'>
-                                    <span className='text-sm text-gray-700'>
-                                        Show
-                                    </span>
-                                    <select
-                                        value={
-                                            table.getState().pagination.pageSize
-                                        }
-                                        onChange={(e) => {
-                                            table.setPageSize(
-                                                Number(e.target.value)
-                                            );
-                                        }}
-                                        className='px-2 py-1 border border-gray-300 rounded text-sm'
-                                    >
-                                        {[10, 20, 30, 40, 50].map(
-                                            (pageSize) => (
-                                                <option
-                                                    key={pageSize}
-                                                    value={pageSize}
-                                                >
-                                                    {pageSize}
-                                                </option>
-                                            )
-                                        )}
-                                    </select>
-                                    <span className='text-sm text-gray-700'>
-                                        entries
-                                    </span>
+                        <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+                                <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
+                                    <h3 className='text-lg font-medium text-red-900'>
+                                        💸 Spending Categories (
+                                        {spendCategories.length})
+                                    </h3>
                                 </div>
-
-                                <div className='flex items-center space-x-2'>
-                                    <span className='text-sm text-gray-700'>
-                                        Page{' '}
-                                        {table.getState().pagination.pageIndex +
-                                            1}{' '}
-                                        of {table.getPageCount()}
-                                    </span>
-                                    <div className='flex space-x-1'>
-                                        <button
-                                            onClick={() =>
-                                                table.setPageIndex(0)
-                                            }
-                                            disabled={
-                                                !table.getCanPreviousPage()
-                                            }
-                                            className='px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100'
-                                        >
-                                            {'<<'}
-                                        </button>
-                                        <button
-                                            onClick={() => table.previousPage()}
-                                            disabled={
-                                                !table.getCanPreviousPage()
-                                            }
-                                            className='px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100'
-                                        >
-                                            {'<'}
-                                        </button>
-                                        <button
-                                            onClick={() => table.nextPage()}
-                                            disabled={!table.getCanNextPage()}
-                                            className='px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100'
-                                        >
-                                            {'>'}
-                                        </button>
-                                        <button
-                                            onClick={() =>
-                                                table.setPageIndex(
-                                                    table.getPageCount() - 1
-                                                )
-                                            }
-                                            disabled={!table.getCanNextPage()}
-                                            className='px-2 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100'
-                                        >
-                                            {'>>'}
-                                        </button>
+                                <div className='px-6 py-4 border-b border-gray-200'>
+                                    <div className='flex gap-4'>
+                                        <div className='flex-1'>
+                                            <input
+                                                type='text'
+                                                placeholder='Search spending categories...'
+                                                value={spendGlobalFilter ?? ''}
+                                                onChange={(event) =>
+                                                    setSpendGlobalFilter(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                                            />
+                                        </div>
                                     </div>
                                 </div>
+                                <div className='overflow-x-auto'>
+                                    <table className='w-full table-auto divide-y divide-gray-200'>
+                                        <thead className='bg-gray-50'>
+                                            {spendTable
+                                                .getHeaderGroups()
+                                                .map((headerGroup) => (
+                                                    <tr key={headerGroup.id}>
+                                                        {headerGroup.headers.map(
+                                                            (header) => (
+                                                                <th
+                                                                    key={
+                                                                        header.id
+                                                                    }
+                                                                    className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                                                                >
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </th>
+                                                            )
+                                                        )}
+                                                    </tr>
+                                                ))}
+                                        </thead>
+                                        <tbody className='bg-white divide-y divide-gray-200'>
+                                            {spendTable
+                                                .getRowModel()
+                                                .rows.map((row) => (
+                                                    <tr
+                                                        key={row.id}
+                                                        className='hover:bg-gray-50'
+                                                    >
+                                                        {row
+                                                            .getVisibleCells()
+                                                            .map((cell) => (
+                                                                <td
+                                                                    key={
+                                                                        cell.id
+                                                                    }
+                                                                    className='px-4 py-2 whitespace-nowrap'
+                                                                >
+                                                                    {flexRender(
+                                                                        cell
+                                                                            .column
+                                                                            .columnDef
+                                                                            .cell,
+                                                                        cell.getContext()
+                                                                    )}
+                                                                </td>
+                                                            ))}
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <Paginator table={spendTable} />
                             </div>
 
-                            {loading && (
-                                <div className='p-6 text-center text-gray-500'>
-                                    Loading categories...
+                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+                                <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
+                                    <h3 className='text-lg font-medium text-green-900'>
+                                        💰 Income Categories (
+                                        {incomeCategories.length})
+                                    </h3>
                                 </div>
-                            )}
-                            {!loading && filteredRowCount === 0 && (
-                                <div className='p-6 text-center text-gray-500'>
-                                    No categories found
+                                <div className='px-6 py-4 border-b border-gray-200'>
+                                    <div className='flex gap-4'>
+                                        <div className='flex-1'>
+                                            <input
+                                                type='text'
+                                                placeholder='Search income categories...'
+                                                value={incomeGlobalFilter ?? ''}
+                                                onChange={(event) =>
+                                                    setIncomeGlobalFilter(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
+                                <div className='overflow-x-auto'>
+                                    <table className='w-full table-auto divide-y divide-gray-200'>
+                                        <thead className='bg-gray-50'>
+                                            {incomeTable
+                                                .getHeaderGroups()
+                                                .map((headerGroup) => (
+                                                    <tr key={headerGroup.id}>
+                                                        {headerGroup.headers.map(
+                                                            (header) => (
+                                                                <th
+                                                                    key={
+                                                                        header.id
+                                                                    }
+                                                                    className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                                                                >
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </th>
+                                                            )
+                                                        )}
+                                                    </tr>
+                                                ))}
+                                        </thead>
+                                        <tbody className='bg-white divide-y divide-gray-200'>
+                                            {incomeTable
+                                                .getRowModel()
+                                                .rows.map((row) => (
+                                                    <tr
+                                                        key={row.id}
+                                                        className='hover:bg-gray-50'
+                                                    >
+                                                        {row
+                                                            .getVisibleCells()
+                                                            .map((cell) => (
+                                                                <td
+                                                                    key={
+                                                                        cell.id
+                                                                    }
+                                                                    className='px-4 py-2 whitespace-nowrap'
+                                                                >
+                                                                    {flexRender(
+                                                                        cell
+                                                                            .column
+                                                                            .columnDef
+                                                                            .cell,
+                                                                        cell.getContext()
+                                                                    )}
+                                                                </td>
+                                                            ))}
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <Paginator table={incomeTable} />
+                            </div>
                         </div>
                     )}
                 </div>
@@ -647,41 +570,29 @@ function Categories() {
             {/* Category Modal */}
             <Modal isOpen={showCategoryModal} onClose={closeModals}>
                 <CategoryForm
-                    category={editingCategory}
+                    category={editingCategory ?? undefined}
                     onClose={closeModals}
                 />
             </Modal>
 
             {/* Delete Confirmation Modal */}
-            <Modal
+            <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
                 onClose={() => setShowDeleteCategoryDialog(false)}
-            >
-                <div className='p-6'>
-                    <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                        Delete Category
-                    </h3>
-                    <p className='text-sm text-gray-500 mb-4'>
+                onConfirm={confirmDeleteCategory}
+                title='Delete Category'
+                message={
+                    <>
                         Are you sure you want to delete the category "
-                        {deletingCategory?.name}"? This action cannot be undone
-                        and will affect all associated transactions.
-                    </p>
-                    <div className='flex justify-end space-x-3'>
-                        <button
-                            onClick={() => setShowDeleteCategoryDialog(false)}
-                            className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200'
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={confirmDeleteCategory}
-                            className='px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700'
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </Modal>
+                        <strong>{deletingCategory?.name}</strong>"? This action
+                        cannot be undone and will affect all associated
+                        transactions.
+                    </>
+                }
+                confirmLabel='Delete'
+                cancelLabel='Cancel'
+                isDanger
+            />
         </div>
     );
 }

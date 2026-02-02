@@ -1,6 +1,24 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+interface RetirementAccountApiResponse {
+    id: number;
+    name: string;
+    account_type: string;
+    provider: string;
+    account_number: string | null;
+    current_balance: string;
+    monthly_contribution: string;
+    employer_match_percentage: string;
+    employer_match_limit: string;
+    risk_level: string;
+    target_retirement_age: string;
+    notes: string | null;
+    annual_contribution: string;
+    employer_match_amount: string;
+    total_annual_contribution: string;
+}
+
 interface RetirementAccount {
     id: number;
     name: string;
@@ -36,8 +54,50 @@ const initialState: RetirementAccountsState = {
 export const fetchRetirementAccounts = createAsyncThunk(
     'retirementAccounts/fetchRetirementAccounts',
     async () => {
-        const response = await axios.get('/api/retirement-accounts/');
-        return response.data;
+        const response = await axios.get(
+            '/api/v1/retirement-accounts/?page_size=10000'
+        );
+        const data = response.data.results || response.data;
+        // Transform string fields to numbers with error handling
+        return data.map((account: RetirementAccountApiResponse) => ({
+            ...account,
+            current_balance: isNaN(parseFloat(account.current_balance))
+                ? 0
+                : parseFloat(account.current_balance),
+            monthly_contribution: isNaN(
+                parseFloat(account.monthly_contribution)
+            )
+                ? 0
+                : parseFloat(account.monthly_contribution),
+            employer_match_percentage: isNaN(
+                parseFloat(account.employer_match_percentage)
+            )
+                ? 0
+                : parseFloat(account.employer_match_percentage),
+            employer_match_limit: isNaN(
+                parseFloat(account.employer_match_limit)
+            )
+                ? 0
+                : parseFloat(account.employer_match_limit),
+            target_retirement_age: isNaN(
+                parseInt(account.target_retirement_age)
+            )
+                ? 65
+                : parseInt(account.target_retirement_age),
+            annual_contribution: isNaN(parseFloat(account.annual_contribution))
+                ? 0
+                : parseFloat(account.annual_contribution),
+            employer_match_amount: isNaN(
+                parseFloat(account.employer_match_amount)
+            )
+                ? 0
+                : parseFloat(account.employer_match_amount),
+            total_annual_contribution: isNaN(
+                parseFloat(account.total_annual_contribution)
+            )
+                ? 0
+                : parseFloat(account.total_annual_contribution),
+        }));
     }
 );
 
@@ -56,7 +116,7 @@ export const createRetirementAccount = createAsyncThunk(
         target_retirement_age?: number;
         notes?: string;
     }) => {
-        const response = await axios.post('/api/retirement-accounts/', data);
+        const response = await axios.post('/api/v1/retirement-accounts/', data);
         return response.data;
     }
 );
@@ -65,7 +125,7 @@ export const updateRetirementAccount = createAsyncThunk(
     'retirementAccounts/updateRetirementAccount',
     async ({ id, data }: { id: number; data: Partial<RetirementAccount> }) => {
         const response = await axios.patch(
-            `/api/retirement-accounts/${id}/`,
+            `/api/v1/retirement-accounts/${id}/`,
             data
         );
         return response.data;
@@ -75,7 +135,7 @@ export const updateRetirementAccount = createAsyncThunk(
 export const deleteRetirementAccount = createAsyncThunk(
     'retirementAccounts/deleteRetirementAccount',
     async (id: number) => {
-        await axios.delete(`/api/retirement-accounts/${id}/`);
+        await axios.delete(`/api/v1/retirement-accounts/${id}/`);
         return id;
     }
 );

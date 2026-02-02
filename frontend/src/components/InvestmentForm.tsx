@@ -8,24 +8,10 @@ import {
     createInvestment,
     updateInvestment,
 } from '../store/slices/investmentsSlice';
+import { Investment } from '../types/investments';
 
 interface InvestmentFormProps {
-    investment?: {
-        id: number;
-        symbol: string;
-        name: string;
-        investment_type: string;
-        quantity: number;
-        purchase_price: number;
-        current_price: number | null;
-        purchase_date: string;
-        principal_amount: number | null;
-        interest_rate: number | null;
-        compounding_frequency: string | null;
-        term_years: number | null;
-        notes: string | null;
-        due_date: string | null;
-    };
+    investment?: Investment;
     onClose: () => void;
 }
 
@@ -143,7 +129,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 ...values,
                 current_price:
                     values.current_price === ''
-                        ? null
+                        ? undefined
                         : Number(values.current_price),
                 quantity:
                     values.investment_type === 'fixed_income'
@@ -156,15 +142,15 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                 principal_amount:
                     values.investment_type === 'fixed_income'
                         ? Number(values.principal_amount)
-                        : null,
+                        : undefined,
                 interest_rate:
                     values.investment_type === 'fixed_income'
                         ? Number(values.interest_rate)
-                        : null,
+                        : undefined,
                 term_years:
                     values.investment_type === 'fixed_income'
                         ? Number(values.term_years)
-                        : null,
+                        : undefined,
             };
 
             if (investment) {

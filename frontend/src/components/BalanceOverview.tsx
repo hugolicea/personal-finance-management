@@ -1,31 +1,30 @@
+import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
-
-interface Transaction {
-    id: number;
-    date: string;
-    amount: string;
-    description: string;
-    category: number;
-}
 
 interface BalanceOverviewProps {
     transactions: Transaction[];
 }
 
 function BalanceOverview({ transactions }: BalanceOverviewProps) {
-    const totalBalance = transactions.reduce(
-        (sum, t) => sum + parseFloat(t.amount),
-        0
-    );
+    const totalBalance = transactions.reduce((sum, t) => {
+        const amount = typeof t.amount === 'number' ? t.amount : 0;
+        return sum + amount;
+    }, 0);
 
     const totalIncome = transactions
-        .filter((t) => parseFloat(t.amount) > 0)
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter((t) => typeof t.amount === 'number' && t.amount > 0)
+        .reduce(
+            (sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0),
+            0
+        );
 
     const totalExpenses = Math.abs(
         transactions
-            .filter((t) => parseFloat(t.amount) < 0)
-            .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+            .filter((t) => typeof t.amount === 'number' && t.amount < 0)
+            .reduce(
+                (sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0),
+                0
+            )
     );
 
     return (

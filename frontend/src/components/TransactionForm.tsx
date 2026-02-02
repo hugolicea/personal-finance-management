@@ -9,16 +9,11 @@ import {
     createTransaction,
     updateTransaction,
 } from '../store/slices/transactionsSlice';
+import type { Transaction } from '../types/transactions';
+import CategorySelect from './CategorySelect';
 
 interface TransactionFormProps {
-    transaction?: {
-        id: number;
-        amount: number;
-        description: string;
-        date: string;
-        category: number;
-        type: 'income' | 'expense';
-    };
+    transaction?: Partial<Transaction>;
     onClose: () => void;
 }
 
@@ -208,20 +203,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 Category
                             </label>
                             <Field
-                                as='select'
                                 name='category'
+                                as={CategorySelect}
+                                categories={categories}
+                                placeholder='Select a category'
                                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-                            >
-                                <option value=''>Select a category</option>
-                                {categories.map((category) => (
-                                    <option
-                                        key={category.id}
-                                        value={category.id}
-                                    >
-                                        {category.name}
-                                    </option>
-                                ))}
-                            </Field>
+                            />
                             <ErrorMessage
                                 name='category'
                                 component='div'

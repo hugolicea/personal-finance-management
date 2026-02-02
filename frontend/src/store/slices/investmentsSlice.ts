@@ -1,21 +1,28 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-interface Investment {
+import { Investment } from '../../types/investments';
+
+interface InvestmentApiResponse {
     id: number;
     symbol: string;
     name: string;
     investment_type: string;
-    quantity: number;
-    purchase_price: number;
-    current_price: number | null;
+    quantity: string;
+    purchase_price: string;
+    current_price: string | null;
     purchase_date: string;
     notes: string | null;
-    total_invested: number;
-    current_value: number;
-    gain_loss: number;
-    gain_loss_percentage: number;
+    total_invested: string;
+    current_value: string;
+    gain_loss: string;
+    gain_loss_percentage: string;
     due_date: string | null;
+    // Optional fixed-income related fields returned by the API
+    principal_amount?: string | null;
+    interest_rate?: string | null;
+    term_years?: string | null;
+    compounding_frequency?: string | null;
 }
 
 interface InvestmentsState {
@@ -35,8 +42,54 @@ const initialState: InvestmentsState = {
 export const fetchInvestments = createAsyncThunk(
     'investments/fetchInvestments',
     async () => {
-        const response = await axios.get('/api/investments/');
-        return response.data;
+        const response = await axios.get(
+            '/api/v1/investments/?page_size=10000'
+        );
+        const data = response.data.results || response.data;
+        // Transform string fields to numbers with error handling
+        return data.map((investment: InvestmentApiResponse) => ({
+            ...investment,
+            quantity: isNaN(parseFloat(investment.quantity))
+                ? 0
+                : parseFloat(investment.quantity),
+            purchase_price: isNaN(parseFloat(investment.purchase_price))
+                ? 0
+                : parseFloat(investment.purchase_price),
+            current_price:
+                investment.current_price &&
+                !isNaN(parseFloat(investment.current_price))
+                    ? parseFloat(investment.current_price)
+                    : null,
+            total_invested: isNaN(parseFloat(investment.total_invested))
+                ? 0
+                : parseFloat(investment.total_invested),
+            current_value: isNaN(parseFloat(investment.current_value))
+                ? 0
+                : parseFloat(investment.current_value),
+            gain_loss: isNaN(parseFloat(investment.gain_loss))
+                ? 0
+                : parseFloat(investment.gain_loss),
+            gain_loss_percentage: isNaN(
+                parseFloat(investment.gain_loss_percentage)
+            )
+                ? 0
+                : parseFloat(investment.gain_loss_percentage),
+            principal_amount:
+                investment.principal_amount &&
+                !isNaN(parseFloat(investment.principal_amount))
+                    ? parseFloat(investment.principal_amount)
+                    : null,
+            interest_rate:
+                investment.interest_rate &&
+                !isNaN(parseFloat(investment.interest_rate))
+                    ? parseFloat(investment.interest_rate)
+                    : null,
+            term_years:
+                investment.term_years &&
+                !isNaN(parseFloat(investment.term_years))
+                    ? parseFloat(investment.term_years)
+                    : null,
+        }));
     }
 );
 
@@ -56,7 +109,7 @@ export const createInvestment = createAsyncThunk(
         compounding_frequency?: string;
         term_years?: number;
     }) => {
-        const response = await axios.post('/api/investments/', data);
+        const response = await axios.post('/api/v1/investments/', data);
         return response.data;
     }
 );
@@ -64,7 +117,7 @@ export const createInvestment = createAsyncThunk(
 export const updateInvestment = createAsyncThunk(
     'investments/updateInvestment',
     async ({ id, data }: { id: number; data: Partial<Investment> }) => {
-        const response = await axios.patch(`/api/investments/${id}/`, data);
+        const response = await axios.patch(`/api/v1/investments/${id}/`, data);
         return response.data;
     }
 );
@@ -72,7 +125,7 @@ export const updateInvestment = createAsyncThunk(
 export const deleteInvestment = createAsyncThunk(
     'investments/deleteInvestment',
     async (id: number) => {
-        await axios.delete(`/api/investments/${id}/`);
+        await axios.delete(`/api/v1/investments/${id}/`);
         return id;
     }
 );

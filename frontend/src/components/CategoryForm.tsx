@@ -8,14 +8,10 @@ import {
     createCategory,
     updateCategory,
 } from '../store/slices/categoriesSlice';
+import { Category } from '../types/categories';
 
 interface CategoryFormProps {
-    category?: {
-        id: number;
-        name: string;
-        classification: string;
-        monthly_budget: number;
-    };
+    category?: Category;
     onClose: () => void;
 }
 

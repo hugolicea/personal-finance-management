@@ -1,9 +1,10 @@
 from datetime import date
 
-from budget.models import Category, Transaction
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from budget.models import Category, Transaction
 
 
 class CategoryAPITest(APITestCase):
@@ -12,7 +13,7 @@ class CategoryAPITest(APITestCase):
         self.category = Category.objects.create(name="Food")
 
     def test_get_categories(self):
-        """Test GET /api/categories/"""
+        """Test GET /api/v1/categories/"""
         url = reverse("category-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -20,7 +21,7 @@ class CategoryAPITest(APITestCase):
         self.assertEqual(response.data[0]["name"], "Food")
 
     def test_create_category(self):
-        """Test POST /api/categories/"""
+        """Test POST /api/v1/categories/"""
         url = reverse("category-list")
         data = {"name": "Transport"}
         response = self.client.post(url, data, format="json")
@@ -29,7 +30,7 @@ class CategoryAPITest(APITestCase):
         self.assertEqual(Category.objects.count(), 2)
 
     def test_get_single_category(self):
-        """Test GET /api/categories/{id}/"""
+        """Test GET /api/v1/categories/{id}/"""
         url = reverse("category-detail", kwargs={"pk": self.category.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -42,14 +43,14 @@ class TransactionAPITest(APITestCase):
         self.category = Category.objects.create(name="Food")
 
     def test_get_transactions(self):
-        """Test GET /api/transactions/"""
+        """Test GET /api/v1/transactions/"""
         url = reverse("transaction-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)  # No transactions yet
 
     def test_create_transaction(self):
-        """Test POST /api/transactions/"""
+        """Test POST /api/v1/transactions/"""
         url = reverse("transaction-list")
         data = {
             "amount": -25.50,
@@ -64,7 +65,7 @@ class TransactionAPITest(APITestCase):
         self.assertEqual(Transaction.objects.count(), 1)
 
     def test_get_single_transaction(self):
-        """Test GET /api/transactions/{id}/"""
+        """Test GET /api/v1/transactions/{id}/"""
         transaction = Transaction.objects.create(
             amount=-10.00,
             description="Snack",
@@ -95,7 +96,7 @@ class BalanceAPITest(APITestCase):
         )
 
     def test_balance_week(self):
-        """Test GET /api/balance/week/"""
+        """Test GET /api/v1/balance/week/"""
         url = reverse("balance_by_period", kwargs={"period": "week"})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -104,7 +105,7 @@ class BalanceAPITest(APITestCase):
         self.assertEqual(data["balance_week"], "-70.00")
 
     def test_balance_month(self):
-        """Test GET /api/balance/month/"""
+        """Test GET /api/v1/balance/month/"""
         url = reverse("balance_by_period", kwargs={"period": "month"})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -113,7 +114,7 @@ class BalanceAPITest(APITestCase):
         self.assertEqual(data["balance_month"], "-70.00")
 
     def test_balance_quarter(self):
-        """Test GET /api/balance/quarter/"""
+        """Test GET /api/v1/balance/quarter/"""
         url = reverse("balance_by_period", kwargs={"period": "quarter"})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -121,7 +122,7 @@ class BalanceAPITest(APITestCase):
         self.assertIn("balance_quarter", data)
 
     def test_balance_year(self):
-        """Test GET /api/balance/year/"""
+        """Test GET /api/v1/balance/year/"""
         url = reverse("balance_by_period", kwargs={"period": "year"})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

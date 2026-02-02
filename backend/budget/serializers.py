@@ -29,6 +29,7 @@ class InvestmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Investment
         fields = "__all__"
+        read_only_fields = ['user']
 
 
 class HeritageSerializer(serializers.ModelSerializer):
@@ -40,6 +41,7 @@ class HeritageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Heritage
         fields = "__all__"
+        read_only_fields = ['user']
 
 
 class RetirementAccountSerializer(serializers.ModelSerializer):
@@ -50,6 +52,7 @@ class RetirementAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = RetirementAccount
         fields = "__all__"
+        read_only_fields = ['user']
 
 
 class TransactionSerializer(serializers.ModelSerializer):

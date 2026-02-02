@@ -37,7 +37,7 @@ function Reports() {
 
     useEffect(() => {
         dispatch(fetchCategories());
-        dispatch(fetchTransactions());
+        dispatch(fetchTransactions({}));
     }, [dispatch]);
 
     // Calculate monthly data for charts

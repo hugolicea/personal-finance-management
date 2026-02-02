@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -9,6 +10,9 @@ class Category(models.Model):
         (INCOME, "Income"),
     ]
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories"
+    )
     name = models.CharField(max_length=100)
     classification = models.CharField(
         max_length=10,
@@ -22,6 +26,13 @@ class Category(models.Model):
         default=0,
         help_text="Monthly budget amount for this category",
     )
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        unique_together = [["user", "name"]]
+        indexes = [
+            models.Index(fields=["user", "classification"]),
+        ]
 
     def __str__(self):
         return self.name
@@ -43,10 +54,11 @@ class Investment(models.Model):
         (FIXED_INCOME, "Fixed Income"),
     ]
 
-    symbol = models.CharField(
-        max_length=20, unique=True, help_text="Ticker symbol or identifier")
-    name = models.CharField(
-        max_length=200, help_text="Full name of the investment")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="investments"
+    )
+    symbol = models.CharField(max_length=20, help_text="Ticker symbol or identifier")
+    name = models.CharField(max_length=200, help_text="Full name of the investment")
     investment_type = models.CharField(
         max_length=20,
         choices=INVESTMENT_TYPE_CHOICES,
@@ -105,8 +117,14 @@ class Investment(models.Model):
         blank=True,
         help_text="Investment term in years",
     )
-    notes = models.TextField(blank=True, null=True,
-                             help_text="Additional notes about the investment")
+    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the investment")
+
+    class Meta:
+        unique_together = [["user", "symbol"]]
+        indexes = [
+            models.Index(fields=["user", "investment_type"]),
+            models.Index(fields=["user", "purchase_date"]),
+        ]
 
     @property
     def total_invested(self):
@@ -197,8 +215,10 @@ class Heritage(models.Model):
         (OTHER, "Other"),
     ]
 
-    name = models.CharField(
-        max_length=200, help_text="Name or description of the property")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="heritages"
+    )
+    name = models.CharField(max_length=200, help_text="Name or description of the property")
     heritage_type = models.CharField(
         max_length=20,
         choices=HERITAGE_TYPE_CHOICES,
@@ -267,6 +287,11 @@ class Heritage(models.Model):
             return (self.annual_rental_income / self.current_value) * 100
         return 0
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "heritage_type"]),
+        ]
+
     def __str__(self):
         return f"{self.name} - {self.get_heritage_type_display()}"
 
@@ -308,8 +333,10 @@ class RetirementAccount(models.Model):
         (VERY_AGGRESSIVE, "Very Aggressive"),
     ]
 
-    name = models.CharField(
-        max_length=200, help_text="Name or nickname for this retirement account")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="retirement_accounts"
+    )
+    name = models.CharField(max_length=200, help_text="Name or nickname for this retirement account")
     account_type = models.CharField(
         max_length=20,
         choices=ACCOUNT_TYPE_CHOICES,
@@ -379,6 +406,11 @@ class RetirementAccount(models.Model):
         """Total annual contribution including employer match"""
         return self.annual_contribution + self.employer_match_amount
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "account_type"]),
+        ]
+
     def __str__(self):
         provider_display = f" - {self.provider}" if self.provider else ""
         return f"{self.name} ({self.get_account_type_display()}){provider_display}"
@@ -392,6 +424,9 @@ class Transaction(models.Model):
         (ACCOUNT, "Account"),
     ]
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions"
+    )
     date = models.DateField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
@@ -410,6 +445,14 @@ class Transaction(models.Model):
     reference_id = models.CharField(
         max_length=255, blank=True, null=True, unique=True
     )  # For duplicate detection
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "date"]),
+            models.Index(fields=["user", "category"]),
+            models.Index(fields=["user", "-date"]),  # For recent transactions
+        ]
+        ordering = ["-date"]
 
     def __str__(self):
         return f"{self.description} - {self.amount:.2f} ({self.date})"
