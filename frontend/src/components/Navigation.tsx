@@ -1,8 +1,22 @@
+import { useNavigate } from 'react-router-dom';
+
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { logout } from '../store/slices/authSlice';
+
 interface NavigationProps {
     onMenuClick?: () => void;
 }
 
 function Navigation({ onMenuClick }: NavigationProps) {
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+    const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+
+    const handleLogout = async () => {
+        await dispatch(logout());
+        navigate('/login');
+    };
+
     return (
         <nav className='bg-white shadow-sm border-b border-gray-200 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-10'>
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
@@ -37,10 +51,27 @@ function Navigation({ onMenuClick }: NavigationProps) {
                     </div>
 
                     {/* Desktop header content can go here if needed */}
-                    <div className='hidden lg:flex lg:items-center lg:justify-end'>
-                        <div className='text-sm text-gray-500'>
-                            Professional Budget Management
-                        </div>
+                    <div className='hidden lg:flex lg:items-center lg:justify-end lg:space-x-4'>
+                        {isAuthenticated ? (
+                            <>
+                                <div className='text-sm text-gray-700'>
+                                    Welcome,{' '}
+                                    <span className='font-medium'>
+                                        {user?.username || 'User'}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <div className='text-sm text-gray-500'>
+                                Professional Budget Management
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

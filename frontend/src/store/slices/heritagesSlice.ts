@@ -38,9 +38,10 @@ const initialState: HeritagesState = {
 export const fetchHeritages = createAsyncThunk(
     'heritages/fetchHeritages',
     async () => {
-        const response = await axios.get('/api/heritages/');
+        const response = await axios.get('/api/v1/heritages/?page_size=10000');
+        const data = response.data.results || response.data;
         // Transform string fields to numbers with error handling
-        return response.data.map((heritage: HeritageApiResponse) => ({
+        return data.map((heritage: HeritageApiResponse) => ({
             ...heritage,
             area: heritage.area
                 ? isNaN(parseFloat(heritage.area))
@@ -96,7 +97,7 @@ export const createHeritage = createAsyncThunk(
         monthly_rental_income?: number;
         notes?: string;
     }) => {
-        const response = await axios.post('/api/heritages/', data);
+        const response = await axios.post('/api/v1/heritages/', data);
         return response.data;
     }
 );
@@ -104,7 +105,7 @@ export const createHeritage = createAsyncThunk(
 export const updateHeritage = createAsyncThunk(
     'heritages/updateHeritage',
     async ({ id, data }: { id: number; data: Partial<Heritage> }) => {
-        const response = await axios.patch(`/api/heritages/${id}/`, data);
+        const response = await axios.patch(`/api/v1/heritages/${id}/`, data);
         return response.data;
     }
 );
@@ -112,7 +113,7 @@ export const updateHeritage = createAsyncThunk(
 export const deleteHeritage = createAsyncThunk(
     'heritages/deleteHeritage',
     async (id: number) => {
-        await axios.delete(`/api/heritages/${id}/`);
+        await axios.delete(`/api/v1/heritages/${id}/`);
         return id;
     }
 );

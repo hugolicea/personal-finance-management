@@ -53,6 +53,7 @@ function AccountTransactions() {
     const [selectedMonth, setSelectedMonth] = useState(
         new Date().getMonth() + 1
     ); // JS months are 0-based
+    const [filterByYear, setFilterByYear] = useState(false);
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
     const [selectedTransactions, setSelectedTransactions] = useState<number[]>(
         []
@@ -62,8 +63,37 @@ function AccountTransactions() {
 
     useEffect(() => {
         dispatch(fetchCategories());
-        dispatch(fetchTransactions());
     }, [dispatch]);
+
+    // Fetch transactions when filters change
+    useEffect(() => {
+        const dateAfter = filterByYear
+            ? `${selectedYear}-01-01`
+            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+
+        const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
+        const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
+        const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
+        const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        dispatch(
+            fetchTransactions({
+                transaction_type: 'account',
+                category: selectedCategory || undefined,
+                search: searchTerm || undefined,
+                date_after: dateAfter,
+                date_before: dateBefore,
+                ordering: '-date',
+            })
+        );
+    }, [
+        dispatch,
+        filterByYear,
+        selectedYear,
+        selectedMonth,
+        selectedCategory,
+        searchTerm,
+    ]);
 
     const handleAddTransaction = () => {
         setEditingTransaction(null);
@@ -100,7 +130,30 @@ function AccountTransactions() {
                 await dispatch(
                     deleteTransaction(deletingTransaction.id)
                 ).unwrap();
-                dispatch(fetchTransactions());
+                // Re-fetch with current filters
+                const dateAfter = filterByYear
+                    ? `${selectedYear}-01-01`
+                    : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+                const dateBeforeYear = filterByYear
+                    ? selectedYear
+                    : selectedYear;
+                const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
+                const lastDay = new Date(
+                    dateBeforeYear,
+                    dateBeforeMonth,
+                    0
+                ).getDate();
+                const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+                dispatch(
+                    fetchTransactions({
+                        transaction_type: 'account',
+                        category: selectedCategory || undefined,
+                        search: searchTerm || undefined,
+                        date_after: dateAfter,
+                        date_before: dateBefore,
+                        ordering: '-date',
+                    })
+                );
                 setShowDeleteTransactionDialog(false);
                 setDeletingTransaction(null);
             } catch (error) {
@@ -168,29 +221,11 @@ function AccountTransactions() {
         setDeletingTransaction(null);
     };
 
-    // Filter transactions based on search and filters
-    const filteredTransactions = transactions.filter((transaction) => {
-        // Only show account transactions
-        if (transaction.transaction_type !== 'account') return false;
-
-        // Skip transactions with invalid amounts
-        if (isNaN(transaction.amount)) return false;
-
-        const matchesSearch = transaction.description
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase());
-        const matchesCategory =
-            !selectedCategory ||
-            transaction.category.toString() === selectedCategory;
-        const transactionDate = new Date(transaction.date);
-        const transactionYear = transactionDate.getFullYear();
-        const transactionMonth = transactionDate.getMonth() + 1; // JS months are 0-based
-        const matchesPeriod =
-            transactionYear === selectedYear &&
-            transactionMonth === selectedMonth;
-
-        return matchesSearch && matchesCategory && matchesPeriod;
-    });
+    // Transactions are already filtered by the server
+    // Only need to filter out invalid amounts
+    const filteredTransactions = transactions.filter(
+        (transaction) => !isNaN(transaction.amount)
+    );
 
     // Separate transactions into spends and incomes (filter out invalid amounts)
     const spendTransactions = filteredTransactions.filter(
@@ -229,7 +264,7 @@ function AccountTransactions() {
 
                     {/* Filters */}
                     <div className='bg-white p-4 rounded-lg shadow mb-6'>
-                        <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+                        <div className='grid grid-cols-1 md:grid-cols-6 gap-4'>
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>
                                     Search
@@ -293,7 +328,8 @@ function AccountTransactions() {
                                             parseInt(e.target.value)
                                         )
                                     }
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                                    disabled={filterByYear}
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
                                 >
                                     <option value={1}>January</option>
                                     <option value={2}>February</option>
@@ -308,6 +344,33 @@ function AccountTransactions() {
                                     <option value={11}>November</option>
                                     <option value={12}>December</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                    Filter
+                                </label>
+                                <div className='flex items-center space-x-2'>
+                                    <button
+                                        onClick={() => setFilterByYear(false)}
+                                        className={`px-3 py-2 text-sm rounded-md border ${
+                                            !filterByYear
+                                                ? 'bg-red-600 text-white border-red-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        Month
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterByYear(true)}
+                                        className={`px-3 py-2 text-sm rounded-md border ${
+                                            filterByYear
+                                                ? 'bg-red-600 text-white border-red-600'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        Year
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>
@@ -348,13 +411,14 @@ function AccountTransactions() {
                                     ? 's'
                                     : ''}{' '}
                                 for{' '}
-                                {new Date(
-                                    selectedYear,
-                                    selectedMonth - 1
-                                ).toLocaleString('default', {
-                                    month: 'long',
-                                })}{' '}
-                                {selectedYear}
+                                {filterByYear
+                                    ? selectedYear
+                                    : `${new Date(
+                                          selectedYear,
+                                          selectedMonth - 1
+                                      ).toLocaleString('default', {
+                                          month: 'long',
+                                      })} ${selectedYear}`}
                             </span>
                             <div className='flex space-x-4 text-sm'>
                                 <div>

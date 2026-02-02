@@ -125,9 +125,9 @@ function MonthlySpendingChart({
                 className='bg-white p-4 rounded-lg shadow'
                 style={{ minHeight: '400px' }}
             >
-                <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                {/* <h4 className='text-lg font-medium text-gray-900 mb-4'>
                     Monthly Spending Throughout {selectedYear}
-                </h4>
+                </h4> */}
                 <ResponsiveContainer
                     width='100%'
                     height={400}

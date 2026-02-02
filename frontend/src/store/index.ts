@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import authReducer from './slices/authSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import heritagesReducer from './slices/heritagesSlice';
 import investmentsReducer from './slices/investmentsSlice';
@@ -8,6 +9,7 @@ import transactionsReducer from './slices/transactionsSlice';
 
 export const store = configureStore({
     reducer: {
+        auth: authReducer,
         categories: categoriesReducer,
         heritages: heritagesReducer,
         investments: investmentsReducer,

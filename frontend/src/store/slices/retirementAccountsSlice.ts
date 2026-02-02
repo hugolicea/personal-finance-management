@@ -54,9 +54,12 @@ const initialState: RetirementAccountsState = {
 export const fetchRetirementAccounts = createAsyncThunk(
     'retirementAccounts/fetchRetirementAccounts',
     async () => {
-        const response = await axios.get('/api/retirement-accounts/');
+        const response = await axios.get(
+            '/api/v1/retirement-accounts/?page_size=10000'
+        );
+        const data = response.data.results || response.data;
         // Transform string fields to numbers with error handling
-        return response.data.map((account: RetirementAccountApiResponse) => ({
+        return data.map((account: RetirementAccountApiResponse) => ({
             ...account,
             current_balance: isNaN(parseFloat(account.current_balance))
                 ? 0
@@ -113,7 +116,7 @@ export const createRetirementAccount = createAsyncThunk(
         target_retirement_age?: number;
         notes?: string;
     }) => {
-        const response = await axios.post('/api/retirement-accounts/', data);
+        const response = await axios.post('/api/v1/retirement-accounts/', data);
         return response.data;
     }
 );
@@ -122,7 +125,7 @@ export const updateRetirementAccount = createAsyncThunk(
     'retirementAccounts/updateRetirementAccount',
     async ({ id, data }: { id: number; data: Partial<RetirementAccount> }) => {
         const response = await axios.patch(
-            `/api/retirement-accounts/${id}/`,
+            `/api/v1/retirement-accounts/${id}/`,
             data
         );
         return response.data;
@@ -132,7 +135,7 @@ export const updateRetirementAccount = createAsyncThunk(
 export const deleteRetirementAccount = createAsyncThunk(
     'retirementAccounts/deleteRetirementAccount',
     async (id: number) => {
-        await axios.delete(`/api/retirement-accounts/${id}/`);
+        await axios.delete(`/api/v1/retirement-accounts/${id}/`);
         return id;
     }
 );

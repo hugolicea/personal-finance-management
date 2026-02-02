@@ -3,43 +3,100 @@ import hashlib
 import io
 from datetime import datetime, timedelta
 
+import django_filters
 from django.db.models import Sum
 from django.http import JsonResponse
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, parser_classes
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from .models import Category, Heritage, Investment, RetirementAccount, Transaction
-from .serializers import (CategorySerializer, HeritageSerializer, InvestmentSerializer,
-                          RetirementAccountSerializer, TransactionSerializer)
+from .serializers import (
+    CategorySerializer,
+    HeritageSerializer,
+    InvestmentSerializer,
+    RetirementAccountSerializer,
+    TransactionSerializer,
+)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    ordering = ['name']
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user).order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class InvestmentViewSet(viewsets.ModelViewSet):
     queryset = Investment.objects.all()
     serializer_class = InvestmentSerializer
+    ordering = ['-purchase_date']
+
+    def get_queryset(self):
+        return Investment.objects.filter(user=self.request.user).order_by('-purchase_date')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class HeritageViewSet(viewsets.ModelViewSet):
     queryset = Heritage.objects.all()
     serializer_class = HeritageSerializer
+    ordering = ['-purchase_date']
+
+    def get_queryset(self):
+        return Heritage.objects.filter(user=self.request.user).order_by('-purchase_date')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class RetirementAccountViewSet(viewsets.ModelViewSet):
     queryset = RetirementAccount.objects.all()
     serializer_class = RetirementAccountSerializer
+    ordering = ['name']
+
+    def get_queryset(self):
+        return RetirementAccount.objects.filter(user=self.request.user).order_by('name')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class TransactionFilter(django_filters.FilterSet):
+    """Custom filter for Transaction to support date range queries"""
+    date__gte = django_filters.DateFilter(field_name='date', lookup_expr='gte')
+    date__lte = django_filters.DateFilter(field_name='date', lookup_expr='lte')
+
+    class Meta:
+        model = Transaction
+        fields = ['category', 'transaction_type', 'date__gte', 'date__lte']
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = TransactionFilter
+    search_fields = ["description"]
+    ordering_fields = ["date", "amount"]
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user).select_related("category").order_by('-date')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
+@api_view(["GET"])
 def balance_by_period(request, period):
     now = datetime.now().date()
     if period == "week":
@@ -54,7 +111,7 @@ def balance_by_period(request, period):
         return JsonResponse({"error": "Invalid period"}, status=400)
 
     total = (
-        Transaction.objects.filter(date__gte=start).aggregate(total=Sum("amount"))[
+        Transaction.objects.filter(user=request.user, date__gte=start).aggregate(total=Sum("amount"))[
             "total"
         ]
         or 0
@@ -100,14 +157,14 @@ def category_spending_by_period(request, period):
         end = now
 
     # Get all categories with their budgets
-    categories = Category.objects.all()
+    categories = Category.objects.filter(user=request.user)
 
     result = []
     for category in categories:
         # Calculate actual spending for this category in the period
         spending = (
             Transaction.objects.filter(
-                category=category, date__gte=start, date__lte=end
+                user=request.user, category=category, date__gte=start, date__lte=end
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
@@ -255,6 +312,7 @@ def upload_bank_statement(request):
                     classification = Category.INCOME if amount > 0 else Category.SPEND
                     category, created = Category.objects.get_or_create(
                         name=category_name,
+                        user=request.user,
                         defaults={'classification': classification}
                     )
                     # If category already exists but has wrong classification, update it
@@ -263,12 +321,14 @@ def upload_bank_statement(request):
                         category.save()
                 else:
                     # Try to auto-categorize based on description keywords
-                    category = auto_categorize_transaction(description)
+                    category = auto_categorize_transaction(description, request.user)
 
                 if not category:
                     # Use a default category if auto-categorization fails
                     category, created = Category.objects.get_or_create(
-                        name="Uncategorized"
+                        name="Uncategorized",
+                        user=request.user,
+                        defaults={'classification': Category.SPEND}
                     )
 
                 # Create transaction
@@ -277,6 +337,7 @@ def upload_bank_statement(request):
                     amount=amount,
                     description=description,
                     category=category,
+                    user=request.user,
                     transaction_type=Transaction.ACCOUNT if is_account_csv else Transaction.CREDIT_CARD,
                     import_source="bank_statement",
                     reference_id=reference_id,
@@ -329,7 +390,7 @@ def get_column_value(row, possible_names):
     return None
 
 
-def auto_categorize_transaction(description):
+def auto_categorize_transaction(description, user):
     """
     Simple auto-categorization based on keywords in description.
     This is a basic implementation - could be enhanced with ML or more sophisticated rules.
@@ -371,12 +432,13 @@ def auto_categorize_transaction(description):
     for category_name, keywords in category_mappings.items():
         if any(keyword in description_lower for keyword in keywords):
             try:
-                return Category.objects.get(name=category_name)
+                return Category.objects.get(name=category_name, user=user)
             except Category.DoesNotExist:
                 # Set classification based on category type
                 classification = Category.INCOME if category_name == "Income" else Category.SPEND
                 return Category.objects.create(
                     name=category_name,
+                    user=user,
                     classification=classification
                 )
 

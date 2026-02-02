@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { fetchCategories } from '../store/slices/categoriesSlice';
 import {
     fetchTransactions,
     uploadBankStatement,
@@ -48,8 +49,9 @@ const BankStatementUpload: React.FC = () => {
             setUploadResult(result);
             setShowModal(true);
 
-            // Refresh transactions list
-            dispatch(fetchTransactions());
+            // Refresh transactions and categories list
+            dispatch(fetchTransactions({}));
+            dispatch(fetchCategories());
         } catch (error) {
             console.error('Upload failed:', error);
             alert('Failed to upload file. Please try again.');

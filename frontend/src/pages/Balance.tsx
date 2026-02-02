@@ -56,7 +56,7 @@ function Balance() {
 
     useEffect(() => {
         dispatch(fetchCategories());
-        dispatch(fetchTransactions());
+        dispatch(fetchTransactions({}));
         dispatch(
             fetchCategorySpending(
                 `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`

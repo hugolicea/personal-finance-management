@@ -1,15 +1,22 @@
 # 💰 Personal Finance Management
 
-A comprehensive personal budget management application built with Django REST API backend and React TypeScript frontend. Track expenses, manage categories, analyze spending patterns, and maintain financial control with ease.
+A comprehensive, secure personal budget management application built with Django REST API backend and React TypeScript frontend. Track expenses, manage investments, analyze spending patterns, and maintain complete financial control with enterprise-grade features.
 
 ## ✨ Features
+
+### 🔐 **Security & Authentication**
+
+- JWT-based authentication for secure API access
+- Multi-user support with complete data isolation
+- Role-based access control
+- Secure password hashing and validation
 
 ### 📊 **Dashboard & Analytics**
 
 - Real-time balance overview with income, expenses, and net calculations
 - Interactive spending charts and visualizations
 - Period-based filtering (monthly/yearly views)
-- Category-wise spending analysis
+- Category-wise spending analysis with budget tracking
 
 ### 🏷️ **Category Management**
 
@@ -21,26 +28,41 @@ A comprehensive personal budget management application built with Django REST AP
 ### 💳 **Transaction Management**
 
 - Manual transaction entry with full CRUD operations
-- Bank statement upload and automatic processing
-- Advanced filtering by date, category, and amount
+- Bank statement upload and automatic processing (CSV support)
+- Advanced filtering, search, and pagination
 - Dual-panel display: Spends vs Incomes
-- Search functionality across transaction descriptions
+- Duplicate transaction detection
 
-### 📈 **Financial Insights**
+### 📈 **Investment Tracking**
 
-- Monthly budget tracking with remaining balance calculations
-- Spending pattern analysis by category
-- Transaction count and average calculations
-- Year-over-year and month-over-month comparisons
+- Track stocks, bonds, ETFs, crypto, and fixed income investments
+- Automatic gain/loss calculations
+- Portfolio performance monitoring
+- Compound interest calculations for fixed income
+
+### 🏠 **Heritage & Real Estate**
+
+- Property management and valuation tracking
+- Rental income tracking and yield calculations
+- Multiple property type support
+
+### 💼 **Retirement Planning**
+
+- 401(k), IRA, and other retirement account tracking
+- Employer match calculations
+- Risk profile management
 
 ### 🔧 **Technical Features**
 
-- RESTful API with Django REST Framework
+- RESTful API with versioning (v1)
 - TypeScript for type-safe frontend development
 - Redux Toolkit for state management
 - Tailwind CSS for responsive UI
 - Docker containerization for easy deployment
-- PostgreSQL database with proper migrations
+- PostgreSQL database with optimized indexes
+- Comprehensive logging and error handling
+- CI/CD pipeline with GitHub Actions
+- Production-ready configurations
 
 ## 🚀 Quick Start
 
@@ -58,28 +80,55 @@ A comprehensive personal budget management application built with Django REST AP
    cd personal-finance-management
    ```
 
-2. **Start the services**
+2. **Run setup script (Windows)**
+
+   ```powershell
+   .\setup.ps1
+   ```
+
+   Or manually:
 
    ```bash
+   # Create environment files
+   cp backend/.env.example backend/.env
+
+   # Start services
    cd docker
    docker-compose up --build
+
+   # Run migrations (automatically creates default admin user)
+   docker-compose exec backend python manage.py migrate
+
+   # Default admin credentials (change after first login):
+   # Username: admin
+   # Password: changeme123
    ```
 
 3. **Access the application**
    - Frontend: <http://localhost:3000>
-   - Backend API: <http://localhost:8000>
-   - API Documentation: <http://localhost:8000/api/docs/>
+   - Backend API: <http://localhost:8000/api/v1/>
+   - Admin Panel: <http://localhost:8000/admin>
+   - API Documentation: <http://localhost:8000/api/schema/swagger-ui/>
 
 ### Production Deployment
 
-1. **Update environment variables**
+1. **Configure environment variables**
 
    ```bash
-   cp .env.example .env
-   # Edit .env with your production settings
+   # Update backend/.env with production values
+   SECRET_KEY=<your-secret-key>
+   DEBUG=False
+   ALLOWED_HOSTS=your-domain.com
    ```
 
-2. **Deploy with Docker Compose**
+2. **Deploy with production Docker Compose**
+
+   ```bash
+   cd docker
+   docker-compose -f docker-compose.prod.yml up -d --build
+   ```
+
+3. **Deploy with Docker Compose**
 
    ```bash
    docker-compose -f docker/docker-compose.yml up -d --build

@@ -71,7 +71,7 @@ function Home() {
 
     useEffect(() => {
         dispatch(fetchCategories());
-        dispatch(fetchTransactions());
+        dispatch(fetchTransactions({}));
         dispatch(fetchInvestments());
         dispatch(fetchHeritages());
         dispatch(fetchRetirementAccounts());
@@ -128,7 +128,7 @@ function Home() {
                 await dispatch(
                     deleteTransaction(deletingTransaction.id)
                 ).unwrap();
-                dispatch(fetchTransactions());
+                dispatch(fetchTransactions({}));
                 setShowDeleteTransactionDialog(false);
                 setDeletingTransaction(null);
             } catch (error) {
@@ -383,14 +383,22 @@ function Home() {
                                                                 <div className='text-right'>
                                                                     <p
                                                                         className={`text-sm font-semibold ${
-                                                                            parseFloat(String(transaction.amount)) <
+                                                                            parseFloat(
+                                                                                String(
+                                                                                    transaction.amount
+                                                                                )
+                                                                            ) <
                                                                             0
                                                                                 ? 'text-red-600'
                                                                                 : 'text-green-600'
                                                                         }`}
                                                                     >
                                                                         {formatCurrency(
-                                                                            parseFloat(String(transaction.amount))
+                                                                            parseFloat(
+                                                                                String(
+                                                                                    transaction.amount
+                                                                                )
+                                                                            )
                                                                         )}
                                                                     </p>
                                                                 </div>

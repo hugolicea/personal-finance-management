@@ -6,3 +6,10 @@ django-jazzmin
 drf-spectacular
 django-cors-headers
 python-dateutil
+djangorestframework-simplejwt==5.3.1
+dj-rest-auth==5.0.2
+django-allauth==0.57.0
+django-filter==24.2
+gunicorn==21.2.0
+requests==2.31.0
+gunicorn==21.2.0

@@ -1,61 +1,34 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
+
+import axios from 'axios';
 
 import BalanceOverview from '../components/BalanceOverview';
-import BankStatementUpload from '../components/BankStatementUpload';
-import CategoryForm from '../components/CategoryForm';
-import ConfirmModal from '../components/ConfirmModal';
-import EditDeleteButtons from '../components/EditDeleteButtons';
-import Modal from '../components/Modal';
+import HeritageChart from '../components/HeritageChart';
+import InvestmentsChart from '../components/InvestmentsChart';
+import MonthlySpendingChart from '../components/MonthlySpendingChart';
+import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
-import TransactionForm from '../components/TransactionForm';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import {
-    deleteCategory,
-    fetchCategories,
-} from '../store/slices/categoriesSlice';
-import {
-    deleteTransaction,
-    fetchTransactions,
-} from '../store/slices/transactionsSlice';
-import { Category } from '../types/categories';
-import type { Transaction } from '../types/transactions';
-import { formatCurrency } from '../utils/formatters';
+import { fetchCategories } from '../store/slices/categoriesSlice';
+import { fetchHeritages } from '../store/slices/heritagesSlice';
+import { fetchInvestments } from '../store/slices/investmentsSlice';
+import { fetchRetirementAccounts } from '../store/slices/retirementAccountsSlice';
+import { fetchTransactions } from '../store/slices/transactionsSlice';
 
 function Dashboard() {
     const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
-    );
-    const { transactions, loading: transactionsLoading } = useAppSelector(
-        (state) => state.transactions
-    );
-
-    // Modal and editing state
-    const [showCategoryModal, setShowCategoryModal] = useState(false);
-    const [showTransactionModal, setShowTransactionModal] = useState(false);
-    const [editingCategory, setEditingCategory] = useState<Category | null>(
-        null
-    );
-    const [editingTransaction, setEditingTransaction] =
-        useState<Transaction | null>(null);
-    const [showDeleteCategoryDialog, setShowDeleteCategoryDialog] =
-        useState(false);
-    const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
-        useState(false);
-    const [deletingCategory, setDeletingCategory] = useState<Category | null>(
-        null
-    );
-    const [deletingTransaction, setDeletingTransaction] =
-        useState<Transaction | null>(null);
-    // Error states
-    const [categoryError, setCategoryError] = useState<string | null>(null);
-    const [transactionError, setTransactionError] = useState<string | null>(
-        null
+    const { categories } = useAppSelector((state) => state.categories);
+    const { transactions } = useAppSelector((state) => state.transactions);
+    const { investments } = useAppSelector((state) => state.investments);
+    const { heritages } = useAppSelector((state) => state.heritages);
+    const { retirementAccounts } = useAppSelector(
+        (state) => state.retirementAccounts
     );
 
-    // Pagination state
-    const [categoryPage, setCategoryPage] = useState(1);
-    const [transactionPage, setTransactionPage] = useState(1);
+    // Separate state for all transactions (for annual expenses)
+    const [allTransactions, setAllTransactions] = React.useState<
+        typeof transactions
+    >([]);
 
     // Filter states
     const [selectedYear, setSelectedYear] = React.useState(
@@ -67,250 +40,86 @@ function Dashboard() {
     const [filterByYear, setFilterByYear] = React.useState(false);
 
     useEffect(() => {
+        console.log('🚀 [Dashboard] First useEffect STARTED');
         dispatch(fetchCategories());
-        dispatch(fetchTransactions());
+        dispatch(fetchInvestments());
+        dispatch(fetchHeritages());
+        dispatch(fetchRetirementAccounts());
+
+        // Fetch all transactions directly for annual expense calculations
+        // Use axios instead of Redux to avoid race condition with filtered fetch
+        console.log(
+            '[Dashboard] Fetching ALL transactions for annual expenses...'
+        );
+
+        const fetchUrl = '/api/v1/transactions/?page_size=5000';
+        console.log('[Dashboard] About to call axios.get with URL:', fetchUrl);
+
+        axios
+            .get(fetchUrl)
+            .then((response) => {
+                const data = response.data.results || response.data;
+                console.log(
+                    '[Dashboard] Extracted transactions count:',
+                    data.length
+                );
+                setAllTransactions(data);
+                console.log(
+                    '[Dashboard] allTransactions state updated with',
+                    data.length,
+                    'items'
+                );
+            })
+            .catch((error) => {
+                console.error(
+                    '[Dashboard] ❌ Axios FAILED - Failed to fetch all transactions:',
+                    error
+                );
+            });
+
+        console.log(
+            '🚀 [Dashboard] First useEffect COMPLETED (axios call initiated)'
+        );
     }, [dispatch]);
 
-    // Memoized filtered lists
-    const filteredTransactions = useMemo(() => {
-        return transactions.filter((transaction) => {
-            const transactionDate = new Date(transaction.date);
-            const transactionYear = transactionDate.getFullYear();
-            const transactionMonth = transactionDate.getMonth() + 1;
-            const matchesPeriod = filterByYear
-                ? transactionYear === selectedYear
-                : transactionYear === selectedYear &&
-                  transactionMonth === selectedMonth;
-            return matchesPeriod;
+    // Fetch transactions when filters change
+    useEffect(() => {
+        const dateAfter = filterByYear
+            ? `${selectedYear}-01-01`
+            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+
+        const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
+        const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
+        const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
+        const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        console.log('[Dashboard] Fetching FILTERED transactions:', {
+            filterByYear,
+            selectedYear,
+            selectedMonth,
+            dateAfter,
+            dateBefore,
         });
-    }, [transactions, filterByYear, selectedYear, selectedMonth]);
+
+        dispatch(
+            fetchTransactions({
+                date_after: dateAfter,
+                date_before: dateBefore,
+                ordering: '-date',
+            })
+        );
+    }, [dispatch, filterByYear, selectedYear, selectedMonth]);
+
+    // Transactions are already filtered by the server, no need for client-side filtering
+    const filteredTransactions = transactions;
 
     const filteredCategories = useMemo(() => {
         return categories.filter((category) =>
-            filteredTransactions.some(
+            transactions.some(
                 (transaction) => transaction.category === category.id
             )
         );
-    }, [categories, filteredTransactions]);
-
-    // Modal handlers
-    // `handleAddCategory` removed — Add Category button removed from UI
-    const handleEditCategory = (category: Category) => {
-        setEditingCategory(category);
-        setShowCategoryModal(true);
-    };
-    // `handleAddTransaction` removed — add button was removed from UI
-    const handleEditTransaction = (transaction: Transaction) => {
-        setEditingTransaction(transaction);
-        setShowTransactionModal(true);
-    };
-    const handleDeleteCategory = (category: Category) => {
-        setDeletingCategory(category);
-        setShowDeleteCategoryDialog(true);
-        setCategoryError(null);
-    };
-    const handleDeleteTransaction = (transaction: Transaction) => {
-        setDeletingTransaction(transaction);
-        setShowDeleteTransactionDialog(true);
-        setTransactionError(null);
-    };
-    const closeModals = () => {
-        setShowCategoryModal(false);
-        setShowTransactionModal(false);
-        setShowDeleteCategoryDialog(false);
-        setShowDeleteTransactionDialog(false);
-        setEditingCategory(null);
-        setEditingTransaction(null);
-        setDeletingCategory(null);
-        setDeletingTransaction(null);
-    };
-
-    // Confirm delete handlers
-    const confirmDeleteCategory = async () => {
-        if (deletingCategory) {
-            try {
-                await dispatch(deleteCategory(deletingCategory.id)).unwrap();
-                dispatch(fetchCategories());
-                setShowDeleteCategoryDialog(false);
-                setDeletingCategory(null);
-            } catch (error) {
-                setCategoryError(
-                    'Failed to delete category. Please try again.'
-                );
-            }
-        }
-    };
-    const confirmDeleteTransaction = async () => {
-        if (deletingTransaction) {
-            try {
-                await dispatch(
-                    deleteTransaction(deletingTransaction.id)
-                ).unwrap();
-                dispatch(fetchTransactions());
-                setShowDeleteTransactionDialog(false);
-                setDeletingTransaction(null);
-            } catch (error) {
-                setTransactionError(
-                    'Failed to delete transaction. Please try again.'
-                );
-            }
-        }
-    };
-
-    // Using shared EditDeleteButtons component from components/
-
-    function CategoriesList({
-        categories,
-        onEdit,
-        onDelete,
-        page,
-    }: {
-        categories: Category[];
-        onEdit: (c: Category) => void;
-        onDelete: (c: Category) => void;
-        page: number;
-    }) {
-        if (!categories.length)
-            return (
-                <p className='text-gray-500'>
-                    No categories for this period. Add one!
-                </p>
-            );
-        const ITEMS_PER_PAGE = 5;
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const paged = categories.slice(start, start + ITEMS_PER_PAGE);
-        return (
-            <>
-                <ul className='divide-y divide-gray-200'>
-                    {paged.map((category) => (
-                        <li
-                            key={category.id}
-                            className='py-2 flex justify-between items-center'
-                        >
-                            <span className='text-sm font-medium text-gray-900'>
-                                {category.name}
-                            </span>
-                            <EditDeleteButtons
-                                onEdit={() => onEdit(category)}
-                                onDelete={() => onDelete(category)}
-                            />
-                        </li>
-                    ))}
-                </ul>
-                {categories.length > ITEMS_PER_PAGE && (
-                    <Pagination
-                        page={page}
-                        total={categories.length}
-                        onPageChange={setCategoryPage}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                    />
-                )}
-            </>
-        );
-    }
-
-    function RecentTransactionsList({
-        transactions,
-        onEdit,
-        onDelete,
-        page,
-    }: {
-        transactions: Transaction[];
-        onEdit: (t: Transaction) => void;
-        onDelete: (t: Transaction) => void;
-        page: number;
-    }) {
-        if (!transactions.length)
-            return (
-                <p className='text-gray-500'>
-                    No recent transactions. Add one!
-                </p>
-            );
-        const ITEMS_PER_PAGE = 5;
-        const start = (page - 1) * ITEMS_PER_PAGE;
-        const paged = transactions.slice(start, start + ITEMS_PER_PAGE);
-        return (
-            <>
-                <ul className='divide-y divide-gray-200'>
-                    {paged.map((transaction) => (
-                        <li key={transaction.id} className='py-2'>
-                            <div className='flex justify-between items-start'>
-                                <div className='flex-1'>
-                                    <div className='flex justify-between'>
-                                        <span className='text-sm font-medium text-gray-900'>
-                                            {transaction.description}
-                                        </span>
-                                        <span
-                                            className={`text-sm font-medium ${transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}
-                                        >
-                                            {formatCurrency(
-                                                Math.abs(transaction.amount)
-                                            )}
-                                        </span>
-                                    </div>
-                                    <p className='text-xs text-gray-500'>
-                                        {new Date(
-                                            transaction.date
-                                        ).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <EditDeleteButtons
-                                    onEdit={() => onEdit(transaction)}
-                                    onDelete={() => onDelete(transaction)}
-                                />
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-                {transactions.length > ITEMS_PER_PAGE && (
-                    <Pagination
-                        page={page}
-                        total={transactions.length}
-                        onPageChange={setTransactionPage}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                    />
-                )}
-            </>
-        );
-    }
-    // Pagination component
-    function Pagination({
-        page,
-        total,
-        onPageChange,
-        itemsPerPage,
-    }: {
-        page: number;
-        total: number;
-        onPageChange: (p: number) => void;
-        itemsPerPage: number;
-    }) {
-        const totalPages = Math.ceil(total / itemsPerPage);
-        if (totalPages <= 1) return null;
-        return (
-            <nav className='flex justify-center mt-2' aria-label='Pagination'>
-                <button
-                    className='px-2 py-1 mx-1 rounded border text-xs bg-gray-100 hover:bg-gray-200'
-                    onClick={() => onPageChange(Math.max(1, page - 1))}
-                    disabled={page === 1}
-                    aria-label='Previous page'
-                >
-                    &lt;
-                </button>
-                <span className='px-2 py-1 text-xs'>
-                    Page {page} of {totalPages}
-                </span>
-                <button
-                    className='px-2 py-1 mx-1 rounded border text-xs bg-gray-100 hover:bg-gray-200'
-                    onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-                    disabled={page === totalPages}
-                    aria-label='Next page'
-                >
-                    &gt;
-                </button>
-            </nav>
-        );
-    }
+    }, [categories, transactions]);
 
     function DashboardFilters() {
         return (
@@ -399,189 +208,215 @@ function Dashboard() {
     }
 
     return (
-        <div className='min-h-screen bg-gray-100'>
-            <header className='bg-white shadow'>
-                <div className='max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8'>
-                    <h1 className='text-3xl font-bold text-gray-900'>
-                        Personal Finance Managment Dashboard
-                    </h1>
+        <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
+            {/* Header */}
+            <header className='bg-white shadow-sm border-b border-gray-200'>
+                <div className='max-w-[1600px] mx-auto py-12 px-4 sm:px-6 lg:px-8'>
+                    <div className='flex items-center justify-between'>
+                        <div>
+                            <h1 className='text-3xl font-bold text-gray-900'>
+                                Dashboard
+                            </h1>
+                            <p className='mt-1 text-sm text-gray-500'>
+                                Overview of your financial portfolio
+                            </p>
+                        </div>
+                        <div className='text-right'>
+                            <p className='text-sm text-gray-500'>
+                                Last Updated
+                            </p>
+                            <p className='text-sm font-medium text-gray-900'>
+                                {new Date().toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                })}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </header>
 
             {/* Filters */}
-            <div className='bg-white shadow-sm border-b'>
-                <div className='max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8'>
+            <div className='bg-white border-b border-gray-200'>
+                <div className='max-w-[1600px] mx-auto py-5 px-4 sm:px-6 lg:px-8'>
                     <DashboardFilters />
                 </div>
             </div>
 
-            <main className='max-w-7xl mx-auto py-6 sm:px-6 lg:px-8'>
-                <div className='px-4 py-6 sm:px-0'>
-                    <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-                        {/* Balance Overview */}
-                        <div className='lg:col-span-3'>
-                            <BalanceOverview
-                                transactions={filteredTransactions}
-                            />
-                        </div>
-
-                        {/* Categories Section */}
-                        <div className='bg-white overflow-hidden shadow rounded-lg'>
-                            <div className='p-5'>
+            <main className='max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8'>
+                <div className='space-y-8'>
+                    {/* Balance Overview */}
+                    <div className='transform transition-all duration-200 hover:scale-[1.01]'>
+                        <BalanceOverview transactions={filteredTransactions} />
+                    </div>
+                    {/* First Row - 2 Spending Charts */}
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                        {/* Monthly/Yearly Spending Chart */}
+                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                            <div className='bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4'>
                                 <div className='flex items-center justify-between'>
-                                    <div className='flex-shrink-0'>
-                                        <h3 className='text-lg leading-6 font-medium text-gray-900'>
-                                            Categories
+                                    <div className='flex items-center'>
+                                        <svg
+                                            className='h-6 w-6 text-white'
+                                            fill='none'
+                                            stroke='currentColor'
+                                            viewBox='0 0 24 24'
+                                        >
+                                            <path
+                                                strokeLinecap='round'
+                                                strokeLinejoin='round'
+                                                strokeWidth={2}
+                                                d='M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                                            />
+                                        </svg>
+                                        <h3 className='ml-3 text-lg font-semibold text-white'>
+                                            {filterByYear
+                                                ? `Spending Breakdown - ${selectedYear}`
+                                                : `Spending - ${new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} ${selectedYear}`}
                                         </h3>
                                     </div>
-                                    {/* Add Category button removed per request */}
+                                    <span className='text-sm text-white/80'>
+                                        {filteredTransactions.length}{' '}
+                                        transaction
+                                        {filteredTransactions.length !== 1
+                                            ? 's'
+                                            : ''}
+                                    </span>
                                 </div>
-                                <div className='mt-5'>
-                                    {categoryError && (
-                                        <div className='text-red-600 text-xs mb-2'>
-                                            {categoryError}
-                                        </div>
-                                    )}
-                                    {categoriesLoading ? (
-                                        <div className='flex flex-col gap-2'>
-                                            {[...Array(5)].map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className='animate-pulse h-6 bg-gray-200 rounded w-full'
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <CategoriesList
-                                            categories={filteredCategories}
-                                            onEdit={handleEditCategory}
-                                            onDelete={handleDeleteCategory}
-                                            page={categoryPage}
-                                        />
-                                    )}
-                                    {filteredCategories.length > 5 && (
-                                        <button className='text-blue-600 hover:underline text-xs mt-2'>
-                                            View All Categories
-                                        </button>
-                                    )}
-                                </div>
+                            </div>
+                            <div className='p-6'>
+                                <MonthlySpendingChart
+                                    transactions={filteredTransactions}
+                                    year={selectedYear}
+                                />
                             </div>
                         </div>
 
-                        {/* Recent Transactions */}
-                        <div className='bg-white overflow-hidden shadow rounded-lg'>
-                            <div className='p-5'>
-                                <div className='flex items-center justify-between'>
-                                    <div className='flex-shrink-0'>
-                                        <h3 className='text-lg leading-6 font-medium text-gray-900'>
-                                            Recent Transactions
-                                        </h3>
-                                    </div>
-                                    {/* Add Transaction button removed per request */}
-                                </div>
-                                <div className='mt-5'>
-                                    {transactionError && (
-                                        <div className='text-red-600 text-xs mb-2'>
-                                            {transactionError}
-                                        </div>
-                                    )}
-                                    {transactionsLoading ? (
-                                        <div className='flex flex-col gap-2'>
-                                            {[...Array(5)].map((_, i) => (
-                                                <div
-                                                    key={i}
-                                                    className='animate-pulse h-6 bg-gray-200 rounded w-full'
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <RecentTransactionsList
-                                            transactions={filteredTransactions}
-                                            onEdit={handleEditTransaction}
-                                            onDelete={handleDeleteTransaction}
-                                            page={transactionPage}
+                        {/* Spending by Category */}
+                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                            <div className='bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4'>
+                                <div className='flex items-center'>
+                                    <svg
+                                        className='h-6 w-6 text-white'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
+                                    >
+                                        <path
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            strokeWidth={2}
+                                            d='M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z'
                                         />
-                                    )}
-                                    {filteredTransactions.length > 5 && (
-                                        <button className='text-blue-600 hover:underline text-xs mt-2'>
-                                            View All Transactions
-                                        </button>
-                                    )}
+                                        <path
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            strokeWidth={2}
+                                            d='M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z'
+                                        />
+                                    </svg>
+                                    <h3 className='ml-3 text-lg font-semibold text-white'>
+                                        Spending by Category
+                                    </h3>
                                 </div>
                             </div>
-                        </div>
-
-                        {/* Spending Chart */}
-                        <div className='bg-white overflow-hidden shadow rounded-lg'>
-                            <div className='p-5'>
-                                <h3 className='text-lg leading-6 font-medium text-gray-900 mb-4'>
-                                    Spending by Category
-                                </h3>
+                            <div className='p-6'>
                                 <SpendingChart
                                     transactions={filteredTransactions}
                                     categories={filteredCategories}
                                 />
                             </div>
                         </div>
+                    </div>
 
-                        {/* Bank Statement Upload Section */}
-                        <div className='lg:col-span-3'>
-                            <BankStatementUpload />
+                    {/* Second Row - Investments and Heritage (Full Width) */}
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                        {/* Investments Chart */}
+                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                            <div className='bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4'>
+                                <div className='flex items-center'>
+                                    <svg
+                                        className='h-6 w-6 text-white'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
+                                    >
+                                        <path
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            strokeWidth={2}
+                                            d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'
+                                        />
+                                    </svg>
+                                    <h3 className='ml-3 text-lg font-semibold text-white'>
+                                        Investments
+                                    </h3>
+                                </div>
+                            </div>
+                            <div className='p-6'>
+                                <InvestmentsChart investments={investments} />
+                            </div>
+                        </div>
+
+                        {/* Heritage Chart */}
+                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                            <div className='bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4'>
+                                <div className='flex items-center'>
+                                    <svg
+                                        className='h-6 w-6 text-white'
+                                        fill='none'
+                                        stroke='currentColor'
+                                        viewBox='0 0 24 24'
+                                    >
+                                        <path
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            strokeWidth={2}
+                                            d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
+                                        />
+                                    </svg>
+                                    <h3 className='ml-3 text-lg font-semibold text-white'>
+                                        Heritage
+                                    </h3>
+                                </div>
+                            </div>
+                            <div className='p-6'>
+                                <HeritageChart heritages={heritages} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Third Row - Retirement (Full Width) */}
+                    <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                        <div className='bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4'>
+                            <div className='flex items-center'>
+                                <svg
+                                    className='h-6 w-6 text-white'
+                                    fill='none'
+                                    stroke='currentColor'
+                                    viewBox='0 0 24 24'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                                    />
+                                </svg>
+                                <h3 className='ml-3 text-lg font-semibold text-white'>
+                                    Retirement
+                                </h3>
+                            </div>
+                        </div>
+                        <div className='p-6'>
+                            <RetirementChart
+                                retirementAccounts={retirementAccounts}
+                            />
                         </div>
                     </div>
                 </div>
             </main>
-
-            {/* Category Modal */}
-            <Modal isOpen={showCategoryModal} onClose={closeModals}>
-                <CategoryForm
-                    category={editingCategory ?? undefined}
-                    onClose={closeModals}
-                />
-            </Modal>
-
-            {/* Transaction Modal */}
-            <Modal isOpen={showTransactionModal} onClose={closeModals}>
-                <TransactionForm
-                    transaction={editingTransaction ?? undefined}
-                    onClose={closeModals}
-                />
-            </Modal>
-
-            {/* Delete Confirmation Modals */}
-            <ConfirmModal
-                isOpen={showDeleteCategoryDialog}
-                onClose={() => setShowDeleteCategoryDialog(false)}
-                onConfirm={confirmDeleteCategory}
-                title='Delete Category'
-                message={
-                    <>
-                        Are you sure you want to delete the category "
-                        <strong>{deletingCategory?.name}</strong>"? This action
-                        cannot be undone.
-                    </>
-                }
-                confirmLabel='Delete'
-                cancelLabel='Cancel'
-                isDanger
-            />
-
-            <ConfirmModal
-                isOpen={showDeleteTransactionDialog}
-                onClose={() => setShowDeleteTransactionDialog(false)}
-                onConfirm={confirmDeleteTransaction}
-                title='Delete Transaction'
-                message={
-                    <>
-                        Are you sure you want to delete the transaction "
-                        <strong>{deletingTransaction?.description}</strong>"?
-                        This action cannot be undone.
-                    </>
-                }
-                confirmLabel='Delete'
-                cancelLabel='Cancel'
-                isDanger
-            />
         </div>
     );
 }

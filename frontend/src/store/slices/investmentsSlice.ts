@@ -42,9 +42,12 @@ const initialState: InvestmentsState = {
 export const fetchInvestments = createAsyncThunk(
     'investments/fetchInvestments',
     async () => {
-        const response = await axios.get('/api/investments/');
+        const response = await axios.get(
+            '/api/v1/investments/?page_size=10000'
+        );
+        const data = response.data.results || response.data;
         // Transform string fields to numbers with error handling
-        return response.data.map((investment: InvestmentApiResponse) => ({
+        return data.map((investment: InvestmentApiResponse) => ({
             ...investment,
             quantity: isNaN(parseFloat(investment.quantity))
                 ? 0
@@ -106,7 +109,7 @@ export const createInvestment = createAsyncThunk(
         compounding_frequency?: string;
         term_years?: number;
     }) => {
-        const response = await axios.post('/api/investments/', data);
+        const response = await axios.post('/api/v1/investments/', data);
         return response.data;
     }
 );
@@ -114,7 +117,7 @@ export const createInvestment = createAsyncThunk(
 export const updateInvestment = createAsyncThunk(
     'investments/updateInvestment',
     async ({ id, data }: { id: number; data: Partial<Investment> }) => {
-        const response = await axios.patch(`/api/investments/${id}/`, data);
+        const response = await axios.patch(`/api/v1/investments/${id}/`, data);
         return response.data;
     }
 );
@@ -122,7 +125,7 @@ export const updateInvestment = createAsyncThunk(
 export const deleteInvestment = createAsyncThunk(
     'investments/deleteInvestment',
     async (id: number) => {
-        await axios.delete(`/api/investments/${id}/`);
+        await axios.delete(`/api/v1/investments/${id}/`);
         return id;
     }
 );
