@@ -1,6 +1,9 @@
 # 💰 Personal Finance Management
 
-A comprehensive, secure personal budget management application built with Django REST API backend and React TypeScript frontend. Track expenses, manage investments, analyze spending patterns, and maintain complete financial control with enterprise-grade features.
+A comprehensive, secure personal budget management application built with Django
+REST API backend and React TypeScript frontend. Track expenses, manage
+investments, analyze spending patterns, and maintain complete financial control
+with enterprise-grade features.
 
 ## ✨ Features
 
@@ -76,38 +79,81 @@ A comprehensive, secure personal budget management application built with Django
 - Docker & Docker Compose
 - Git
 
+### Interactive Setup (Recommended)
+
+The easiest way to get started is using our interactive setup script that
+supports both PostgreSQL and MySQL:
+
+```powershell
+# Windows PowerShell
+.\setup.ps1
+```
+
+The setup script will:
+
+- ✅ Verify Docker installation
+- 🗄️ Let you choose between PostgreSQL or MySQL
+- 📝 Create environment files automatically
+- 🚀 Start services with your selected database
+- 🔄 Run database migrations
+- 🎉 Set up everything for you!
+
+**Default admin credentials:**
+
+- Username: `admin`
+- Password: `changeme123` (change after first login)
+
+> 📖 **For detailed database configuration options**, see
+> [DATABASE_SELECTION_GUIDE.md](DATABASE_SELECTION_GUIDE.md)
+
+### Manual Setup
+
+If you prefer manual configuration:
+
 ### Development Setup
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/hugolicea/personal-finance-management.git
-   cd personal-finance-management
-   ```
+    ```bash
+    git clone https://github.com/hugolicea/personal-finance-management.git
+    cd personal-finance-management
+    ```
 
-2. **Run setup script (Windows)**
+2. **Choose your database and configure**
 
-   ```bash
-   # Create environment files
-   cp backend/.env.example backend/.env
+    **Option A: PostgreSQL (Recommended)**
 
-   # Start services
-   cd docker
-   docker-compose up --build
+    ```powershell
+    cd docker
+    Copy-Item .env.postgresql .env
+    # Edit .env if needed
+    docker compose --profile postgres up -d
+    ```
 
-   # Run migrations (automatically creates default admin user)
-   docker-compose exec backend python manage.py migrate
+    **Option B: MySQL**
 
-   # Default admin credentials (change after first login):
-   # Username: admin
-   # Password: changeme123
-   ```
+    ```powershell
+    cd docker
+    Copy-Item .env.mysql .env
+    # Edit .env if needed
+    docker compose --profile mysql up -d
+    ```
 
-3. **Access the application**
-   - Frontend: <http://localhost:3000>
-   - Backend API: <http://localhost:8000/api/v1/>
-   - Admin Panel: <http://localhost:8000/admin>
-   - API Documentation: <http://localhost:8000/api/schema/swagger-ui/>
+3. **Run migrations**
+
+    ```bash
+    # For PostgreSQL
+    docker compose --profile postgres exec backend python manage.py migrate
+
+    # For MySQL
+    docker compose --profile mysql exec backend python manage.py migrate
+    ```
+
+4. **Access the application**
+    - Frontend: <http://localhost:3000>
+    - Backend API: <http://localhost:8000/api/v1/>
+    - Admin Panel: <http://localhost:8000/admin>
+    - API Documentation: <http://localhost:8000/api/schema/swagger-ui/>
 
 ### Developer Setup (Code Quality Tools)
 
@@ -115,70 +161,70 @@ For development work with automated code quality checks:
 
 1. **Install pre-commit hooks**
 
-   ```bash
-   # Install pre-commit (if not already installed)
-   pip install pre-commit
+    ```bash
+    # Install pre-commit (if not already installed)
+    pip install pre-commit
 
-   # Install git hooks
-   pre-commit install
+    # Install git hooks
+    pre-commit install
 
-   # (Optional) Run on all files to test
-   pre-commit run --all-files
-   ```
+    # (Optional) Run on all files to test
+    pre-commit run --all-files
+    ```
 
 2. **Pre-commit hooks will automatically**:
-   - Format Python code with Black
-   - Lint Python code with Flake8
-   - Sort Python imports with isort
-   - Scan for security issues with Bandit
-   - Format JavaScript/TypeScript with Prettier
-   - Lint JavaScript/TypeScript with ESLint
-   - Check for trailing whitespace
-   - Validate YAML files
-   - Prevent committing large files or secrets
+    - Format Python code with Black
+    - Lint Python code with Flake8
+    - Sort Python imports with isort
+    - Scan for security issues with Bandit
+    - Format JavaScript/TypeScript with Prettier
+    - Lint JavaScript/TypeScript with ESLint
+    - Check for trailing whitespace
+    - Validate YAML files
+    - Prevent committing large files or secrets
 
 3. **Sentry Integration (Optional)**
 
-   For error monitoring in development:
+    For error monitoring in development:
 
-   ```bash
-   # Backend: Add to backend/.env
-   SENTRY_DSN=your-sentry-dsn-here
+    ```bash
+    # Backend: Add to backend/.env
+    SENTRY_DSN=your-sentry-dsn-here
 
-   # Frontend: Add to frontend/.env
-   VITE_SENTRY_DSN=your-sentry-dsn-here
-   ```
+    # Frontend: Add to frontend/.env
+    VITE_SENTRY_DSN=your-sentry-dsn-here
+    ```
 
 ### Production Deployment
 
 1. **Configure environment variables**
 
-   ```bash
-   # Backend environment variables
-   SECRET_KEY=<your-secret-key>
-   DEBUG=False
-   ALLOWED_HOSTS=your-domain.com
+    ```bash
+    # Backend environment variables
+    SECRET_KEY=<your-secret-key>
+    DEBUG=False
+    ALLOWED_HOSTS=your-domain.com
 
-   # Optional: Sentry for error monitoring
-   SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
-   ENVIRONMENT=production
+    # Optional: Sentry for error monitoring
+    SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+    ENVIRONMENT=production
 
-   # Frontend environment variables
-   VITE_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
-   ```
+    # Frontend environment variables
+    VITE_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+    ```
 
 2. **Deploy with production Docker Compose**
 
-   ```bash
-   cd docker
-   docker-compose -f docker-compose.prod.yml up -d --build
-   ```
+    ```bash
+    cd docker
+    docker-compose -f docker-compose.prod.yml up -d --build
+    ```
 
 3. **Deploy with Docker Compose**
 
-   ```bash
-   docker-compose -f docker/docker-compose.yml up -d --build
-   ```
+    ```bash
+    docker-compose -f docker/docker-compose.yml up -d --build
+    ```
 
 ## 🏗️ Project Structure
 
@@ -269,7 +315,8 @@ personal-finance-management/
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ## 🙏 Acknowledgments
 

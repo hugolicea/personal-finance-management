@@ -7,12 +7,32 @@ and React TypeScript frontend.
 
 **Tech Stack:**
 
-- **Backend**: Django 5.1, DRF, PostgreSQL 15, Gunicorn
+- **Backend**: Django 5.1, DRF, PostgreSQL 15 / MySQL 8.0, Gunicorn
 - **Frontend**: React 18, TypeScript, Redux Toolkit, Vite, Tailwind CSS
 - **DevOps**: Docker, Docker Compose, Nginx, GitHub Actions
 - **Code Quality**: Ruff (replaces Black/Flake8/isort), Pre-commit hooks,
   ESLint, Prettier
 - **Monitoring**: Sentry (optional), Django logging
+
+## Database Support
+
+The application supports **both PostgreSQL and MySQL** databases:
+
+- **PostgreSQL 15** (Recommended) - Better for analytics and complex queries
+- **MySQL 8.0** - Good for traditional applications with wide hosting support
+
+**Configuration**: Database is selected via `DB_ENGINE` environment variable
+(`postgresql` or `mysql`). The application automatically configures the
+appropriate Django database backend. See `DATABASE_SELECTION_GUIDE.md` for
+details.
+
+**Important**: When writing database queries or migrations:
+
+- Use Django ORM features compatible with both databases
+- Avoid PostgreSQL-specific features (JSONField advanced queries, ArrayField)
+  unless documented
+- Test migrations on both databases when possible
+- Use `select_related()` and `prefetch_related()` for optimization on both
 
 ## Code Standards
 
@@ -67,38 +87,52 @@ frontend/
 └── package.json        # Dependencies + @sentry/react
 
 docker/
-├── docker-compose.yml      # Development
+├── docker-compose.yml      # Development (supports both PostgreSQL and MySQL)
 ├── docker-compose.prod.yml # Production with static_volume
+├── .env.postgresql         # PostgreSQL configuration template
+├── .env.mysql              # MySQL configuration template
 └── nginx-backend.conf      # Nginx config for static files
 ```
 
 ## Development Commands
 
+### Interactive Setup (First Time)
+
+```powershell
+# Run interactive setup script (choose database during setup)
+.\setup.ps1
+```
+
 ### Local Development
 
 ```powershell
-# Start services
+# Start services with PostgreSQL
 cd docker
-docker compose up -d
+docker compose --profile postgres up -d
+
+# OR start services with MySQL
+docker compose --profile mysql up -d
 
 # View logs
-docker compose logs -f backend
-docker compose logs -f frontend
+docker compose --profile postgres logs -f backend  # or --profile mysql
+docker compose --profile postgres logs -f frontend
 
 # Run migrations
-docker compose exec backend python manage.py makemigrations
-docker compose exec backend python manage.py migrate
+docker compose --profile postgres exec backend python manage.py makemigrations
+docker compose --profile postgres exec backend python manage.py migrate
 
 # Create superuser (or use default: admin/changeme123)
-docker compose exec backend python manage.py createsuperuser
+docker compose --profile postgres exec backend python manage.py createsuperuser
 
 # Collect static files
-docker compose exec backend python manage.py collectstatic --noinput
+docker compose --profile postgres exec backend python manage.py collectstatic --noinput
 
 # Run tests
-docker compose exec backend pytest
+docker compose --profile postgres exec backend pytest
 cd ../frontend && npm test
 ```
+
+**Note**: Replace `--profile postgres` with `--profile mysql` if using MySQL.
 
 ### Production
 
@@ -153,13 +187,18 @@ pre-commit autoupdate
 
 ## Important Notes
 
+## Important Notes
+
 ### Database
 
 - **Default admin**: username=`admin`, password=`changeme123` (auto-created in
   migrations)
+- **Multi-database support**: PostgreSQL 15 and MySQL 8.0
+- **Selection**: Use `DB_ENGINE` environment variable (`postgresql` or `mysql`)
 - All models have `user` ForeignKey for multi-user support
 - Indexes on user-scoped queries for performance
 - Use `select_related('user')` in all ViewSets
+- **Important**: Avoid PostgreSQL-specific features unless documented
 
 ### Static Files (Production)
 
@@ -212,14 +251,18 @@ pre-commit autoupdate
 **Backend** (`docker/.env`):
 
 ```bash
-SECRET_KEY=your-secret-key
-DEBUG=False
-ALLOWED_HOSTS=localhost,127.0.0.1
+# Database Configuration
+DB_ENGINE=postgresql  # or mysql
 DB_NAME=personal_finance_management
 DB_USER=user
 DB_PASSWORD=password
-DB_HOST=postgres
-DB_PORT=5432
+DB_HOST=postgres  # or mysql
+DB_PORT=5432      # or 3306 for MySQL
+
+# Django Configuration
+SECRET_KEY=your-secret-key
+DEBUG=False
+ALLOWED_HOSTS=localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=http://localhost:3000
 
 # Optional
