@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth.models import User
 from django.urls import reverse
 
 from rest_framework import status
@@ -11,7 +12,11 @@ from budget.models import Category, Transaction
 class CategoryAPITest(APITestCase):
     def setUp(self):
         """Set up test data"""
-        self.category = Category.objects.create(name="Food")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
+        self.client.force_authenticate(user=self.user)
+        self.category = Category.objects.create(name="Food", user=self.user)
 
     def test_get_categories(self):
         """Test GET /api/v1/categories/"""
@@ -41,7 +46,11 @@ class CategoryAPITest(APITestCase):
 class TransactionAPITest(APITestCase):
     def setUp(self):
         """Set up test data"""
-        self.category = Category.objects.create(name="Food")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
+        self.client.force_authenticate(user=self.user)
+        self.category = Category.objects.create(name="Food", user=self.user)
 
     def test_get_transactions(self):
         """Test GET /api/v1/transactions/"""
@@ -72,6 +81,7 @@ class TransactionAPITest(APITestCase):
             description="Snack",
             date=date.today(),
             category=self.category,
+            user=self.user,
         )
         url = reverse("transaction-detail", kwargs={"pk": transaction.id})
         response = self.client.get(url)
@@ -82,18 +92,24 @@ class TransactionAPITest(APITestCase):
 class BalanceAPITest(APITestCase):
     def setUp(self):
         """Set up test data"""
-        self.category = Category.objects.create(name="Food")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
+        self.client.force_authenticate(user=self.user)
+        self.category = Category.objects.create(name="Food", user=self.user)
         Transaction.objects.create(
             amount=-50.00,
             description="Lunch",
             date=date.today(),
             category=self.category,
+            user=self.user,
         )
         Transaction.objects.create(
             amount=-20.00,
             description="Dinner",
             date=date.today(),
             category=self.category,
+            user=self.user,
         )
 
     def test_balance_week(self):
