@@ -49,8 +49,8 @@ jobs:
             - name: Run linting
               working-directory: ./backend
               run: |
-                  flake8 . --max-line-length=79 --exclude=migrations,__pycache__,.venv
-                  black --check . --exclude=migrations
+                  ruff check . --select E,W,F,I,N,UP,B,C4,DJ,S
+                  ruff format --check .
 
             - name: Run tests
               working-directory: ./backend
