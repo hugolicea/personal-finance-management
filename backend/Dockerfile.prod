@@ -3,10 +3,13 @@ FROM python:3.11-slim as builder
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (PostgreSQL and MySQL clients)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
+    default-mysql-client \
+    default-libmysqlclient-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -19,9 +22,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies (PostgreSQL and MySQL clients)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder
@@ -34,7 +38,8 @@ COPY . .
 # Create necessary directories and set permissions
 RUN mkdir -p /app/staticfiles /app/logs && \
     useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app/entrypoint.sh
 
 USER appuser
 
@@ -51,5 +56,7 @@ ENV SECRET_KEY=temp-collectstatic-key \
 RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "60", "personal_finance_management.wsgi:application"]

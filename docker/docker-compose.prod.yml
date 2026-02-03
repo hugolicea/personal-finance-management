@@ -17,6 +17,31 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    profiles:
+      - postgres
+
+  mysql:
+    image: mysql:8.0
+    env_file:
+      - .env
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-personal_finance_management}
+      MYSQL_USER: ${DB_USER:-user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - personal_finance_network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-user}", "-p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    profiles:
+      - mysql
 
   backend:
     build:
@@ -28,19 +53,20 @@ services:
       - SECRET_KEY=${SECRET_KEY:-django-insecure-change-me}
       - DEBUG=False
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - DB_ENGINE=${DB_ENGINE:-postgresql}
       - DB_NAME=${DB_NAME:-personal_finance_management}
       - DB_USER=${DB_USER:-user}
       - DB_PASSWORD=${DB_PASSWORD:-password}
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost}
     volumes:
       - static_volume:/app/staticfiles  # Share static files with nginx
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - personal_finance_network
+    profiles:
+      - postgres
+      - mysql
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import socket; s = socket.socket(); s.connect(('localhost', 8000)); s.close()\""]
       interval: 30s
@@ -97,6 +123,7 @@ services:
 volumes:
   static_volume:  # Volume for Django static files
   postgres_data:
+  mysql_data:
 
 networks:
   personal_finance_network:

@@ -51,6 +51,12 @@ CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS", default="http://localhost:3000,http://127.0.0.1:3000"
 ).split(",")
 
+# CSRF Configuration for production
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000,http://127.0.0.1:3000",
+).split(",")
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -83,16 +89,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "personal_finance_management.wsgi.application"
 
+# Dynamic Database Configuration - Supports PostgreSQL and MySQL
+DB_ENGINE = config("DB_ENGINE", default="postgresql").lower()
+
+# Map common database names to Django backends
+DB_ENGINE_MAP = {
+    "postgresql": "django.db.backends.postgresql",
+    "postgres": "django.db.backends.postgresql",
+    "mysql": "django.db.backends.mysql",
+}
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": DB_ENGINE_MAP.get(DB_ENGINE, "django.db.backends.postgresql"),
         "NAME": config("DB_NAME", default="personal_finance_management"),
         "USER": config("DB_USER", default="user"),
         "PASSWORD": config("DB_PASSWORD", default="password"),
         "HOST": config("DB_HOST", default="db"),
-        "PORT": config("DB_PORT", default="5432"),
+        "PORT": config(
+            "DB_PORT",
+            default="5432" if DB_ENGINE in ["postgresql", "postgres"] else "3306",
+        ),
     }
 }
+
+# MySQL specific configuration
+if DB_ENGINE == "mysql":
+    DATABASES["default"]["OPTIONS"] = {
+        "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        "charset": "utf8mb4",
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -151,6 +177,10 @@ REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_HTTPONLY": False,
 }
+
+# Ensure logs directory exists
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Logging Configuration
 LOGGING = {
