@@ -108,6 +108,7 @@ jobs:
         timeout-minutes: 10
         permissions:
             contents: read
+            actions: read # Required for workflow run telemetry
             security-events: write # Required for uploading SARIF
 
         steps:
@@ -123,7 +124,7 @@ jobs:
               continue-on-error: true # Don't fail if vulnerabilities found
 
             - name: Upload Trivy results to GitHub Security
-              uses: github/codeql-action/upload-sarif@v3
+              uses: github/codeql-action/upload-sarif@v4
               with:
                   sarif_file: 'trivy-results.sarif'
               if: always() # Upload even if scan fails
