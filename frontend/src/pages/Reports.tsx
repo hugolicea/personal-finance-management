@@ -78,13 +78,13 @@ function Reports() {
             });
 
             const income = monthTransactions
-                .filter((t) => parseFloat(t.amount) > 0)
-                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                .filter((t) => t.amount > 0)
+                .reduce((sum, t) => sum + t.amount, 0);
 
             const expenses = Math.abs(
                 monthTransactions
-                    .filter((t) => parseFloat(t.amount) < 0)
-                    .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+                    .filter((t) => t.amount < 0)
+                    .reduce((sum, t) => sum + t.amount, 0)
             );
 
             const net = income - expenses;
@@ -106,10 +106,10 @@ function Reports() {
         > = {};
 
         transactions
-            .filter((t) => parseFloat(t.amount) < 0)
+            .filter((t) => t.amount < 0)
             .forEach((transaction) => {
                 const categoryId = transaction.category;
-                const amount = Math.abs(parseFloat(transaction.amount));
+                const amount = Math.abs(transaction.amount);
 
                 if (!categoryTotals[categoryId]) {
                     const category = categories.find(
@@ -122,8 +122,8 @@ function Reports() {
                     };
                 }
 
-                categoryTotals[categoryId].amount += amount;
-                categoryTotals[categoryId].count += 1;
+                categoryTotals[categoryId]!.amount += amount;
+                categoryTotals[categoryId]!.count += 1;
             });
 
         return Object.values(categoryTotals)
@@ -136,13 +136,13 @@ function Reports() {
 
     // Calculate summary statistics
     const totalIncome = transactions
-        .filter((t) => parseFloat(t.amount) > 0)
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        .filter((t) => t.amount > 0)
+        .reduce((sum, t) => sum + t.amount, 0);
 
     const totalExpenses = Math.abs(
         transactions
-            .filter((t) => parseFloat(t.amount) < 0)
-            .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+            .filter((t) => t.amount < 0)
+            .reduce((sum, t) => sum + t.amount, 0)
     );
 
     const netBalance = totalIncome - totalExpenses;
@@ -318,8 +318,10 @@ function Reports() {
                                             <XAxis dataKey='month' />
                                             <YAxis />
                                             <Tooltip
-                                                formatter={(value: number) => [
-                                                    formatCurrency(value),
+                                                formatter={(
+                                                    value: number | undefined
+                                                ) => [
+                                                    formatCurrency(value ?? 0),
                                                     '',
                                                 ]}
                                             />
@@ -372,8 +374,10 @@ function Reports() {
                                                 width={100}
                                             />
                                             <Tooltip
-                                                formatter={(value: number) => [
-                                                    formatCurrency(value),
+                                                formatter={(
+                                                    value: number | undefined
+                                                ) => [
+                                                    formatCurrency(value ?? 0),
                                                     'Amount',
                                                 ]}
                                             />

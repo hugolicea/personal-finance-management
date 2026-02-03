@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
     push:
-        branches: [main] # branches: [main, develop]
+        branches: [main, dev, develop]
     pull_request:
-        branches: [main] # branches: [main, develop]
+        branches: [main, dev, develop]
 
 # Cancel in-progress runs when a new run is triggered
 concurrency:
@@ -123,7 +123,7 @@ jobs:
               continue-on-error: true # Don't fail if vulnerabilities found
 
             - name: Upload Trivy results to GitHub Security
-              uses: github/codeql-action/upload-sarif@v2
+              uses: github/codeql-action/upload-sarif@v3
               with:
                   sarif_file: 'trivy-results.sarif'
               if: always() # Upload even if scan fails

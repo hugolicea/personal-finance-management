@@ -84,10 +84,14 @@ function MonthlySpendingChart({
         0
     );
     const avgMonthlySpending = totalSpending / 12;
-    const maxSpendingMonth = chartData.reduce(
-        (max, month) => (month.spending > max.spending ? month : max),
-        chartData[0]
-    );
+    const maxSpendingMonth =
+        chartData.length > 0
+            ? chartData.reduce(
+                  (max, month) =>
+                      month.spending > (max?.spending ?? 0) ? month : max,
+                  chartData[0]
+              )
+            : null;
 
     return (
         <div className='space-y-6'>
@@ -114,8 +118,14 @@ function MonthlySpendingChart({
                         Highest Month
                     </div>
                     <div className='text-2xl font-bold'>
-                        {maxSpendingMonth.month}:{' '}
-                        {formatCurrency(maxSpendingMonth.spending)}
+                        {maxSpendingMonth ? (
+                            <>
+                                {maxSpendingMonth.month}:{' '}
+                                {formatCurrency(maxSpendingMonth.spending)}
+                            </>
+                        ) : (
+                            'No data'
+                        )}
                     </div>
                 </div>
             </div>

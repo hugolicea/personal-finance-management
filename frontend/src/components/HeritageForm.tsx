@@ -73,15 +73,31 @@ const HeritageForm: React.FC<HeritageFormProps> = ({ heritage, onClose }) => {
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
-            const data = {
-                ...values,
-                area: values.area === '' ? null : Number(values.area),
+            const data: {
+                name: string;
+                heritage_type: string;
+                address: string;
+                area?: number;
+                area_unit?: string;
+                purchase_price: number;
+                current_value?: number;
+                purchase_date: string;
+                monthly_rental_income?: number;
+                notes?: string;
+            } = {
+                name: values.name,
+                heritage_type: values.heritage_type,
+                address: values.address,
+                area: values.area === '' ? undefined : Number(values.area),
+                area_unit: values.area_unit,
+                purchase_price: Number(values.purchase_price),
                 current_value:
                     values.current_value === ''
-                        ? null
+                        ? undefined
                         : Number(values.current_value),
-                purchase_price: Number(values.purchase_price),
+                purchase_date: values.purchase_date!, // Formik validation ensures this is set
                 monthly_rental_income: Number(values.monthly_rental_income),
+                notes: values.notes || undefined,
             };
 
             if (heritage) {
