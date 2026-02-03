@@ -1,5 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import loadingReducer from './loadingSlice';
 import authReducer from './slices/authSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import heritagesReducer from './slices/heritagesSlice';
@@ -15,6 +16,7 @@ export const store = configureStore({
         investments: investmentsReducer,
         retirementAccounts: retirementAccountsReducer,
         transactions: transactionsReducer,
+        loading: loadingReducer,
     },
 });
 

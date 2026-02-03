@@ -3,10 +3,13 @@ import hashlib
 import io
 from datetime import datetime, timedelta
 
-import django_filters
 from django.db.models import Sum
 from django.http import JsonResponse
+
+import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -26,10 +29,14 @@ from .serializers import (
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    ordering = ['name']
+    ordering = ["name"]
 
     def get_queryset(self):
-        return Category.objects.filter(user=self.request.user).order_by('name')
+        return (
+            Category.objects.filter(user=self.request.user)
+            .select_related("user")
+            .order_by("name")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -38,10 +45,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class InvestmentViewSet(viewsets.ModelViewSet):
     queryset = Investment.objects.all()
     serializer_class = InvestmentSerializer
-    ordering = ['-purchase_date']
+    ordering = ["-purchase_date"]
 
     def get_queryset(self):
-        return Investment.objects.filter(user=self.request.user).order_by('-purchase_date')
+        return (
+            Investment.objects.filter(user=self.request.user)
+            .select_related("user")
+            .order_by("-purchase_date")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -50,10 +61,14 @@ class InvestmentViewSet(viewsets.ModelViewSet):
 class HeritageViewSet(viewsets.ModelViewSet):
     queryset = Heritage.objects.all()
     serializer_class = HeritageSerializer
-    ordering = ['-purchase_date']
+    ordering = ["-purchase_date"]
 
     def get_queryset(self):
-        return Heritage.objects.filter(user=self.request.user).order_by('-purchase_date')
+        return (
+            Heritage.objects.filter(user=self.request.user)
+            .select_related("user")
+            .order_by("-purchase_date")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -62,10 +77,14 @@ class HeritageViewSet(viewsets.ModelViewSet):
 class RetirementAccountViewSet(viewsets.ModelViewSet):
     queryset = RetirementAccount.objects.all()
     serializer_class = RetirementAccountSerializer
-    ordering = ['name']
+    ordering = ["name"]
 
     def get_queryset(self):
-        return RetirementAccount.objects.filter(user=self.request.user).order_by('name')
+        return (
+            RetirementAccount.objects.filter(user=self.request.user)
+            .select_related("user")
+            .order_by("name")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -73,12 +92,13 @@ class RetirementAccountViewSet(viewsets.ModelViewSet):
 
 class TransactionFilter(django_filters.FilterSet):
     """Custom filter for Transaction to support date range queries"""
-    date__gte = django_filters.DateFilter(field_name='date', lookup_expr='gte')
-    date__lte = django_filters.DateFilter(field_name='date', lookup_expr='lte')
+
+    date__gte = django_filters.DateFilter(field_name="date", lookup_expr="gte")
+    date__lte = django_filters.DateFilter(field_name="date", lookup_expr="lte")
 
     class Meta:
         model = Transaction
-        fields = ['category', 'transaction_type', 'date__gte', 'date__lte']
+        fields = ["category", "transaction_type", "date__gte", "date__lte"]
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -90,12 +110,31 @@ class TransactionViewSet(viewsets.ModelViewSet):
     ordering_fields = ["date", "amount"]
 
     def get_queryset(self):
-        return Transaction.objects.filter(user=self.request.user).select_related("category").order_by('-date')
+        return (
+            Transaction.objects.filter(user=self.request.user)
+            .select_related("category")
+            .order_by("-date")
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name="period",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description="Time period (week, month, quarter, year)",
+            enum=["week", "month", "quarter", "year"],
+        )
+    ],
+    responses={
+        200: {"type": "object", "properties": {"balance_week": {"type": "number"}}},
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
 @api_view(["GET"])
 def balance_by_period(request, period):
     now = datetime.now().date()
@@ -111,14 +150,40 @@ def balance_by_period(request, period):
         return JsonResponse({"error": "Invalid period"}, status=400)
 
     total = (
-        Transaction.objects.filter(user=request.user, date__gte=start).aggregate(total=Sum("amount"))[
-            "total"
-        ]
+        Transaction.objects.filter(user=request.user, date__gte=start).aggregate(
+            total=Sum("amount")
+        )["total"]
         or 0
     )
     return JsonResponse({f"balance_{period}": total})
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name="period",
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description="Time period (week, month, quarter, year) or YYYY-MM format",
+        )
+    ],
+    responses={
+        200: {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "integer"},
+                    "name": {"type": "string"},
+                    "budget": {"type": "number"},
+                    "spending": {"type": "number"},
+                    "percentage_used": {"type": "number"},
+                },
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
 @api_view(["GET"])
 def category_spending_by_period(request, period):
     """
@@ -126,6 +191,7 @@ def category_spending_by_period(request, period):
     Supports both predefined periods ('week', 'month', 'quarter', 'year')
     and specific year-month format ('YYYY-MM').
     Returns category budgets vs actual spending.
+    Optimized to prevent N+1 queries.
     """
     now = datetime.now().date()
 
@@ -156,18 +222,21 @@ def category_spending_by_period(request, period):
             return JsonResponse({"error": "Invalid period"}, status=400)
         end = now
 
+    # Optimized: Get all spending in one query grouped by category
+    spending_by_category = dict(
+        Transaction.objects.filter(user=request.user, date__gte=start, date__lte=end)
+        .values("category")
+        .annotate(total=Sum("amount"))
+        .values_list("category", "total")
+    )
+
     # Get all categories with their budgets
     categories = Category.objects.filter(user=request.user)
 
     result = []
     for category in categories:
-        # Calculate actual spending for this category in the period
-        spending = (
-            Transaction.objects.filter(
-                user=request.user, category=category, date__gte=start, date__lte=end
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
+        # Get pre-calculated spending from dict (no additional query)
+        spending = spending_by_category.get(category.id, 0)
 
         # Calculate budget vs spending
         budget = float(category.monthly_budget)
@@ -181,7 +250,9 @@ def category_spending_by_period(request, period):
                 "budget": budget,
                 "spending": spending_float,
                 "balance": balance,
-                "percentage_used": (spending_float / budget * 100) if budget > 0 else 0,
+                "percentage_used": (
+                    (spending_float / budget * 100) if budget > 0 else 0
+                ),
             }
         )
 
@@ -232,17 +303,18 @@ def upload_bank_statement(request):
         ):  # Start at 2 because row 1 is headers
             try:
                 if is_account_csv:
-                    # Account CSV format: Details, Posting Date, Description, Amount, Type
+                    # Account CSV format:
+                    # Details, Posting Date, Description, Amount, Type
                     date_str = get_column_value(
                         row, ["Posting Date", "Post Date", "date", "Date"]
                     )
                     description = get_column_value(
                         row, ["Description", "description", "desc"]
                     )
-                    amount_str = get_column_value(
-                        row, ["Amount", "amount", "amt"])
+                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
                     category_name = get_column_value(
-                        row, ["Type", "type"])  # Use Type as category
+                        row, ["Type", "type"]
+                    )  # Use Type as category
                 else:
                     # Credit card CSV format: flexible columns
                     date_str = get_column_value(
@@ -251,21 +323,28 @@ def upload_bank_statement(request):
                     description = get_column_value(
                         row, ["Description", "description", "desc"]
                     )
-                    amount_str = get_column_value(
-                        row, ["Amount", "amount", "amt"])
+                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
                     category_name = get_column_value(
-                        row, ["Category", "category", "cat"])
+                        row, ["Category", "category", "cat"]
+                    )
 
                 # Validate required fields
                 if not date_str or not description or not amount_str:
                     errors.append(
-                        f"Row {row_num}: Missing required fields (date, description, amount)"
+                        f"Row {row_num}: Missing required fields "
+                        f"(date, description, amount)"
                     )
                     continue
 
                 # Parse date - try multiple formats
                 date = None
-                for date_format in ["%m/%d/%Y", "%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"]:
+                date_formats = [
+                    "%m/%d/%Y",
+                    "%Y-%m-%d",
+                    "%d/%m/%Y",
+                    "%Y/%m/%d",
+                ]
+                for date_format in date_formats:
                     try:
                         date = datetime.strptime(date_str, date_format).date()
                         break
@@ -274,7 +353,9 @@ def upload_bank_statement(request):
 
                 if not date:
                     errors.append(
-                        f"Row {row_num}: Invalid date format. Supported formats: MM/DD/YYYY, YYYY-MM-DD, DD/MM/YYYY"
+                        f"Row {row_num}: Invalid date format. "
+                        f"Supported formats: MM/DD/YYYY, YYYY-MM-DD, "
+                        f"DD/MM/YYYY"
                     )
                     continue
 
@@ -282,8 +363,7 @@ def upload_bank_statement(request):
                 try:
                     # Remove currency symbols, commas, and extra spaces
                     clean_amount = (
-                        amount_str.replace("$", "").replace(
-                            ",", "").replace(" ", "")
+                        amount_str.replace("$", "").replace(",", "").replace(" ", "")
                     )
                     amount = float(clean_amount)
                 except ValueError:
@@ -313,9 +393,10 @@ def upload_bank_statement(request):
                     category, created = Category.objects.get_or_create(
                         name=category_name,
                         user=request.user,
-                        defaults={'classification': classification}
+                        defaults={"classification": classification},
                     )
-                    # If category already exists but has wrong classification, update it
+                    # If category already exists but has wrong
+                    # classification, update it
                     if not created and category.classification != classification:
                         category.classification = classification
                         category.save()
@@ -328,7 +409,7 @@ def upload_bank_statement(request):
                     category, created = Category.objects.get_or_create(
                         name="Uncategorized",
                         user=request.user,
-                        defaults={'classification': Category.SPEND}
+                        defaults={"classification": Category.SPEND},
                     )
 
                 # Create transaction
@@ -338,7 +419,11 @@ def upload_bank_statement(request):
                     description=description,
                     category=category,
                     user=request.user,
-                    transaction_type=Transaction.ACCOUNT if is_account_csv else Transaction.CREDIT_CARD,
+                    transaction_type=(
+                        Transaction.ACCOUNT
+                        if is_account_csv
+                        else Transaction.CREDIT_CARD
+                    ),
                     import_source="bank_statement",
                     reference_id=reference_id,
                 )
@@ -359,7 +444,9 @@ def upload_bank_statement(request):
 
         return Response(
             {
-                "message": f"Processed {len(transactions_created)} transactions successfully",
+                "message": (
+                    f"Processed {len(transactions_created)} transactions successfully"
+                ),
                 "transactions_created": transactions_created,
                 "transactions_skipped": transactions_skipped,
                 "errors": errors,
@@ -393,7 +480,8 @@ def get_column_value(row, possible_names):
 def auto_categorize_transaction(description, user):
     """
     Simple auto-categorization based on keywords in description.
-    This is a basic implementation - could be enhanced with ML or more sophisticated rules.
+    This is a basic implementation - could be enhanced with ML or
+    more sophisticated rules.
     """
     description_lower = description.lower()
 
@@ -414,16 +502,39 @@ def auto_categorize_transaction(description, user):
             "sq *",
             "golden corral",
         ],
-        "Groceries": ["fiesta mart", "foodland", "wm supercenter", "paypal *walmart"],
-        "Gas": ["chevron", "exxon", "murphy", "love's", "super fuels", "7-eleven"],
+        "Groceries": [
+            "fiesta mart",
+            "foodland",
+            "wm supercenter",
+            "paypal *walmart",
+        ],
+        "Gas": [
+            "chevron",
+            "exxon",
+            "murphy",
+            "love's",
+            "super fuels",
+            "7-eleven",
+        ],
         "Health & Wellness": [
             "bswhealth",
             "texas digestive",
             "cvs/pharmacy",
             "pharmacy",
         ],
-        "Travel": ["ntta", "aeroenlaces", "vivaaerob", "parking", "gaston garage"],
-        "Bills & Utilities": ["metrob", "t-mobile", "eqt*swhp", "paypal *netflix"],
+        "Travel": [
+            "ntta",
+            "aeroenlaces",
+            "vivaaerob",
+            "parking",
+            "gaston garage",
+        ],
+        "Bills & Utilities": [
+            "metrob",
+            "t-mobile",
+            "eqt*swhp",
+            "paypal *netflix",
+        ],
         "Shopping": ["dd's discount", "adobe", "home depot"],
         "Home": ["home depot"],
         "Income": ["salary", "payroll", "deposit", "transfer in", "income"],
@@ -435,11 +546,11 @@ def auto_categorize_transaction(description, user):
                 return Category.objects.get(name=category_name, user=user)
             except Category.DoesNotExist:
                 # Set classification based on category type
-                classification = Category.INCOME if category_name == "Income" else Category.SPEND
+                classification = (
+                    Category.INCOME if category_name == "Income" else Category.SPEND
+                )
                 return Category.objects.create(
-                    name=category_name,
-                    user=user,
-                    classification=classification
+                    name=category_name, user=user, classification=classification
                 )
 
     return None

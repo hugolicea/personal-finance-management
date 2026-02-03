@@ -3,12 +3,31 @@ import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
+import * as Sentry from '@sentry/react';
 import axios from 'axios';
 
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 import { store } from './store';
+
+// Initialize Sentry for error tracking
+if (import.meta.env.VITE_SENTRY_DSN) {
+    Sentry.init({
+        dsn: import.meta.env.VITE_SENTRY_DSN,
+        environment: import.meta.env.MODE,
+        integrations: [
+            Sentry.browserTracingIntegration(),
+            Sentry.replayIntegration({
+                maskAllText: true,
+                blockAllMedia: true,
+            }),
+        ],
+        tracesSampleRate: 0.1,
+        replaysSessionSampleRate: 0.1,
+        replaysOnErrorSampleRate: 1.0,
+    });
+}
 
 // Configure axios baseURL from environment variable
 axios.defaults.baseURL =

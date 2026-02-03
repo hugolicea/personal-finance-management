@@ -1,0 +1,63 @@
+# Ruff configuration (replaces black, flake8, isort)
+# To use: rename to ruff.toml and update .pre-commit-config.yaml
+
+# Same line length as Black
+line-length = 88
+
+# Target Python 3.11+
+target-version = "py311"
+
+[lint]
+# Enable rules (replaces flake8)
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "DJ",  # flake8-django
+    "S",   # flake8-bandit (security)
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "S101",  # Use of assert (OK in tests)
+    "DJ001", # Avoid null=True in string fields
+    "DJ012", # Django model method ordering (too strict)
+    "S324",  # MD5 hash (OK for duplicate detection, not crypto)
+]
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "migrations",
+    "staticfiles",
+    "node_modules",
+]
+
+[lint.per-file-ignores]
+# Ignore security issues in tests
+"**/tests/**" = ["S"]
+"**/test_*.py" = ["S"]
+# Ignore hardcoded passwords in migrations (they're for setup)
+"**/migrations/**" = ["S106"]
+
+[lint.isort]
+# isort configuration (replaces isort)
+known-first-party = ["budget", "personal_finance_management"]
+section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
+
+[lint.isort.sections]
+django = ["django"]
+
+[format]
+# Formatting options (replaces black)
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

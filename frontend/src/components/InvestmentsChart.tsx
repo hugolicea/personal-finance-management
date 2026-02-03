@@ -84,7 +84,11 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                     </div>
                 </div>
                 <div
-                    className={`rounded-lg p-4 text-white ${totalGainLoss >= 0 ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'}`}
+                    className={`rounded-lg p-4 text-white ${
+                        totalGainLoss >= 0
+                            ? 'bg-gradient-to-r from-green-500 to-green-600'
+                            : 'bg-gradient-to-r from-red-500 to-red-600'
+                    }`}
                 >
                     <div className='text-sm font-medium opacity-90'>
                         Total Gain/Loss
@@ -125,7 +129,9 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                                 cy='50%'
                                 labelLine={false}
                                 label={({ name, percent }) =>
-                                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                                    `${name} ${((percent || 0) * 100).toFixed(
+                                        0
+                                    )}%`
                                 }
                                 outerRadius={80}
                                 fill='#8884d8'

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.5",
+    "@sentry/react": "^8.42.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/yup": "^0.29.14",
     "axios": "^1.7.2",

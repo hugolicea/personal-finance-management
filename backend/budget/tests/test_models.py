@@ -1,5 +1,6 @@
-from budget.models import Category, Transaction
 from django.test import TestCase
+
+from budget.models import Category, Transaction
 
 
 class CategoryModelTest(TestCase):

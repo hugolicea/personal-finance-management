@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 from decouple import config
@@ -40,9 +41,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 5000,
     "MAX_PAGE_SIZE": 10000,
@@ -124,8 +123,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # JWT Settings
-from datetime import timedelta
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -184,7 +181,7 @@ LOGGING = {
             "formatter": "verbose",
         },
         "file": {
-            "level": "INFO",
+            "level": "DEBUG" if DEBUG else "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": BASE_DIR / "logs" / "django.log",
             "maxBytes": 1024 * 1024 * 15,  # 15MB
@@ -217,3 +214,24 @@ LOGGING = {
         },
     },
 }
+
+# Sentry Configuration for Error Tracking
+SENTRY_DSN = config("SENTRY_DSN", default=None)
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import LoggingIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            LoggingIntegration(
+                level=None, event_level=None
+            ),  # Capture all log levels  # Send all events
+        ],
+        environment=config("ENVIRONMENT", default="development"),
+        traces_sample_rate=0.1 if not DEBUG else 1.0,  # Performance monitoring
+        send_default_pii=False,  # Don't send personally identifiable information
+        release=config("RELEASE_VERSION", default="1.0.0"),
+    )

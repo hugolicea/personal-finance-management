@@ -70,7 +70,9 @@ function Balance() {
             // If categorySpending is empty, try fetching again
             dispatch(
                 fetchCategorySpending(
-                    `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`
+                    `${selectedYear}-${selectedMonth
+                        .toString()
+                        .padStart(2, '0')}`
                 )
             );
         }

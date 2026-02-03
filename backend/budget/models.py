@@ -117,7 +117,9 @@ class Investment(models.Model):
         blank=True,
         help_text="Investment term in years",
     )
-    notes = models.TextField(blank=True, null=True, help_text="Additional notes about the investment")
+    notes = models.TextField(
+        blank=True, null=True, help_text="Additional notes about the investment"
+    )
 
     class Meta:
         unique_together = [["user", "symbol"]]
@@ -132,7 +134,7 @@ class Investment(models.Model):
         from decimal import Decimal
 
         if self.investment_type == self.FIXED_INCOME:
-            return self.principal_amount or Decimal('0')
+            return self.principal_amount or Decimal("0")
         return self.quantity * self.purchase_price
 
     @property
@@ -149,24 +151,23 @@ class Investment(models.Model):
         from decimal import Decimal
 
         if not self.principal_amount or not self.interest_rate or not self.term_years:
-            return self.principal_amount or Decimal('0')
+            return self.principal_amount or Decimal("0")
 
         principal = Decimal(str(self.principal_amount))
-        rate = Decimal(str(self.interest_rate)) / \
-            100  # Convert percentage to decimal
+        rate = Decimal(str(self.interest_rate)) / 100  # Convert percentage to decimal
         years = Decimal(str(self.term_years))
 
         # Determine compounding frequency
         if self.compounding_frequency == "annual":
-            n = Decimal('1')
+            n = Decimal("1")
         elif self.compounding_frequency == "semi_annual":
-            n = Decimal('2')
+            n = Decimal("2")
         elif self.compounding_frequency == "quarterly":
-            n = Decimal('4')
+            n = Decimal("4")
         elif self.compounding_frequency == "monthly":
-            n = Decimal('12')
+            n = Decimal("12")
         else:
-            n = Decimal('1')  # Default to annual
+            n = Decimal("1")  # Default to annual
 
         # Compound interest formula: A = P(1 + r/n)^(nt)
         current_value = principal * (1 + rate / n) ** (n * years)
@@ -187,8 +188,13 @@ class Investment(models.Model):
     @property
     def due_date(self):
         """Due date for fixed income investments (maturity date)"""
-        if self.investment_type == self.FIXED_INCOME and self.purchase_date and self.term_years:
+        if (
+            self.investment_type == self.FIXED_INCOME
+            and self.purchase_date
+            and self.term_years
+        ):
             from dateutil.relativedelta import relativedelta
+
             return self.purchase_date + relativedelta(years=int(self.term_years))
         return None
 
@@ -218,7 +224,9 @@ class Heritage(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="heritages"
     )
-    name = models.CharField(max_length=200, help_text="Name or description of the property")
+    name = models.CharField(
+        max_length=200, help_text="Name or description of the property"
+    )
     heritage_type = models.CharField(
         max_length=20,
         choices=HERITAGE_TYPE_CHOICES,
@@ -258,8 +266,9 @@ class Heritage(models.Model):
         default=0,
         help_text="Monthly rental income if applicable",
     )
-    notes = models.TextField(blank=True, null=True,
-                             help_text="Additional notes about the property")
+    notes = models.TextField(
+        blank=True, null=True, help_text="Additional notes about the property"
+    )
 
     @property
     def gain_loss(self):
@@ -334,9 +343,13 @@ class RetirementAccount(models.Model):
     ]
 
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="retirement_accounts"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="retirement_accounts",
     )
-    name = models.CharField(max_length=200, help_text="Name or nickname for this retirement account")
+    name = models.CharField(
+        max_length=200, help_text="Name or nickname for this retirement account"
+    )
     account_type = models.CharField(
         max_length=20,
         choices=ACCOUNT_TYPE_CHOICES,
@@ -344,49 +357,48 @@ class RetirementAccount(models.Model):
         help_text="Type of retirement account",
     )
     provider = models.CharField(
-        max_length=100, help_text="Financial institution or provider (e.g., Fidelity, Vanguard)")
+        max_length=100,
+        help_text="Financial institution or provider (e.g., Fidelity, Vanguard)",
+    )
     account_number = models.CharField(
         max_length=50,
         blank=True,
         null=True,
-        help_text="Account number (last 4 digits for security)"
+        help_text="Account number (last 4 digits for security)",
     )
     current_balance = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-        help_text="Current account balance"
+        max_digits=15, decimal_places=2, default=0, help_text="Current account balance"
     )
     monthly_contribution = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
-        help_text="Monthly contribution amount"
+        help_text="Monthly contribution amount",
     )
     employer_match_percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=0,
-        help_text="Employer match percentage (e.g., 0.50 for 50%)"
+        help_text="Employer match percentage (e.g., 0.50 for 50%)",
     )
     employer_match_limit = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
-        help_text="Maximum employer match amount per year"
+        help_text="Maximum employer match amount per year",
     )
     risk_level = models.CharField(
         max_length=20,
         choices=RISK_LEVEL_CHOICES,
         default=MODERATE,
-        help_text="Risk level of the investment portfolio"
+        help_text="Risk level of the investment portfolio",
     )
     target_retirement_age = models.PositiveIntegerField(
-        default=65,
-        help_text="Target retirement age"
+        default=65, help_text="Target retirement age"
     )
-    notes = models.TextField(blank=True, null=True,
-                             help_text="Additional notes about the account")
+    notes = models.TextField(
+        blank=True, null=True, help_text="Additional notes about the account"
+    )
 
     @property
     def annual_contribution(self):
@@ -398,7 +410,7 @@ class RetirementAccount(models.Model):
         """Maximum annual employer match"""
         return min(
             self.annual_contribution * self.employer_match_percentage,
-            self.employer_match_limit
+            self.employer_match_limit,
         )
 
     @property

@@ -542,7 +542,12 @@ function Investments() {
                                                         Gain/Loss:
                                                     </span>
                                                     <span
-                                                        className={`ml-2 font-semibold ${investment.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        className={`ml-2 font-semibold ${
+                                                            investment.gain_loss >=
+                                                            0
+                                                                ? 'text-green-600'
+                                                                : 'text-red-600'
+                                                        }`}
                                                     >
                                                         {investment.gain_loss >=
                                                         0
@@ -558,7 +563,12 @@ function Investments() {
                                                         Gain/Loss %:
                                                     </span>
                                                     <span
-                                                        className={`ml-2 font-semibold ${investment.gain_loss_percentage >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        className={`ml-2 font-semibold ${
+                                                            investment.gain_loss_percentage >=
+                                                            0
+                                                                ? 'text-green-600'
+                                                                : 'text-red-600'
+                                                        }`}
                                                     >
                                                         {investment.gain_loss_percentage >=
                                                         0
@@ -763,7 +773,12 @@ function Investments() {
                                                 Gain/Loss:
                                             </span>{' '}
                                             <span
-                                                className={`font-semibold ${deletingInvestment.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                className={`font-semibold ${
+                                                    deletingInvestment.gain_loss >=
+                                                    0
+                                                        ? 'text-green-600'
+                                                        : 'text-red-600'
+                                                }`}
                                             >
                                                 {deletingInvestment.gain_loss >=
                                                 0

@@ -60,6 +60,11 @@ A comprehensive, secure personal budget management application built with Django
 - Tailwind CSS for responsive UI
 - Docker containerization for easy deployment
 - PostgreSQL database with optimized indexes
+- **Error boundaries** for graceful error handling
+- **Global loading states** with Redux integration
+- **Sentry integration** for error monitoring and tracking
+- **Pre-commit hooks** for code quality and security
+- **Optimized database queries** (N+1 problem fixes)
 - Comprehensive logging and error handling
 - CI/CD pipeline with GitHub Actions
 - Production-ready configurations
@@ -81,12 +86,6 @@ A comprehensive, secure personal budget management application built with Django
    ```
 
 2. **Run setup script (Windows)**
-
-   ```powershell
-   .\setup.ps1
-   ```
-
-   Or manually:
 
    ```bash
    # Create environment files
@@ -110,15 +109,62 @@ A comprehensive, secure personal budget management application built with Django
    - Admin Panel: <http://localhost:8000/admin>
    - API Documentation: <http://localhost:8000/api/schema/swagger-ui/>
 
+### Developer Setup (Code Quality Tools)
+
+For development work with automated code quality checks:
+
+1. **Install pre-commit hooks**
+
+   ```bash
+   # Install pre-commit (if not already installed)
+   pip install pre-commit
+
+   # Install git hooks
+   pre-commit install
+
+   # (Optional) Run on all files to test
+   pre-commit run --all-files
+   ```
+
+2. **Pre-commit hooks will automatically**:
+   - Format Python code with Black
+   - Lint Python code with Flake8
+   - Sort Python imports with isort
+   - Scan for security issues with Bandit
+   - Format JavaScript/TypeScript with Prettier
+   - Lint JavaScript/TypeScript with ESLint
+   - Check for trailing whitespace
+   - Validate YAML files
+   - Prevent committing large files or secrets
+
+3. **Sentry Integration (Optional)**
+
+   For error monitoring in development:
+
+   ```bash
+   # Backend: Add to backend/.env
+   SENTRY_DSN=your-sentry-dsn-here
+
+   # Frontend: Add to frontend/.env
+   VITE_SENTRY_DSN=your-sentry-dsn-here
+   ```
+
 ### Production Deployment
 
 1. **Configure environment variables**
 
    ```bash
-   # Update backend/.env with production values
+   # Backend environment variables
    SECRET_KEY=<your-secret-key>
    DEBUG=False
    ALLOWED_HOSTS=your-domain.com
+
+   # Optional: Sentry for error monitoring
+   SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+   ENVIRONMENT=production
+
+   # Frontend environment variables
+   VITE_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
    ```
 
 2. **Deploy with production Docker Compose**
@@ -182,9 +228,14 @@ personal-finance-management/
 
 - **Docker** - Containerization
 - **Docker Compose** - Multi-service orchestration
+- **Sentry** - Error tracking and monitoring
+- **Pre-commit** - Git hooks for code quality
 - **Flake8** - Python linting
 - **Black** - Python formatting
+- **isort** - Python import sorting
+- **Bandit** - Python security scanning
 - **Prettier** - JavaScript/TypeScript formatting
+- **ESLint** - JavaScript/TypeScript linting
 
 ## 📡 API Endpoints
 
