@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
     push:
-        branches: [main] # branches: [main, develop]
+        branches: [main, dev, develop]
     pull_request:
-        branches: [main] # branches: [main, develop]
+        branches: [main, dev, develop]
 
 # Cancel in-progress runs when a new run is triggered
 concurrency:
@@ -49,12 +49,13 @@ jobs:
             - name: Run linting
               working-directory: ./backend
               run: |
-                  flake8 . --max-line-length=79 --exclude=migrations,__pycache__,.venv
-                  black --check . --exclude=migrations
+                  ruff check . --config ../ruff.toml
+                  ruff format --check . --config ../ruff.toml
 
             - name: Run tests
               working-directory: ./backend
               env:
+                  DJANGO_SETTINGS_MODULE: personal_finance_management.settings
                   SECRET_KEY: test-secret-key
                   DEBUG: True
                   DB_NAME: test_db
@@ -63,6 +64,7 @@ jobs:
                   DB_HOST: localhost
                   DB_PORT: 5432
               run: |
+                  mkdir -p logs
                   pytest --cov=budget --cov-report=xml --cov-report=term
 
             - name: Upload coverage
@@ -108,6 +110,7 @@ jobs:
         timeout-minutes: 10
         permissions:
             contents: read
+            actions: read # Required for workflow run telemetry
             security-events: write # Required for uploading SARIF
 
         steps:
@@ -123,7 +126,7 @@ jobs:
               continue-on-error: true # Don't fail if vulnerabilities found
 
             - name: Upload Trivy results to GitHub Security
-              uses: github/codeql-action/upload-sarif@v2
+              uses: github/codeql-action/upload-sarif@v4
               with:
                   sarif_file: 'trivy-results.sarif'
               if: always() # Upload even if scan fails

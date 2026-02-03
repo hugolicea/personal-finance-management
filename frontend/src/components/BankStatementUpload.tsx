@@ -64,8 +64,9 @@ const BankStatementUpload: React.FC = () => {
         setDragActive(false);
 
         const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
+        const file = files?.[0];
+        if (file) {
+            handleFileSelect(file);
         }
     };
 
@@ -83,8 +84,9 @@ const BankStatementUpload: React.FC = () => {
 
     const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (files && files.length > 0) {
-            handleFileSelect(files[0]);
+        const file = files?.[0];
+        if (file) {
+            handleFileSelect(file);
         }
     };
 

@@ -125,12 +125,23 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
-            const data = {
-                ...values,
-                current_price:
-                    values.current_price === ''
-                        ? undefined
-                        : Number(values.current_price),
+            const data: {
+                symbol: string;
+                name: string;
+                investment_type: string;
+                quantity: number;
+                purchase_price: number;
+                current_price?: number;
+                purchase_date: string;
+                notes?: string;
+                principal_amount?: number;
+                interest_rate?: number;
+                compounding_frequency?: string;
+                term_years?: number;
+            } = {
+                symbol: values.symbol,
+                name: values.name,
+                investment_type: values.investment_type,
                 quantity:
                     values.investment_type === 'fixed_income'
                         ? 1
@@ -139,16 +150,29 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
                     values.investment_type === 'fixed_income'
                         ? Number(values.principal_amount)
                         : Number(values.purchase_price),
+                current_price:
+                    values.current_price === ''
+                        ? undefined
+                        : Number(values.current_price),
+                purchase_date: values.purchase_date!, // Formik validation ensures this is set
+                notes: values.notes || undefined,
                 principal_amount:
-                    values.investment_type === 'fixed_income'
+                    values.investment_type === 'fixed_income' &&
+                    values.principal_amount !== ''
                         ? Number(values.principal_amount)
                         : undefined,
                 interest_rate:
-                    values.investment_type === 'fixed_income'
+                    values.investment_type === 'fixed_income' &&
+                    values.interest_rate !== ''
                         ? Number(values.interest_rate)
                         : undefined,
-                term_years:
+                compounding_frequency:
                     values.investment_type === 'fixed_income'
+                        ? values.compounding_frequency
+                        : undefined,
+                term_years:
+                    values.investment_type === 'fixed_income' &&
+                    values.term_years !== ''
                         ? Number(values.term_years)
                         : undefined,
             };

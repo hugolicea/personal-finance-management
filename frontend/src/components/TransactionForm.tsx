@@ -68,23 +68,29 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     ? -Math.abs(parseFloat(values.amount))
                     : Math.abs(parseFloat(values.amount));
 
+            const transactionData: {
+                description: string;
+                date: string;
+                amount: number;
+                category: number;
+                transaction_type: string;
+            } = {
+                description: values.description,
+                date: values.date!, // Formik validation ensures this is set
+                amount: amount,
+                category: Number(values.category),
+                transaction_type: values.type,
+            };
+
             if (transaction) {
                 await dispatch(
                     updateTransaction({
-                        id: transaction.id,
-                        ...values,
-                        amount: String(amount),
-                        category: Number(values.category),
+                        id: transaction.id!,
+                        ...transactionData,
                     })
                 ).unwrap();
             } else {
-                await dispatch(
-                    createTransaction({
-                        ...values,
-                        amount: String(amount),
-                        category: Number(values.category),
-                    })
-                ).unwrap();
+                await dispatch(createTransaction(transactionData)).unwrap();
             }
             onClose();
         } catch (error) {

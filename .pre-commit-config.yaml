@@ -1,50 +1,50 @@
-# Example pre-commit config with Ruff (faster alternative)
-# To use: backup current .pre-commit-config.yaml and rename this
-
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
-        args: ['--maxkb=1000']
-      - id: check-json
-      - id: check-merge-conflict
-      - id: detect-private-key
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0
+      hooks:
+          - id: trailing-whitespace
+          - id: end-of-file-fixer
+          - id: check-yaml
+          - id: check-added-large-files
+            args: ['--maxkb=1000']
+          - id: check-json
+          - id: check-merge-conflict
+          - id: detect-private-key
 
-  # Ruff - replaces black, flake8, and isort
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.4
-    hooks:
-      # Linter (replaces flake8 + isort)
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-        files: ^backend/
-      # Formatter (replaces black)
-      - id: ruff-format
-        files: ^backend/
+    # Ruff - replaces black, flake8, and isort
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.8.4
+      hooks:
+          # Linter (replaces flake8 + isort)
+          - id: ruff
+            args: [--fix, --exit-non-zero-on-fix]
+            files: ^backend/
+          # Formatter (replaces black)
+          - id: ruff-format
+            files: ^backend/
 
-  # Frontend tools
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
-    hooks:
-      - id: prettier
-        files: ^frontend/
-        types_or: [javascript, jsx, ts, tsx, json, css]
+    # Prettier - runs from root, works fine
+    - repo: https://github.com/pre-commit/mirrors-prettier
+      rev: v3.1.0
+      hooks:
+          - id: prettier
+            files: ^frontend/
+            types_or: [javascript, jsx, ts, tsx, json, css]
 
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.56.0
-    hooks:
-      - id: eslint
-        files: ^frontend/src/.*\.[jt]sx?$
-        types: [file]
-        additional_dependencies:
-          - eslint@8.45.0
-          - '@typescript-eslint/eslint-plugin@6.0.0'
-          - '@typescript-eslint/parser@6.0.0'
+    # Frontend tools - use local hooks to run from correct directory
+    - repo: local
+      hooks:
+          - id: eslint
+            name: ESLint
+            entry: bash -c 'cd frontend && npx eslint'
+            language: system
+            files: ^frontend/src/.*\.[jt]sx?$
+            types: [file]
 
-# Speed comparison on typical commit:
-# Current (black + flake8 + isort): ~2-5 seconds
-# With Ruff: ~100-300 milliseconds (10-50x faster!)
+          - id: typescript-check
+            name: TypeScript Type Check
+            entry: bash -c 'cd frontend && npx tsc --noEmit'
+            language: system
+            files: ^frontend/.*\.[jt]sx?$
+            pass_filenames: false # tsc needs the whole project context
+            types: [ts, tsx]
