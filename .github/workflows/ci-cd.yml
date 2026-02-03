@@ -14,7 +14,7 @@ concurrency:
 jobs:
     test-backend:
         runs-on: ubuntu-latest
-        timeout-minutes: 15 # Prevent hanging jobs
+        timeout-minutes: 10 # GitHub best practice: most test suites < 10min
 
         services:
             postgres:
@@ -73,7 +73,7 @@ jobs:
 
     test-frontend:
         runs-on: ubuntu-latest
-        timeout-minutes: 15
+        timeout-minutes: 8 # GitHub best practice: Node.js builds typically 5-8min
 
         steps:
             - uses: actions/checkout@v3
