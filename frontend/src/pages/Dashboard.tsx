@@ -25,11 +25,6 @@ function Dashboard() {
         (state) => state.retirementAccounts
     );
 
-    // Separate state for all transactions (for annual expenses)
-    const [allTransactions, setAllTransactions] = React.useState<
-        typeof transactions
-    >([]);
-
     // Filter states
     const [selectedYear, setSelectedYear] = React.useState(
         new Date().getFullYear()
@@ -63,9 +58,8 @@ function Dashboard() {
                     '[Dashboard] Extracted transactions count:',
                     data.length
                 );
-                setAllTransactions(data);
                 console.log(
-                    '[Dashboard] allTransactions state updated with',
+                    '[Dashboard] Transactions loaded:',
                     data.length,
                     'items'
                 );
@@ -91,7 +85,9 @@ function Dashboard() {
         const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
         const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
         const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
-        const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const dateBefore = `${dateBeforeYear}-${String(
+            dateBeforeMonth
+        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
         console.log('[Dashboard] Fetching FILTERED transactions:', {
             filterByYear,
@@ -184,13 +180,21 @@ function Dashboard() {
                     <div className='flex items-center space-x-2'>
                         <button
                             onClick={() => setFilterByYear(false)}
-                            className={`px-3 py-2 text-sm rounded-md border ${!filterByYear ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                            className={`px-3 py-2 text-sm rounded-md border ${
+                                !filterByYear
+                                    ? 'bg-red-600 text-white border-red-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
                         >
                             Month
                         </button>
                         <button
                             onClick={() => setFilterByYear(true)}
-                            className={`px-3 py-2 text-sm rounded-md border ${filterByYear ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                            className={`px-3 py-2 text-sm rounded-md border ${
+                                filterByYear
+                                    ? 'bg-red-600 text-white border-red-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
                         >
                             Year
                         </button>
@@ -201,7 +205,12 @@ function Dashboard() {
                     {filteredTransactions.length !== 1 ? 's' : ''} for{' '}
                     {filterByYear
                         ? selectedYear
-                        : `${new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} ${selectedYear}`}
+                        : `${new Date(
+                              selectedYear,
+                              selectedMonth - 1
+                          ).toLocaleString('default', {
+                              month: 'long',
+                          })} ${selectedYear}`}
                 </div>
             </div>
         );
@@ -273,7 +282,12 @@ function Dashboard() {
                                         <h3 className='ml-3 text-lg font-semibold text-white'>
                                             {filterByYear
                                                 ? `Spending Breakdown - ${selectedYear}`
-                                                : `Spending - ${new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} ${selectedYear}`}
+                                                : `Spending - ${new Date(
+                                                      selectedYear,
+                                                      selectedMonth - 1
+                                                  ).toLocaleString('default', {
+                                                      month: 'long',
+                                                  })} ${selectedYear}`}
                                         </h3>
                                     </div>
                                     <span className='text-sm text-white/80'>

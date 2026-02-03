@@ -12,4 +12,5 @@ django-allauth==0.57.0
 django-filter==24.2
 gunicorn==21.2.0
 requests==2.31.0
+sentry-sdk[django]==2.19.2
 gunicorn==21.2.0

@@ -72,7 +72,9 @@ function CreditCardTransactions() {
         const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
         const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
         const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
-        const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const dateBefore = `${dateBeforeYear}-${String(
+            dateBeforeMonth
+        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
         dispatch(
             fetchTransactions({
@@ -131,7 +133,10 @@ function CreditCardTransactions() {
                 // Re-fetch with current filters
                 const dateAfter = filterByYear
                     ? `${selectedYear}-01-01`
-                    : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+                    : `${selectedYear}-${String(selectedMonth).padStart(
+                          2,
+                          '0'
+                      )}-01`;
                 const dateBeforeYear = filterByYear
                     ? selectedYear
                     : selectedYear;
@@ -141,7 +146,9 @@ function CreditCardTransactions() {
                     dateBeforeMonth,
                     0
                 ).getDate();
-                const dateBefore = `${dateBeforeYear}-${String(dateBeforeMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+                const dateBefore = `${dateBeforeYear}-${String(
+                    dateBeforeMonth
+                ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
                 dispatch(
                     fetchTransactions({
                         transaction_type: 'credit_card',

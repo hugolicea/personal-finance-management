@@ -1,3 +1,6 @@
+# Example pre-commit config with Ruff (faster alternative)
+# To use: backup current .pre-commit-config.yaml and rename this
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
@@ -6,31 +9,24 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        args: ['--maxkb=1000']
       - id: check-json
       - id: check-merge-conflict
       - id: detect-private-key
 
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  # Ruff - replaces black, flake8, and isort
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
     hooks:
-      - id: black
-        language_version: python3.11
+      # Linter (replaces flake8 + isort)
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      # Formatter (replaces black)
+      - id: ruff-format
         files: ^backend/
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        files: ^backend/
-        args: ['--config=backend/.flake8']
-
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        files: ^backend/
-        args: ['--settings-path', 'backend/pyproject.toml']
-
+  # Frontend tools
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
@@ -48,3 +44,7 @@ repos:
           - eslint@8.45.0
           - '@typescript-eslint/eslint-plugin@6.0.0'
           - '@typescript-eslint/parser@6.0.0'
+
+# Speed comparison on typical commit:
+# Current (black + flake8 + isort): ~2-5 seconds
+# With Ruff: ~100-300 milliseconds (10-50x faster!)

@@ -179,7 +179,13 @@ function Home() {
                                                 for{' '}
                                                 {filterByYear
                                                     ? selectedYear
-                                                    : `${new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long' })} ${selectedYear}`}
+                                                    : `${new Date(
+                                                          selectedYear,
+                                                          selectedMonth - 1
+                                                      ).toLocaleString(
+                                                          'default',
+                                                          { month: 'long' }
+                                                      )} ${selectedYear}`}
                                             </p>
                                         </div>
                                         <div className='flex flex-wrap items-center gap-4 mt-12'>

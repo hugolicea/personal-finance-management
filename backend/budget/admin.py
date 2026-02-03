@@ -12,7 +12,14 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ["description", "user", "amount", "date", "category", "transaction_type"]
+    list_display = [
+        "description",
+        "user",
+        "amount",
+        "date",
+        "category",
+        "transaction_type",
+    ]
     list_filter = ["transaction_type", "date", "category", "user"]
     search_fields = ["description", "user__email"]
     date_hierarchy = "date"
@@ -20,7 +27,14 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(Investment)
 class InvestmentAdmin(admin.ModelAdmin):
-    list_display = ["symbol", "name", "user", "investment_type", "quantity", "purchase_price"]
+    list_display = [
+        "symbol",
+        "name",
+        "user",
+        "investment_type",
+        "quantity",
+        "purchase_price",
+    ]
     list_filter = ["investment_type", "user"]
     search_fields = ["symbol", "name", "user__email"]
 

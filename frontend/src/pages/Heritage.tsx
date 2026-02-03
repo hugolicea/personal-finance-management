@@ -532,7 +532,12 @@ function Heritage() {
                                                         Gain/Loss:
                                                     </span>
                                                     <span
-                                                        className={`ml-2 font-semibold ${heritage.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        className={`ml-2 font-semibold ${
+                                                            heritage.gain_loss >=
+                                                            0
+                                                                ? 'text-green-600'
+                                                                : 'text-red-600'
+                                                        }`}
                                                     >
                                                         {heritage.gain_loss >= 0
                                                             ? '+'
@@ -767,7 +772,12 @@ function Heritage() {
                                                         Gain/Loss:
                                                     </span>{' '}
                                                     <span
-                                                        className={`font-semibold ${deletingHeritage.gain_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}
+                                                        className={`font-semibold ${
+                                                            deletingHeritage.gain_loss >=
+                                                            0
+                                                                ? 'text-green-600'
+                                                                : 'text-red-600'
+                                                        }`}
                                                     >
                                                         {formatCurrency(
                                                             deletingHeritage.gain_loss

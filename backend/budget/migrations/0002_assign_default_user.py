@@ -5,20 +5,18 @@ from django.db import migrations
 
 def assign_default_user(apps, schema_editor):
     """Assign all existing records to the first superuser or create one."""
-    User = apps.get_model('auth', 'User')
-    Category = apps.get_model('budget', 'Category')
-    Transaction = apps.get_model('budget', 'Transaction')
-    Investment = apps.get_model('budget', 'Investment')
-    Heritage = apps.get_model('budget', 'Heritage')
-    RetirementAccount = apps.get_model('budget', 'RetirementAccount')
+    User = apps.get_model("auth", "User")
+    Category = apps.get_model("budget", "Category")
+    Transaction = apps.get_model("budget", "Transaction")
+    Investment = apps.get_model("budget", "Investment")
+    Heritage = apps.get_model("budget", "Heritage")
+    RetirementAccount = apps.get_model("budget", "RetirementAccount")
 
     # Get or create default user
     user = User.objects.filter(is_superuser=True).first()
     if not user:
         user = User.objects.create_superuser(
-            username='admin',
-            email='admin@example.com',
-            password='changeme123'
+            username="admin", email="admin@example.com", password="changeme123"
         )
 
     # Assign all existing records to this user
@@ -30,9 +28,8 @@ def assign_default_user(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('budget', '0001_initial'),
+        ("budget", "0001_initial"),
     ]
 
     operations = [
