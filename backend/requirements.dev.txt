@@ -1,10 +1,12 @@
-flake8==7.1.1
+# Testing
 pytest==8.3.3
 pytest-django
 pytest-cov
-black
-isort
+
+# Code quality (Ruff replaces black, flake8, isort)
+ruff>=0.8.0
 pre-commit
 bandit[toml]
-django-extensions==4.8.0
-ruff>=0.8.0
+
+# Development tools
+django-extensions==4.1
