@@ -23,10 +23,12 @@ class CategoryAPITest(APITestCase):
         url = reverse("category-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Should only see this user's categories (migration creates admin user with categories)
-        user_categories = [c for c in response.data if c["user"] == self.user.id]
-        self.assertEqual(len(user_categories), 1)
-        self.assertEqual(user_categories[0]["name"], "Food")
+        # Response is paginated: {'count': N, 'results': [...]}
+        self.assertIn("results", response.data)
+        results = response.data["results"]
+        # ViewSet filters by user, so should only see this user's categories
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["name"], "Food")
 
     def test_create_category(self):
         """Test POST /api/v1/categories/"""
@@ -61,9 +63,11 @@ class TransactionAPITest(APITestCase):
         url = reverse("transaction-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Should only see this user's transactions
-        user_transactions = [t for t in response.data if t["user"] == self.user.id]
-        self.assertEqual(len(user_transactions), 0)  # No transactions yet
+        # Response is paginated: {'count': N, 'results': [...]}
+        self.assertIn("results", response.data)
+        results = response.data["results"]
+        # ViewSet filters by user, so no transactions for this user yet
+        self.assertEqual(len(results), 0)
 
     def test_create_transaction(self):
         """Test POST /api/v1/transactions/"""
