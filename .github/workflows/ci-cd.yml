@@ -49,8 +49,8 @@ jobs:
             - name: Run linting
               working-directory: ./backend
               run: |
-                  ruff check . --select E,W,F,I,N,UP,B,C4,DJ,S
-                  ruff format --check .
+                  ruff check . --config ../ruff.toml
+                  ruff format --check . --config ../ruff.toml
 
             - name: Run tests
               working-directory: ./backend
