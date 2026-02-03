@@ -55,6 +55,7 @@ jobs:
             - name: Run tests
               working-directory: ./backend
               env:
+                  DJANGO_SETTINGS_MODULE: personal_finance_management.settings
                   SECRET_KEY: test-secret-key
                   DEBUG: True
                   DB_NAME: test_db
