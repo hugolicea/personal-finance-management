@@ -23,17 +23,21 @@ class CategoryAPITest(APITestCase):
         url = reverse("category-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "Food")
+        # Should only see this user's categories (migration creates admin user with categories)
+        user_categories = [c for c in response.data if c["user"] == self.user.id]
+        self.assertEqual(len(user_categories), 1)
+        self.assertEqual(user_categories[0]["name"], "Food")
 
     def test_create_category(self):
         """Test POST /api/v1/categories/"""
         url = reverse("category-list")
-        data = {"name": "Transport"}
+        data = {"name": "Transport", "classification": "spend", "user": self.user.id}
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["name"], "Transport")
-        self.assertEqual(Category.objects.count(), 2)
+        # Count only this user's categories
+        user_category_count = Category.objects.filter(user=self.user).count()
+        self.assertEqual(user_category_count, 2)  # Food + Transport
 
     def test_get_single_category(self):
         """Test GET /api/v1/categories/{id}/"""
@@ -57,7 +61,9 @@ class TransactionAPITest(APITestCase):
         url = reverse("transaction-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)  # No transactions yet
+        # Should only see this user's transactions
+        user_transactions = [t for t in response.data if t["user"] == self.user.id]
+        self.assertEqual(len(user_transactions), 0)  # No transactions yet
 
     def test_create_transaction(self):
         """Test POST /api/v1/transactions/"""
@@ -67,12 +73,16 @@ class TransactionAPITest(APITestCase):
             "description": "Coffee",
             "date": "2026-01-24",
             "category": self.category.id,
+            "transaction_type": "account",
+            "user": self.user.id,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["amount"], "-25.50")
         self.assertEqual(response.data["description"], "Coffee")
-        self.assertEqual(Transaction.objects.count(), 1)
+        # Count only this user's transactions
+        user_transaction_count = Transaction.objects.filter(user=self.user).count()
+        self.assertEqual(user_transaction_count, 1)
 
     def test_get_single_transaction(self):
         """Test GET /api/v1/transactions/{id}/"""
