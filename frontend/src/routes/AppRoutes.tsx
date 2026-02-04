@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import PrivateRoute from '../components/PrivateRoute';
 import AccountTransactions from '../pages/AccountTransactions';
 import Categories from '../pages/Categories';
+import CleanAndReclassify from '../pages/CleanAndReclassify';
 import CreditCardTransactions from '../pages/CreditCardTransactions';
 import Dashboard from '../pages/Dashboard';
 import Heritage from '../pages/Heritage';
@@ -78,6 +79,14 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <Reports />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/clean-and-reclassify'
+                element={
+                    <PrivateRoute>
+                        <CleanAndReclassify />
                     </PrivateRoute>
                 }
             />

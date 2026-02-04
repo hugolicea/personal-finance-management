@@ -36,15 +36,14 @@ repos:
       hooks:
           - id: eslint
             name: ESLint
-            entry: bash -c 'cd frontend && npx eslint'
+            entry: python -c "import sys, os, subprocess; os.chdir('frontend'); files = [f.replace('frontend/', '').replace('frontend\\\\', '') for f in sys.argv[1:]]; sys.exit(subprocess.call('npx eslint ' + ' '.join(files), shell=True) if files else 0)"
             language: system
             files: ^frontend/src/.*\.[jt]sx?$
             types: [file]
 
           - id: typescript-check
             name: TypeScript Type Check
-            entry: bash -c 'cd frontend && npx tsc --noEmit'
+            entry: cmd /c "cd frontend && npx tsc --noEmit"
             language: system
             files: ^frontend/.*\.[jt]sx?$
             pass_filenames: false # tsc needs the whole project context
-            types: [ts, tsx]

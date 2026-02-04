@@ -468,3 +468,64 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.description} - {self.amount:.2f} ({self.date})"
+
+
+class ReclassificationRule(models.Model):
+    """Store persistent reclassification rules for Clean and Reclassify feature"""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reclassification_rules",
+    )
+    from_category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="reclassification_from_rules",
+        help_text="Category to reclassify from",
+    )
+    to_category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="reclassification_to_rules",
+        help_text="Category to reclassify to",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(
+        default=True, help_text="Whether this rule is active"
+    )
+
+    class Meta:
+        unique_together = [["user", "from_category"]]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.from_category.name} → {self.to_category.name}"
+
+
+class CategoryDeletionRule(models.Model):
+    """Store persistent category deletion rules for Clean and Reclassify feature"""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="category_deletion_rules",
+    )
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name="deletion_rules"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(
+        default=True, help_text="Whether this rule is active"
+    )
+
+    class Meta:
+        unique_together = [["user", "category"]]
+        indexes = [
+            models.Index(fields=["user", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"Delete: {self.category.name}"

@@ -1,7 +1,13 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-import type { Transaction } from '../../types/transactions';
+import type {
+    BulkDeleteRequest,
+    BulkDeleteResponse,
+    BulkReclassifyRequest,
+    BulkReclassifyResponse,
+    Transaction,
+} from '../../types/transactions';
 
 interface TransactionsState {
     transactions: Transaction[];
@@ -106,6 +112,28 @@ export const uploadBankStatement = createAsyncThunk(
     }
 );
 
+export const bulkReclassifyTransactions = createAsyncThunk(
+    'transactions/bulkReclassify',
+    async (request: BulkReclassifyRequest): Promise<BulkReclassifyResponse> => {
+        const response = await axios.post(
+            '/api/v1/bulk-reclassify-transactions/',
+            request
+        );
+        return response.data;
+    }
+);
+
+export const bulkDeleteTransactions = createAsyncThunk(
+    'transactions/bulkDelete',
+    async (request: BulkDeleteRequest): Promise<BulkDeleteResponse> => {
+        const response = await axios.post(
+            '/api/v1/bulk-delete-transactions/',
+            request
+        );
+        return response.data;
+    }
+);
+
 const transactionsSlice = createSlice({
     name: 'transactions',
     initialState,
@@ -201,6 +229,32 @@ const transactionsSlice = createSlice({
                 state.loading = false;
                 state.error =
                     action.error.message || 'Failed to upload bank statement';
+            })
+            .addCase(bulkReclassifyTransactions.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(bulkReclassifyTransactions.fulfilled, (state) => {
+                state.loading = false;
+                // Transactions will be refreshed after reclassification
+            })
+            .addCase(bulkReclassifyTransactions.rejected, (state, action) => {
+                state.loading = false;
+                state.error =
+                    action.error.message || 'Failed to reclassify transactions';
+            })
+            .addCase(bulkDeleteTransactions.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(bulkDeleteTransactions.fulfilled, (state) => {
+                state.loading = false;
+                // Transactions will be refreshed after deletion
+            })
+            .addCase(bulkDeleteTransactions.rejected, (state, action) => {
+                state.loading = false;
+                state.error =
+                    action.error.message || 'Failed to delete transactions';
             });
     },
 });

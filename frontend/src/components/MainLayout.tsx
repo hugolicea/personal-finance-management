@@ -78,6 +78,11 @@ function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
         { path: '/heritage', label: 'Heritage', icon: '🏠' },
         { path: '/retirement', label: 'Retirement', icon: '🏖️' },
         { path: '/reports', label: 'Reports', icon: '📊' },
+        {
+            path: '/clean-and-reclassify',
+            label: 'Clean & Reclassify',
+            icon: '🧹',
+        },
     ];
 
     return (
