@@ -729,7 +729,7 @@ def bulk_delete_transactions_by_category(request):
             return Response(
                 {
                     "error": (
-                        "One or more categories not found or do not " "belong to user"
+                        "One or more categories not found or do not belong to user"
                     )
                 },
                 status=status.HTTP_404_NOT_FOUND,
