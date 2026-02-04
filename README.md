@@ -36,6 +36,15 @@ with enterprise-grade features.
 - Dual-panel display: Spends vs Incomes
 - Duplicate transaction detection
 
+### 🧹 **Clean and Reclassify**
+
+- Bulk reclassification of transactions by category
+- Batch deletion of transactions by category
+- Persistent reclassification and deletion rules
+- User-specific rule management
+- Real-time rule execution with progress tracking
+- Confirmation modals for safe operation execution
+
 ### 📈 **Investment Tracking**
 
 - Track stocks, bonds, ETFs, crypto, and fixed income investments
@@ -104,7 +113,7 @@ The setup script will:
 - Password: `changeme123` (change after first login)
 
 > 📖 **For detailed database configuration options**, see
-> [DATABASE_SELECTION_GUIDE.md](DATABASE_SELECTION_GUIDE.md)
+> [Database Selection Guide](./docs/setup/DATABASE_SELECTION_GUIDE.md)
 
 ### Manual Setup
 
@@ -301,9 +310,35 @@ personal-finance-management/
 - `PUT /api/transactions/{id}/` - Update transaction
 - `DELETE /api/transactions/{id}/` - Delete transaction
 
+### Bulk Operations
+
+- `POST /api/bulk-reclassify-transactions/` - Reclassify transactions by
+  category
+- `POST /api/bulk-delete-transactions/` - Delete transactions by categories
+- `GET /api/reclassification-rules/` - List reclassification rules
+- `POST /api/reclassification-rules/` - Create reclassification rule
+- `DELETE /api/reclassification-rules/{id}/` - Delete reclassification rule
+- `GET /api/category-deletion-rules/` - List category deletion rules
+- `POST /api/category-deletion-rules/` - Create category deletion rule
+- `DELETE /api/category-deletion-rules/{id}/` - Delete category deletion rule
+
 ### Analytics
 
 - `GET /api/category-spending/{period}/` - Category spending analysis
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [docs](./docs/) folder:
+
+- **[Setup & Installation](./docs/setup/)** - Docker setup and database
+  configuration
+- **[User Guides](./docs/guides/)** - Feature tutorials and how-tos
+- **[Architecture](./docs/architecture/)** - Technical documentation and design
+  decisions
+- **[Troubleshooting](./docs/troubleshooting/)** - Common issues and solutions
+- **[Changelog](./docs/changelog/)** - Version history and release notes
+
+For a complete overview, see the [Documentation Index](./docs/README.md).
 
 ## 🤝 Contributing
 

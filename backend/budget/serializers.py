@@ -1,12 +1,21 @@
 from rest_framework import serializers
 
-from .models import Category, Heritage, Investment, RetirementAccount, Transaction
+from .models import (
+    Category,
+    CategoryDeletionRule,
+    Heritage,
+    Investment,
+    ReclassificationRule,
+    RetirementAccount,
+    Transaction,
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = "__all__"
+        read_only_fields = ["user"]
 
 
 class InvestmentSerializer(serializers.ModelSerializer):
@@ -77,3 +86,38 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = "__all__"
+
+
+class ReclassificationRuleSerializer(serializers.ModelSerializer):
+    from_category_name = serializers.CharField(
+        source="from_category.name", read_only=True
+    )
+    to_category_name = serializers.CharField(source="to_category.name", read_only=True)
+
+    class Meta:
+        model = ReclassificationRule
+        fields = [
+            "id",
+            "from_category",
+            "to_category",
+            "from_category_name",
+            "to_category_name",
+            "created_at",
+            "is_active",
+        ]
+        read_only_fields = ["user", "created_at"]
+
+    def validate(self, data):
+        """Prevent circular reclassification"""
+        if data.get("from_category") == data.get("to_category"):
+            raise serializers.ValidationError("Cannot reclassify to the same category")
+        return data
+
+
+class CategoryDeletionRuleSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+
+    class Meta:
+        model = CategoryDeletionRule
+        fields = ["id", "category", "category_name", "created_at", "is_active"]
+        read_only_fields = ["user", "created_at"]

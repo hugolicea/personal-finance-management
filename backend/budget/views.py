@@ -16,11 +16,21 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
-from .models import Category, Heritage, Investment, RetirementAccount, Transaction
+from .models import (
+    Category,
+    CategoryDeletionRule,
+    Heritage,
+    Investment,
+    ReclassificationRule,
+    RetirementAccount,
+    Transaction,
+)
 from .serializers import (
+    CategoryDeletionRuleSerializer,
     CategorySerializer,
     HeritageSerializer,
     InvestmentSerializer,
+    ReclassificationRuleSerializer,
     RetirementAccountSerializer,
     TransactionSerializer,
 )
@@ -114,6 +124,38 @@ class TransactionViewSet(viewsets.ModelViewSet):
             Transaction.objects.filter(user=self.request.user)
             .select_related("category")
             .order_by("-date")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class ReclassificationRuleViewSet(viewsets.ModelViewSet):
+    queryset = ReclassificationRule.objects.all()
+    serializer_class = ReclassificationRuleSerializer
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return (
+            ReclassificationRule.objects.filter(user=self.request.user, is_active=True)
+            .select_related("user", "from_category", "to_category")
+            .order_by("-created_at")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class CategoryDeletionRuleViewSet(viewsets.ModelViewSet):
+    queryset = CategoryDeletionRule.objects.all()
+    serializer_class = CategoryDeletionRuleSerializer
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return (
+            CategoryDeletionRule.objects.filter(user=self.request.user, is_active=True)
+            .select_related("user", "category")
+            .order_by("-created_at")
         )
 
     def perform_create(self, serializer):
@@ -554,3 +596,166 @@ def auto_categorize_transaction(description, user):
                 )
 
     return None
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "from_category_id": {"type": "integer"},
+                "to_category_id": {"type": "integer"},
+            },
+            "required": ["from_category_id", "to_category_id"],
+        }
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "transactions_updated": {"type": "integer"},
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
+@api_view(["POST"])
+def bulk_reclassify_transactions(request):
+    """
+    Reclassify all transactions from one category to another.
+    Prevents circular reclassification by checking if the source and target
+    categories are the same.
+    """
+    from_category_id = request.data.get("from_category_id")
+    to_category_id = request.data.get("to_category_id")
+
+    if not from_category_id or not to_category_id:
+        return Response(
+            {"error": "Both from_category_id and to_category_id are required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Prevent circular reclassification (same category)
+    if from_category_id == to_category_id:
+        return Response(
+            {"error": "Cannot reclassify to the same category"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # Verify both categories exist and belong to the user
+        from_category = Category.objects.get(id=from_category_id, user=request.user)
+        to_category = Category.objects.get(id=to_category_id, user=request.user)
+
+        # Update all transactions from source category to target category
+        transactions_updated = Transaction.objects.filter(
+            user=request.user, category=from_category
+        ).update(category=to_category)
+
+        return Response(
+            {
+                "message": (
+                    f"Successfully reclassified {transactions_updated} "
+                    f"transactions from '{from_category.name}' to "
+                    f"'{to_category.name}'"
+                ),
+                "transactions_updated": transactions_updated,
+                "from_category": from_category.name,
+                "to_category": to_category.name,
+            }
+        )
+
+    except Category.DoesNotExist:
+        return Response(
+            {"error": "Category not found or does not belong to user"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to reclassify transactions: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "category_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                },
+            },
+            "required": ["category_ids"],
+        }
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "transactions_deleted": {"type": "integer"},
+                "categories_processed": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
+@api_view(["POST"])
+def bulk_delete_transactions_by_category(request):
+    """
+    Delete all transactions belonging to specified categories.
+    Accepts an array of category IDs to delete transactions from multiple
+    categories at once.
+    """
+    category_ids = request.data.get("category_ids", [])
+
+    if not category_ids or not isinstance(category_ids, list):
+        return Response(
+            {"error": "category_ids must be a non-empty array"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # Verify all categories exist and belong to the user
+        categories = Category.objects.filter(id__in=category_ids, user=request.user)
+
+        if categories.count() != len(category_ids):
+            return Response(
+                {
+                    "error": (
+                        "One or more categories not found or do not belong to user"
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Get category names for response
+        category_names = list(categories.values_list("name", flat=True))
+
+        # Delete all transactions in these categories
+        transactions_deleted, _ = Transaction.objects.filter(
+            user=request.user, category__in=categories
+        ).delete()
+
+        return Response(
+            {
+                "message": (
+                    f"Successfully deleted {transactions_deleted} "
+                    f"transactions from {len(category_names)} categories"
+                ),
+                "transactions_deleted": transactions_deleted,
+                "categories_processed": category_names,
+            }
+        )
+
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to delete transactions: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

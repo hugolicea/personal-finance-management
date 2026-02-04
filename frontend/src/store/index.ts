@@ -3,6 +3,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import loadingReducer from './loadingSlice';
 import authReducer from './slices/authSlice';
 import categoriesReducer from './slices/categoriesSlice';
+import cleanAndReclassifyReducer from './slices/cleanAndReclassifySlice';
 import heritagesReducer from './slices/heritagesSlice';
 import investmentsReducer from './slices/investmentsSlice';
 import retirementAccountsReducer from './slices/retirementAccountsSlice';
@@ -12,6 +13,7 @@ export const store = configureStore({
     reducer: {
         auth: authReducer,
         categories: categoriesReducer,
+        cleanAndReclassify: cleanAndReclassifyReducer,
         heritages: heritagesReducer,
         investments: investmentsReducer,
         retirementAccounts: retirementAccountsReducer,
