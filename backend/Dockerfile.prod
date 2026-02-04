@@ -36,10 +36,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
 # Create necessary directories and set permissions
+# Fix line endings for entrypoint.sh (Windows -> Unix)
 RUN mkdir -p /app/staticfiles /app/logs && \
     useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app && \
-    chmod +x /app/entrypoint.sh
+    sed -i 's/\r$//' /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh && \
+    chown -R appuser:appuser /app
 
 USER appuser
 

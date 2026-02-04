@@ -30,17 +30,30 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 }
 
 // Configure axios baseURL from environment variable
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL;
 axios.defaults.baseURL =
-    import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    apiBaseURL !== undefined ? apiBaseURL : 'http://localhost:8000';
 axios.defaults.timeout = 30000; // 30 seconds timeout
+axios.defaults.withCredentials = true; // Send cookies with requests
 
-// Add axios request interceptor to include JWT token
+// Add axios request interceptor to include JWT token and CSRF token
 axios.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('accessToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Get CSRF token from cookie
+        const csrfToken = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+
+        if (csrfToken) {
+            config.headers['X-CSRFToken'] = csrfToken;
+        }
+
         return config;
     },
     (error) => {
