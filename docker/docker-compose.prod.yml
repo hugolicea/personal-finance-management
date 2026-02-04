@@ -90,6 +90,9 @@ services:
       - backend
     networks:
       - personal_finance_network
+    profiles:
+      - postgres
+      - mysql
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
       interval: 30s
@@ -113,6 +116,9 @@ services:
       - backend
     networks:
       - personal_finance_network
+    profiles:
+      - postgres
+      - mysql
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
       interval: 30s
