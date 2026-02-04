@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom';
 
 import PrivateRoute from '../components/PrivateRoute';
 import AccountTransactions from '../pages/AccountTransactions';
+import Balance from '../pages/Balance';
 import Categories from '../pages/Categories';
 import CleanAndReclassify from '../pages/CleanAndReclassify';
 import CreditCardTransactions from '../pages/CreditCardTransactions';
@@ -79,6 +80,14 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <Reports />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/balance'
+                element={
+                    <PrivateRoute>
+                        <Balance />
                     </PrivateRoute>
                 }
             />

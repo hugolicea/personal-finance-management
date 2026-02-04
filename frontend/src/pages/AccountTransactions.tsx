@@ -840,6 +840,7 @@ function AccountTransactions() {
                 <TransactionForm
                     transaction={editingTransaction || undefined}
                     onClose={closeModals}
+                    transactionType='account'
                 />
             </Modal>
 

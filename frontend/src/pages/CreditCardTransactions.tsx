@@ -838,6 +838,7 @@ function CreditCardTransactions() {
                 <TransactionForm
                     transaction={editingTransaction || undefined}
                     onClose={closeModals}
+                    transactionType='credit_card'
                 />
             </Modal>
 

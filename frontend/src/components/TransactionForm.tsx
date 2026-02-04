@@ -15,11 +15,13 @@ import CategorySelect from './CategorySelect';
 interface TransactionFormProps {
     transaction?: Partial<Transaction>;
     onClose: () => void;
+    transactionType?: 'account' | 'credit_card';
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
     transaction,
     onClose,
+    transactionType = 'account',
 }) => {
     const dispatch = useAppDispatch();
     const { categories, loading: categoriesLoading } = useAppSelector(
@@ -68,29 +70,29 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     ? -Math.abs(parseFloat(values.amount))
                     : Math.abs(parseFloat(values.amount));
 
-            const transactionData: {
-                description: string;
-                date: string;
-                amount: number;
-                category: number;
-                transaction_type: string;
-            } = {
+            const baseData = {
                 description: values.description,
                 date: values.date!, // Formik validation ensures this is set
                 amount: amount,
                 category: Number(values.category),
-                transaction_type: values.type,
             };
 
             if (transaction) {
+                // Update existing transaction - don't include transaction_type
                 await dispatch(
                     updateTransaction({
                         id: transaction.id!,
-                        ...transactionData,
+                        ...baseData,
                     })
                 ).unwrap();
             } else {
-                await dispatch(createTransaction(transactionData)).unwrap();
+                // Create new transaction - include transaction_type
+                await dispatch(
+                    createTransaction({
+                        ...baseData,
+                        transaction_type: transactionType,
+                    })
+                ).unwrap();
             }
             onClose();
         } catch (error) {
