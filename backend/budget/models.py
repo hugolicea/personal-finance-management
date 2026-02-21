@@ -455,16 +455,30 @@ class Transaction(models.Model):
     )  # e.g., 'bank_statement', 'manual'
     import_date = models.DateTimeField(auto_now_add=True)
     reference_id = models.CharField(
-        max_length=255, blank=True, null=True, unique=True
-    )  # For duplicate detection
+        max_length=255, blank=True, null=True, unique=True, db_index=True
+    )  # For duplicate detection - indexed for faster lookups
+
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         indexes = [
             models.Index(fields=["user", "date"]),
             models.Index(fields=["user", "category"]),
             models.Index(fields=["user", "-date"]),  # For recent transactions
+            models.Index(
+                fields=["user", "date", "category"]
+            ),  # Composite for filtering
+            models.Index(fields=["reference_id"]),  # For duplicate detection
         ]
         ordering = ["-date"]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(amount__isnull=False),
+                name="transaction_amount_not_null",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.description} - {self.amount:.2f} ({self.date})"

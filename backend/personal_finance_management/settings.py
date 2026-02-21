@@ -43,8 +43,16 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 5000,
-    "MAX_PAGE_SIZE": 10000,
+    "PAGE_SIZE": 100,  # Reduced from 5000 for better performance
+    "MAX_PAGE_SIZE": 1000,  # Reduced from 10000 to prevent abuse
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "100/hour",  # Anonymous users
+        "user": "1000/hour",  # Authenticated users
+    },
 }
 
 CORS_ALLOWED_ORIGINS = config(
@@ -122,12 +130,22 @@ if DB_ENGINE == "mysql":
         "charset": "utf8mb4",
     }
 
+# PostgreSQL specific configuration with connection pooling
+if DB_ENGINE in ["postgresql", "postgres"]:
+    DATABASES["default"]["CONN_MAX_AGE"] = 600  # 10 minutes connection pooling
+    DATABASES["default"]["OPTIONS"] = {
+        "connect_timeout": 10,
+    }
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 12,  # Increased from default 8
+        },
     },
     {
         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
@@ -136,6 +154,40 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+# Security Settings (Production)
+if not DEBUG:
+    # HTTPS Security
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+    # HSTS (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Cookie Security
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_AGE = 3600  # 1 hour
+
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SAMESITE = "Lax"
+
+    # Content Security
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
+
+    # Referrer Policy
+    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+else:
+    # Development - More lenient for local testing
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_AGE = 86400  # 24 hours for dev
 
 LANGUAGE_CODE = "en-us"
 
@@ -152,7 +204,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),  # Reduced from 5 hours
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,

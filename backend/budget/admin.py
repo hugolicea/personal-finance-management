@@ -16,6 +16,12 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ["name", "user", "classification", "monthly_budget"]
     list_filter = ["classification", "user"]
     search_fields = ["name", "user__email"]
+    readonly_fields = ["user"]  # Prevent changing user after creation
+
+    def get_queryset(self, request):
+        """Optimize query with select_related to prevent N+1 queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related("user")
 
 
 @admin.register(Transaction)
@@ -29,8 +35,20 @@ class TransactionAdmin(admin.ModelAdmin):
         "transaction_type",
     ]
     list_filter = ["transaction_type", "date", "category", "user"]
-    search_fields = ["description", "user__email"]
+    search_fields = ["description", "user__email", "reference_id"]
     date_hierarchy = "date"
+    readonly_fields = [
+        "user",
+        "import_date",
+        "reference_id",
+        "created_at",
+        "updated_at",
+    ]
+
+    def get_queryset(self, request):
+        """Optimize query with select_related to prevent N+1 queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related("user", "category")
 
 
 @admin.register(Investment)
@@ -45,6 +63,12 @@ class InvestmentAdmin(admin.ModelAdmin):
     ]
     list_filter = ["investment_type", "user"]
     search_fields = ["symbol", "name", "user__email"]
+    readonly_fields = ["user"]
+
+    def get_queryset(self, request):
+        """Optimize query with select_related to prevent N+1 queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related("user")
 
 
 @admin.register(Heritage)
@@ -52,6 +76,12 @@ class HeritageAdmin(admin.ModelAdmin):
     list_display = ["name", "user", "heritage_type", "address", "purchase_price"]
     list_filter = ["heritage_type", "user"]
     search_fields = ["name", "address", "user__email"]
+    readonly_fields = ["user"]
+
+    def get_queryset(self, request):
+        """Optimize query with select_related to prevent N+1 queries."""
+        qs = super().get_queryset(request)
+        return qs.select_related("user")
 
 
 @admin.register(RetirementAccount)

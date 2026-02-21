@@ -11,9 +11,15 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import (
+    api_view,
+    parser_classes,
+    permission_classes,
+    throttle_classes,
+)
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import (
@@ -34,6 +40,7 @@ from .serializers import (
     RetirementAccountSerializer,
     TransactionSerializer,
 )
+from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -179,6 +186,15 @@ class CategoryDeletionRuleViewSet(viewsets.ModelViewSet):
 )
 @api_view(["GET"])
 def balance_by_period(request, period):
+    """Calculate balance for a specific time period."""
+    # Validate period parameter
+    valid_periods = ["week", "month", "quarter", "year"]
+    if period not in valid_periods:
+        return JsonResponse(
+            {"error": f"Invalid period. Must be one of: {', '.join(valid_periods)}"},
+            status=400,
+        )
+
     now = datetime.now().date()
     if period == "week":
         start = now - timedelta(days=7)
@@ -188,8 +204,6 @@ def balance_by_period(request, period):
         start = now - timedelta(days=90)
     elif period == "year":
         start = now - timedelta(days=365)
-    else:
-        return JsonResponse({"error": "Invalid period"}, status=400)
 
     total = (
         Transaction.objects.filter(user=request.user, date__gte=start).aggregate(
@@ -310,26 +324,57 @@ def category_spending_by_period(request, period):
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
+@permission_classes([IsAuthenticated])
+@throttle_classes([UploadRateThrottle])
 def upload_bank_statement(request):
     """
     Upload and process a bank statement CSV file.
     Supports multiple CSV formats with flexible column names and date formats.
     Handles both credit card and account transaction formats.
+
+    Security: Validates file size (max 10MB) and content type.
     """
+    # Validate file presence
     if "file" not in request.FILES:
         return Response(
             {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
         )
 
     file = request.FILES["file"]
+
+    # Validate file extension
     if not file.name.endswith(".csv"):
         return Response(
             {"error": "File must be a CSV"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    # Validate file size (5MB limit)
+    max_size = 5 * 1024 * 1024  # 5MB
+    if file.size > max_size:
+        return Response(
+            {
+                "error": f"File size exceeds maximum allowed size of {max_size / (1024 * 1024):.0f}MB"
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate content type
+    allowed_content_types = ["text/csv", "application/csv", "application/vnd.ms-excel"]
+    if file.content_type and file.content_type not in allowed_content_types:
+        return Response(
+            {"error": "Invalid file content type. Must be CSV."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     try:
-        # Read and parse CSV
-        file_data = file.read().decode("utf-8")
+        # Read and parse CSV with encoding detection
+        try:
+            file_data = file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            # Try latin-1 encoding as fallback
+            file.seek(0)
+            file_data = file.read().decode("latin-1")
+
         csv_reader = csv.DictReader(io.StringIO(file_data))
 
         # Detect CSV type based on headers
@@ -500,9 +545,15 @@ def upload_bank_statement(request):
             }
         )
 
-    except Exception as e:
+    except Exception:
+        # Log error securely without exposing details
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception("Error processing bank statement upload")
+
         return Response(
-            {"error": f"Failed to process file: {str(e)}"},
+            {"error": "An unexpected error occurred while processing the file"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -621,6 +672,8 @@ def auto_categorize_transaction(description, user):
     },
 )
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([BulkOperationThrottle])
 def bulk_reclassify_transactions(request):
     """
     Reclassify all transactions from one category to another.
@@ -630,9 +683,20 @@ def bulk_reclassify_transactions(request):
     from_category_id = request.data.get("from_category_id")
     to_category_id = request.data.get("to_category_id")
 
+    # Validate required fields
     if not from_category_id or not to_category_id:
         return Response(
             {"error": "Both from_category_id and to_category_id are required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate IDs are integers
+    try:
+        from_category_id = int(from_category_id)
+        to_category_id = int(to_category_id)
+    except (ValueError, TypeError):
+        return Response(
+            {"error": "Category IDs must be valid integers"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -671,9 +735,19 @@ def bulk_reclassify_transactions(request):
             {"error": "Category not found or does not belong to user"},
             status=status.HTTP_404_NOT_FOUND,
         )
-    except Exception as e:
+    except ValueError:
         return Response(
-            {"error": f"Failed to reclassify transactions: {str(e)}"},
+            {"error": "Invalid input data"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except Exception:
+        # Log the actual error but don't expose details to client
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception("Error in bulk_reclassify_transactions")
+        return Response(
+            {"error": "An unexpected error occurred"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
@@ -707,6 +781,8 @@ def bulk_reclassify_transactions(request):
     },
 )
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([BulkOperationThrottle])
 def bulk_delete_transactions_by_category(request):
     """
     Delete all transactions belonging to specified categories.
@@ -754,8 +830,13 @@ def bulk_delete_transactions_by_category(request):
             }
         )
 
-    except Exception as e:
+    except Exception:
+        # Log the actual error but don't expose details to client
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception("Error in bulk_delete_transactions_by_category")
         return Response(
-            {"error": f"Failed to delete transactions: {str(e)}"},
+            {"error": "An unexpected error occurred"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

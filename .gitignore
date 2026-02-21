@@ -298,3 +298,6 @@ requirement.md
 
 # Static files
 staticfiles/
+
+# Agent files
+.agents/
