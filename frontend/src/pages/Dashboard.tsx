@@ -1,6 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
-
-import axios from 'axios';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
@@ -15,109 +13,27 @@ import { fetchInvestments } from '../store/slices/investmentsSlice';
 import { fetchRetirementAccounts } from '../store/slices/retirementAccountsSlice';
 import { fetchTransactions } from '../store/slices/transactionsSlice';
 
-function Dashboard() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector((state) => state.categories);
-    const { transactions } = useAppSelector((state) => state.transactions);
-    const { investments } = useAppSelector((state) => state.investments);
-    const { heritages } = useAppSelector((state) => state.heritages);
-    const { retirementAccounts } = useAppSelector(
-        (state) => state.retirementAccounts
-    );
+// Memoized filter component to prevent unnecessary re-renders
+interface DashboardFiltersProps {
+    selectedYear: number;
+    selectedMonth: number;
+    filterByYear: boolean;
+    transactionCount: number;
+    onYearChange: (year: number) => void;
+    onMonthChange: (month: number) => void;
+    onFilterToggle: (byYear: boolean) => void;
+}
 
-    // Filter states
-    const [selectedYear, setSelectedYear] = React.useState(
-        new Date().getFullYear()
-    );
-    const [selectedMonth, setSelectedMonth] = React.useState(
-        new Date().getMonth() + 1
-    );
-    const [filterByYear, setFilterByYear] = React.useState(false);
-
-    useEffect(() => {
-        console.log('🚀 [Dashboard] First useEffect STARTED');
-        dispatch(fetchCategories());
-        dispatch(fetchInvestments());
-        dispatch(fetchHeritages());
-        dispatch(fetchRetirementAccounts());
-
-        // Fetch all transactions directly for annual expense calculations
-        // Use axios instead of Redux to avoid race condition with filtered fetch
-        console.log(
-            '[Dashboard] Fetching ALL transactions for annual expenses...'
-        );
-
-        const fetchUrl = '/api/v1/transactions/?page_size=5000';
-        console.log('[Dashboard] About to call axios.get with URL:', fetchUrl);
-
-        axios
-            .get(fetchUrl)
-            .then((response) => {
-                const data = response.data.results || response.data;
-                console.log(
-                    '[Dashboard] Extracted transactions count:',
-                    data.length
-                );
-                console.log(
-                    '[Dashboard] Transactions loaded:',
-                    data.length,
-                    'items'
-                );
-            })
-            .catch((error) => {
-                console.error(
-                    '[Dashboard] ❌ Axios FAILED - Failed to fetch all transactions:',
-                    error
-                );
-            });
-
-        console.log(
-            '🚀 [Dashboard] First useEffect COMPLETED (axios call initiated)'
-        );
-    }, [dispatch]);
-
-    // Fetch transactions when filters change
-    useEffect(() => {
-        const dateAfter = filterByYear
-            ? `${selectedYear}-01-01`
-            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
-
-        const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
-        const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
-        const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
-        const dateBefore = `${dateBeforeYear}-${String(
-            dateBeforeMonth
-        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        console.log('[Dashboard] Fetching FILTERED transactions:', {
-            filterByYear,
-            selectedYear,
-            selectedMonth,
-            dateAfter,
-            dateBefore,
-        });
-
-        dispatch(
-            fetchTransactions({
-                date_after: dateAfter,
-                date_before: dateBefore,
-                ordering: '-date',
-            })
-        );
-    }, [dispatch, filterByYear, selectedYear, selectedMonth]);
-
-    // Transactions are already filtered by the server, no need for client-side filtering
-    const filteredTransactions = transactions;
-
-    const filteredCategories = useMemo(() => {
-        return categories.filter((category) =>
-            transactions.some(
-                (transaction) => transaction.category === category.id
-            )
-        );
-    }, [categories, transactions]);
-
-    function DashboardFilters() {
+const DashboardFilters = React.memo(
+    ({
+        selectedYear,
+        selectedMonth,
+        filterByYear,
+        transactionCount,
+        onYearChange,
+        onMonthChange,
+        onFilterToggle,
+    }: DashboardFiltersProps) => {
         return (
             <div className='flex flex-wrap items-center gap-4'>
                 <div>
@@ -126,9 +42,7 @@ function Dashboard() {
                     </label>
                     <select
                         value={selectedYear}
-                        onChange={(e) =>
-                            setSelectedYear(parseInt(e.target.value))
-                        }
+                        onChange={(e) => onYearChange(parseInt(e.target.value))}
                         className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
                     >
                         {Array.from({ length: 5 }, (_, i) => {
@@ -148,7 +62,7 @@ function Dashboard() {
                     <select
                         value={selectedMonth}
                         onChange={(e) =>
-                            setSelectedMonth(parseInt(e.target.value))
+                            onMonthChange(parseInt(e.target.value))
                         }
                         disabled={filterByYear}
                         className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
@@ -179,7 +93,7 @@ function Dashboard() {
                     </label>
                     <div className='flex items-center space-x-2'>
                         <button
-                            onClick={() => setFilterByYear(false)}
+                            onClick={() => onFilterToggle(false)}
                             className={`px-3 py-2 text-sm rounded-md border ${
                                 !filterByYear
                                     ? 'bg-red-600 text-white border-red-600'
@@ -189,7 +103,7 @@ function Dashboard() {
                             Month
                         </button>
                         <button
-                            onClick={() => setFilterByYear(true)}
+                            onClick={() => onFilterToggle(true)}
                             className={`px-3 py-2 text-sm rounded-md border ${
                                 filterByYear
                                     ? 'bg-red-600 text-white border-red-600'
@@ -201,8 +115,8 @@ function Dashboard() {
                     </div>
                 </div>
                 <div className='text-sm text-gray-500 self-end'>
-                    {filteredTransactions.length} transaction
-                    {filteredTransactions.length !== 1 ? 's' : ''} for{' '}
+                    {transactionCount} transaction
+                    {transactionCount !== 1 ? 's' : ''} for{' '}
                     {filterByYear
                         ? selectedYear
                         : `${new Date(
@@ -215,6 +129,81 @@ function Dashboard() {
             </div>
         );
     }
+);
+
+DashboardFilters.displayName = 'DashboardFilters';
+
+function Dashboard() {
+    const dispatch = useAppDispatch();
+    const { categories } = useAppSelector((state) => state.categories);
+    const { transactions } = useAppSelector((state) => state.transactions);
+    const { investments } = useAppSelector((state) => state.investments);
+    const { heritages } = useAppSelector((state) => state.heritages);
+    const { retirementAccounts } = useAppSelector(
+        (state) => state.retirementAccounts
+    );
+
+    // Filter states
+    const [selectedYear, setSelectedYear] = React.useState(
+        new Date().getFullYear()
+    );
+    const [selectedMonth, setSelectedMonth] = React.useState(
+        new Date().getMonth() + 1
+    );
+    const [filterByYear, setFilterByYear] = React.useState(false);
+
+    // Memoize handlers to prevent unnecessary re-renders
+    const handleYearChange = useCallback((year: number) => {
+        setSelectedYear(year);
+    }, []);
+
+    const handleMonthChange = useCallback((month: number) => {
+        setSelectedMonth(month);
+    }, []);
+
+    const handleFilterToggle = useCallback((byYear: boolean) => {
+        setFilterByYear(byYear);
+    }, []);
+
+    useEffect(() => {
+        dispatch(fetchCategories());
+        dispatch(fetchInvestments());
+        dispatch(fetchHeritages());
+        dispatch(fetchRetirementAccounts());
+    }, [dispatch]);
+
+    // Fetch transactions when filters change
+    useEffect(() => {
+        const dateAfter = filterByYear
+            ? `${selectedYear}-01-01`
+            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+
+        const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
+        const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
+        const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
+        const dateBefore = `${dateBeforeYear}-${String(
+            dateBeforeMonth
+        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        dispatch(
+            fetchTransactions({
+                date_after: dateAfter,
+                date_before: dateBefore,
+                ordering: '-date',
+            })
+        );
+    }, [dispatch, filterByYear, selectedYear, selectedMonth]);
+
+    // Transactions are already filtered by the server, no need for client-side filtering
+    const filteredTransactions = transactions;
+
+    const filteredCategories = useMemo(() => {
+        return categories.filter((category) =>
+            transactions.some(
+                (transaction) => transaction.category === category.id
+            )
+        );
+    }, [categories, transactions]);
 
     return (
         <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
@@ -249,7 +238,15 @@ function Dashboard() {
             {/* Filters */}
             <div className='bg-white border-b border-gray-200'>
                 <div className='max-w-[1600px] mx-auto py-5 px-4 sm:px-6 lg:px-8'>
-                    <DashboardFilters />
+                    <DashboardFilters
+                        selectedYear={selectedYear}
+                        selectedMonth={selectedMonth}
+                        filterByYear={filterByYear}
+                        transactionCount={filteredTransactions.length}
+                        onYearChange={handleYearChange}
+                        onMonthChange={handleMonthChange}
+                        onFilterToggle={handleFilterToggle}
+                    />
                 </div>
             </div>
 
