@@ -23,6 +23,7 @@ import {
     fetchInvestments,
 } from '../store/slices/investmentsSlice';
 import { Investment } from '../types/investments';
+import { formatDateForDisplay } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function Investments() {
@@ -142,9 +143,7 @@ function Investments() {
                 header: 'Purchase Date',
                 cell: ({ row }) => (
                     <div className='text-sm'>
-                        {new Date(
-                            row.original.purchase_date
-                        ).toLocaleDateString()}
+                        {formatDateForDisplay(row.original.purchase_date)}
                     </div>
                 ),
             },
@@ -154,7 +153,7 @@ function Investments() {
                 cell: ({ row }) => (
                     <div className='text-sm'>
                         {row.original.due_date ? (
-                            new Date(row.original.due_date).toLocaleDateString()
+                            formatDateForDisplay(row.original.due_date)
                         ) : (
                             <span className='text-gray-400'>N/A</span>
                         )}

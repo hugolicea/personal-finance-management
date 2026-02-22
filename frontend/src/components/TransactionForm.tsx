@@ -10,6 +10,7 @@ import {
     updateTransaction,
 } from '../store/slices/transactionsSlice';
 import type { Transaction } from '../types/transactions';
+import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 import CategorySelect from './CategorySelect';
 
 interface TransactionFormProps {
@@ -37,7 +38,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     const initialValues = {
         amount: transaction?.amount ? String(Math.abs(transaction.amount)) : '',
         description: transaction?.description || '',
-        date: transaction?.date || new Date().toISOString().split('T')[0],
+        date: transaction?.date
+            ? toDateInputValue(transaction.date)
+            : getTodayDate(),
         category: transaction?.category ? String(transaction.category) : '',
         type: transaction?.amount
             ? transaction.amount < 0

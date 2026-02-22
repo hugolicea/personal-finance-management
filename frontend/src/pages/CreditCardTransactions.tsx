@@ -18,6 +18,7 @@ import {
 } from '../store/slices/transactionsSlice';
 import { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
+import { formatDateForDisplay } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function CreditCardTransactions() {
@@ -527,9 +528,9 @@ function CreditCardTransactions() {
                                                                             transaction.category
                                                                         )}{' '}
                                                                         •{' '}
-                                                                        {new Date(
+                                                                        {formatDateForDisplay(
                                                                             transaction.date
-                                                                        ).toLocaleDateString()}
+                                                                        )}
                                                                     </p>
                                                                 </div>
                                                                 <div className='text-right'>
@@ -611,9 +612,9 @@ function CreditCardTransactions() {
                                                                             transaction.category
                                                                         )}{' '}
                                                                         •{' '}
-                                                                        {new Date(
+                                                                        {formatDateForDisplay(
                                                                             transaction.date
-                                                                        ).toLocaleDateString()}
+                                                                        )}
                                                                     </p>
                                                                 </div>
                                                                 <div className='text-right'>
@@ -765,9 +766,9 @@ function CreditCardTransactions() {
                                                             />
                                                         </td>
                                                         <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900'>
-                                                            {new Date(
+                                                            {formatDateForDisplay(
                                                                 transaction.date
-                                                            ).toLocaleDateString()}
+                                                            )}
                                                         </td>
                                                         <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900'>
                                                             {

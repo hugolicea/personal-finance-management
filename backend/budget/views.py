@@ -757,6 +757,253 @@ def bulk_reclassify_transactions(request):
         "application/json": {
             "type": "object",
             "properties": {
+                "rule_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "description": "Array of reclassification rule IDs to execute",
+                },
+            },
+            "required": ["rule_ids"],
+        }
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "total_transactions_updated": {"type": "integer"},
+                "rules_applied": {"type": "integer"},
+                "rule_results": {"type": "array"},
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([BulkOperationThrottle])
+def bulk_execute_reclassification_rules(request):
+    """
+    Efficiently execute multiple reclassification rules.
+    Loads transactions ONCE and applies all rules sequentially.
+    Much more efficient than calling apply_reclassification_rule multiple times.
+    """
+    rule_ids = request.data.get("rule_ids", [])
+
+    # Validate required field
+    if not rule_ids:
+        return Response(
+            {"error": "rule_ids is required and must not be empty"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate all IDs are integers
+    try:
+        rule_ids = [int(rid) for rid in rule_ids]
+    except (ValueError, TypeError):
+        return Response(
+            {"error": "All rule_ids must be valid integers"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # Fetch all rules at once
+        rules = list(
+            ReclassificationRule.objects.filter(
+                id__in=rule_ids, user=request.user, is_active=True
+            )
+            .select_related("from_category", "to_category")
+            .order_by("id")
+        )
+
+        if len(rules) != len(rule_ids):
+            return Response(
+                {
+                    "error": "One or more rules not found, inactive, or do not belong to user"
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Load ALL user transactions ONCE
+        all_transactions = list(
+            Transaction.objects.filter(user=request.user).select_related("category")
+        )
+
+        # Track which transactions have been reclassified
+        # Key: transaction.id, Value: new category_id
+        reclassification_map = {}
+        rule_results = []
+
+        # Apply each rule sequentially
+        for rule in rules:
+            matching_count = 0
+
+            # Check each transaction against this rule
+            for txn in all_transactions:
+                # Check if transaction matches the rule
+                if rule.matches_transaction(txn):
+                    # Mark this transaction for reclassification
+                    reclassification_map[txn.id] = rule.to_category_id
+                    matching_count += 1
+
+                    # Update the in-memory transaction object so subsequent rules see the change
+                    txn.category_id = rule.to_category_id
+                    txn.category = rule.to_category
+
+            rule_results.append(
+                {
+                    "rule_id": rule.id,
+                    "rule_name": rule.rule_name or str(rule),
+                    "transactions_matched": matching_count,
+                }
+            )
+
+        # Perform ALL updates in a single database operation
+        total_updated = 0
+        if reclassification_map:
+            # Batch update by grouping transactions by target category
+            from collections import defaultdict
+
+            category_transaction_map = defaultdict(list)
+            for txn_id, category_id in reclassification_map.items():
+                category_transaction_map[category_id].append(txn_id)
+
+            # Execute batch updates
+            for category_id, txn_ids in category_transaction_map.items():
+                updated = Transaction.objects.filter(id__in=txn_ids).update(
+                    category_id=category_id
+                )
+                total_updated += updated
+
+        return Response(
+            {
+                "message": f"Successfully executed {len(rules)} rule(s) and reclassified {total_updated} transaction(s)",
+                "total_transactions_updated": total_updated,
+                "rules_applied": len(rules),
+                "rule_results": rule_results,
+            }
+        )
+
+    except Exception:
+        # Log the actual error but don't expose details to client
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception("Error in bulk_execute_reclassification_rules")
+        return Response(
+            {"error": "An unexpected error occurred"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "rule_id": {
+                    "type": "integer",
+                    "description": "ID of the reclassification rule to preview",
+                },
+            },
+            "required": ["rule_id"],
+        }
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "matching_count": {"type": "integer"},
+                "transactions": {"type": "array"},
+                "rule_name": {"type": "string"},
+            },
+        },
+        404: {"type": "object", "properties": {"error": {"type": "string"}}},
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def preview_reclassification_rule(request):
+    """
+    Preview which transactions will be matched by a reclassification rule
+    without actually updating them.
+    """
+    rule_id = request.data.get("rule_id")
+
+    # Validate required field
+    if not rule_id:
+        return Response(
+            {"error": "rule_id is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Validate ID is integer
+    try:
+        rule_id = int(rule_id)
+    except (ValueError, TypeError):
+        return Response(
+            {"error": "rule_id must be a valid integer"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        # Fetch the rule
+        rule = ReclassificationRule.objects.select_related(
+            "from_category", "to_category"
+        ).get(id=rule_id, user=request.user, is_active=True)
+
+        # Get all user transactions
+        transactions = Transaction.objects.filter(user=request.user).select_related(
+            "category"
+        )
+
+        # Filter transactions that match the rule
+        matching_transactions = [
+            txn for txn in transactions if rule.matches_transaction(txn)
+        ]
+
+        # Serialize matching transactions
+        from .serializers import TransactionSerializer
+
+        serialized_transactions = TransactionSerializer(
+            matching_transactions[:50], many=True
+        ).data
+
+        return Response(
+            {
+                "matching_count": len(matching_transactions),
+                "transactions": serialized_transactions,
+                "rule_name": rule.rule_name or str(rule),
+                "from_category_name": rule.from_category.name
+                if rule.from_category
+                else "All Categories",
+                "to_category_name": rule.to_category.name,
+            }
+        )
+
+    except ReclassificationRule.DoesNotExist:
+        return Response(
+            {"error": "Rule not found, inactive, or does not belong to user"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+    except Exception:
+        # Log the actual error but don't expose details to client
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.exception("Error in preview_reclassification_rule")
+        return Response(
+            {"error": "An unexpected error occurred"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
                 "category_ids": {
                     "type": "array",
                     "items": {"type": "integer"},

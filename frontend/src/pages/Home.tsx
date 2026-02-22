@@ -23,6 +23,7 @@ import {
 } from '../store/slices/transactionsSlice';
 import type { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
+import { formatDateForDisplay } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function Home() {
@@ -381,9 +382,9 @@ function Home() {
                                                                         }
                                                                     </p>
                                                                     <p className='text-xs text-gray-500'>
-                                                                        {new Date(
+                                                                        {formatDateForDisplay(
                                                                             transaction.date
-                                                                        ).toLocaleDateString()}
+                                                                        )}
                                                                     </p>
                                                                 </div>
                                                                 <div className='text-right'>

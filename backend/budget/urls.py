@@ -12,8 +12,10 @@ from .views import (
     TransactionViewSet,
     balance_by_period,
     bulk_delete_transactions_by_category,
+    bulk_execute_reclassification_rules,
     bulk_reclassify_transactions,
     category_spending_by_period,
+    preview_reclassification_rule,
     upload_bank_statement,
 )
 
@@ -43,6 +45,16 @@ urlpatterns = [
         "bulk-reclassify-transactions/",
         bulk_reclassify_transactions,
         name="bulk_reclassify_transactions",
+    ),
+    path(
+        "bulk-execute-reclassification-rules/",
+        bulk_execute_reclassification_rules,
+        name="bulk_execute_reclassification_rules",
+    ),
+    path(
+        "preview-reclassification-rule/",
+        preview_reclassification_rule,
+        name="preview_reclassification_rule",
     ),
     path(
         "bulk-delete-transactions/",

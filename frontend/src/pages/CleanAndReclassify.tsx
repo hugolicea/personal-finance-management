@@ -2,21 +2,42 @@ import { useEffect, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
+import RuleConditionBuilder from '../components/RuleConditionBuilder';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCategories } from '../store/slices/categoriesSlice';
 import {
+    bulkExecuteReclassificationRules,
     createCategoryDeletionRule,
     createReclassificationRule,
     deleteCategoryDeletionRule,
     deleteReclassificationRule,
     fetchCategoryDeletionRules,
     fetchReclassificationRules,
+    previewReclassificationRule,
 } from '../store/slices/cleanAndReclassifySlice';
 import {
     bulkDeleteTransactions,
-    bulkReclassifyTransactions,
     fetchTransactions,
 } from '../store/slices/transactionsSlice';
+import type { ReclassificationConditions } from '../types/cleanAndReclassify';
+
+interface PreviewTransaction {
+    id: number;
+    date: string;
+    amount: string;
+    description: string;
+    category: number;
+    category_name: string;
+    transaction_type: string;
+}
+
+interface PreviewData {
+    matching_count: number;
+    transactions: PreviewTransaction[];
+    rule_name: string;
+    from_category_name: string;
+    to_category_name: string;
+}
 
 function CleanAndReclassify() {
     const dispatch = useAppDispatch();
@@ -38,6 +59,13 @@ function CleanAndReclassify() {
     );
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [ruleName, setRuleName] = useState('');
+    const [conditions, setConditions] = useState<ReclassificationConditions>(
+        {}
+    );
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -54,50 +82,50 @@ function CleanAndReclassify() {
     const availableCategories = categories.filter((cat) => cat.name);
 
     const handleAddReclassificationRule = async () => {
+        if (!selectedToCategory) {
+            alert('Please select a target category');
+            return;
+        }
+
         if (
             selectedFromCategory &&
-            selectedToCategory &&
-            selectedFromCategory !== selectedToCategory
+            selectedFromCategory === selectedToCategory
         ) {
-            const fromCategory = categories.find(
-                (c) => c.id === Number(selectedFromCategory)
-            );
-            const toCategory = categories.find(
-                (c) => c.id === Number(selectedToCategory)
-            );
+            alert('Cannot reclassify to the same category');
+            return;
+        }
 
-            if (fromCategory && toCategory) {
-                // Check if rule already exists
-                const exists = reclassificationRules.some(
-                    (rule) =>
-                        rule.from_category === Number(selectedFromCategory)
-                );
+        const toCategory = categories.find(
+            (c) => c.id === Number(selectedToCategory)
+        );
 
-                if (exists) {
-                    alert(
-                        `A reclassification rule for "${fromCategory.name}" already exists.`
-                    );
-                    return;
-                }
+        if (!toCategory) {
+            alert('Invalid target category');
+            return;
+        }
 
-                try {
-                    await dispatch(
-                        createReclassificationRule({
-                            from_category: Number(selectedFromCategory),
-                            to_category: Number(selectedToCategory),
-                        })
-                    ).unwrap();
+        try {
+            await dispatch(
+                createReclassificationRule({
+                    from_category: selectedFromCategory
+                        ? Number(selectedFromCategory)
+                        : null,
+                    to_category: Number(selectedToCategory),
+                    conditions:
+                        Object.keys(conditions).length > 0
+                            ? conditions
+                            : undefined,
+                    rule_name: ruleName.trim() || undefined,
+                })
+            ).unwrap();
 
-                    setSelectedFromCategory('');
-                    setSelectedToCategory('');
-                } catch (error) {
-                    console.error(
-                        'Failed to create reclassification rule:',
-                        error
-                    );
-                    alert('Failed to save reclassification rule.');
-                }
-            }
+            setSelectedFromCategory('');
+            setSelectedToCategory('');
+            setRuleName('');
+            setConditions({});
+        } catch (error) {
+            console.error('Failed to create reclassification rule:', error);
+            alert('Failed to save reclassification rule.');
         }
     };
 
@@ -107,6 +135,22 @@ function CleanAndReclassify() {
         } catch (error) {
             console.error('Failed to delete reclassification rule:', error);
             alert('Failed to delete reclassification rule.');
+        }
+    };
+
+    const handlePreviewRule = async (ruleId: number) => {
+        setIsLoadingPreview(true);
+        try {
+            const result = await dispatch(
+                previewReclassificationRule(ruleId)
+            ).unwrap();
+            setPreviewData(result);
+            setShowPreviewModal(true);
+        } catch (error) {
+            console.error('Failed to preview rule:', error);
+            alert('Failed to preview rule. Please try again.');
+        } finally {
+            setIsLoadingPreview(false);
         }
     };
 
@@ -158,19 +202,19 @@ function CleanAndReclassify() {
             let totalReclassified = 0;
             let totalDeleted = 0;
 
-            // Execute reclassification rules
-            for (const rule of reclassificationRules) {
+            // Execute reclassification rules (bulk operation for performance)
+            if (reclassificationRules.length > 0) {
                 try {
+                    const ruleIds = reclassificationRules.map(
+                        (rule) => rule.id
+                    );
                     const result = await dispatch(
-                        bulkReclassifyTransactions({
-                            from_category_id: rule.from_category,
-                            to_category_id: rule.to_category,
-                        })
+                        bulkExecuteReclassificationRules(ruleIds)
                     ).unwrap();
-                    totalReclassified += result.transactions_updated;
+                    totalReclassified = result.total_transactions_updated;
                 } catch (error) {
                     console.error(
-                        `Failed to reclassify from category ${rule.from_category}:`,
+                        'Failed to apply reclassification rules:',
                         error
                     );
                 }
@@ -220,7 +264,8 @@ function CleanAndReclassify() {
         }
     };
 
-    const getCategoryName = (categoryId: number) => {
+    const getCategoryName = (categoryId: number | null) => {
+        if (!categoryId) return 'All Categories';
         const category = categories.find((c) => c.id === categoryId);
         return category?.name || 'Unknown';
     };
@@ -256,13 +301,32 @@ function CleanAndReclassify() {
                             Reclassification Rules
                         </h2>
                         <p className='text-sm text-gray-600 mb-4'>
-                            Move all transactions from one category to another.
+                            Create rules to reclassify transactions with
+                            advanced conditions.
                         </p>
 
                         <div className='space-y-4'>
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                    From Category
+                                    Rule Name (Optional)
+                                </label>
+                                <input
+                                    type='text'
+                                    value={ruleName}
+                                    onChange={(e) =>
+                                        setRuleName(e.target.value)
+                                    }
+                                    placeholder='e.g., Groceries from Walmart'
+                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                                />
+                            </div>
+
+                            <div>
+                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                    From Category (Optional)
+                                    <span className='ml-2 text-xs text-gray-500'>
+                                        Leave empty to match all categories
+                                    </span>
                                 </label>
                                 <select
                                     value={selectedFromCategory}
@@ -275,9 +339,7 @@ function CleanAndReclassify() {
                                     }
                                     className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                 >
-                                    <option value=''>
-                                        Select category to move from...
-                                    </option>
+                                    <option value=''>All Categories</option>
                                     {availableCategories.map((category) => (
                                         <option
                                             key={category.id}
@@ -291,7 +353,7 @@ function CleanAndReclassify() {
 
                             <div>
                                 <label className='block text-sm font-medium text-gray-700 mb-1'>
-                                    To Category
+                                    To Category (Required)
                                 </label>
                                 <select
                                     value={selectedToCategory}
@@ -324,13 +386,14 @@ function CleanAndReclassify() {
                                 </select>
                             </div>
 
+                            <RuleConditionBuilder
+                                conditions={conditions}
+                                onChange={setConditions}
+                            />
+
                             <button
                                 onClick={handleAddReclassificationRule}
-                                disabled={
-                                    !selectedFromCategory ||
-                                    !selectedToCategory ||
-                                    selectedFromCategory === selectedToCategory
-                                }
+                                disabled={!selectedToCategory}
                                 className='w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                             >
                                 ➕ Add Rule
@@ -344,39 +407,171 @@ function CleanAndReclassify() {
                                     Active Rules ({reclassificationRules.length}
                                     )
                                 </h3>
-                                <div className='space-y-2'>
-                                    {reclassificationRules.map((rule) => (
-                                        <div
-                                            key={rule.id}
-                                            className='flex items-center justify-between bg-blue-50 p-3 rounded-md border border-blue-200'
-                                        >
-                                            <div className='flex items-center space-x-2 text-sm'>
-                                                <span className='font-medium text-gray-700'>
-                                                    {getCategoryName(
-                                                        rule.from_category
-                                                    )}
-                                                </span>
-                                                <span className='text-blue-600'>
-                                                    →
-                                                </span>
-                                                <span className='font-medium text-gray-700'>
-                                                    {getCategoryName(
-                                                        rule.to_category
-                                                    )}
-                                                </span>
-                                            </div>
-                                            <button
-                                                onClick={() =>
-                                                    handleRemoveReclassificationRule(
-                                                        rule.id
-                                                    )
-                                                }
-                                                className='text-red-600 hover:text-red-800 transition-colors'
+                                <div className='space-y-3'>
+                                    {reclassificationRules.map((rule) => {
+                                        const hasConditions =
+                                            rule.conditions &&
+                                            Object.keys(rule.conditions)
+                                                .length > 0;
+                                        return (
+                                            <div
+                                                key={rule.id}
+                                                className='bg-blue-50 p-3 rounded-md border border-blue-200'
                                             >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                    ))}
+                                                <div className='flex items-start justify-between'>
+                                                    <div className='flex-1'>
+                                                        {rule.rule_name && (
+                                                            <div className='text-sm font-semibold text-gray-800 mb-1'>
+                                                                {rule.rule_name}
+                                                            </div>
+                                                        )}
+                                                        <div className='flex items-center space-x-2 text-sm'>
+                                                            <span className='font-medium text-gray-700'>
+                                                                {getCategoryName(
+                                                                    rule.from_category
+                                                                )}
+                                                            </span>
+                                                            <span className='text-blue-600'>
+                                                                →
+                                                            </span>
+                                                            <span className='font-medium text-gray-700'>
+                                                                {getCategoryName(
+                                                                    rule.to_category
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                        {hasConditions && (
+                                                            <div className='mt-2 text-xs text-gray-600 space-y-1'>
+                                                                {rule.conditions
+                                                                    ?.description_contains &&
+                                                                    rule
+                                                                        .conditions
+                                                                        .description_contains
+                                                                        .length >
+                                                                        0 && (
+                                                                        <div>
+                                                                            <span className='font-medium'>
+                                                                                Contains:
+                                                                            </span>{' '}
+                                                                            {rule.conditions.description_contains.join(
+                                                                                ', '
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                {rule.conditions
+                                                                    ?.description_not_contains &&
+                                                                    rule
+                                                                        .conditions
+                                                                        .description_not_contains
+                                                                        .length >
+                                                                        0 && (
+                                                                        <div>
+                                                                            <span className='font-medium'>
+                                                                                Excludes:
+                                                                            </span>{' '}
+                                                                            {rule.conditions.description_not_contains.join(
+                                                                                ', '
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                {(rule
+                                                                    .conditions
+                                                                    ?.amount_min ||
+                                                                    rule
+                                                                        .conditions
+                                                                        ?.amount_max) && (
+                                                                    <div>
+                                                                        <span className='font-medium'>
+                                                                            Amount:
+                                                                        </span>{' '}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.amount_min &&
+                                                                            `≥ $${rule.conditions.amount_min}`}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.amount_min &&
+                                                                            rule
+                                                                                .conditions
+                                                                                ?.amount_max &&
+                                                                            ' and '}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.amount_max &&
+                                                                            `≤ $${rule.conditions.amount_max}`}
+                                                                    </div>
+                                                                )}
+                                                                {(rule
+                                                                    .conditions
+                                                                    ?.date_from ||
+                                                                    rule
+                                                                        .conditions
+                                                                        ?.date_to) && (
+                                                                    <div>
+                                                                        <span className='font-medium'>
+                                                                            Date:
+                                                                        </span>{' '}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.date_from &&
+                                                                            `from ${rule.conditions.date_from}`}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.date_from &&
+                                                                            rule
+                                                                                .conditions
+                                                                                ?.date_to &&
+                                                                            ' '}
+                                                                        {rule
+                                                                            .conditions
+                                                                            ?.date_to &&
+                                                                            `to ${rule.conditions.date_to}`}
+                                                                    </div>
+                                                                )}
+                                                                {rule.conditions
+                                                                    ?.transaction_type && (
+                                                                    <div>
+                                                                        <span className='font-medium'>
+                                                                            Type:
+                                                                        </span>{' '}
+                                                                        {
+                                                                            rule
+                                                                                .conditions
+                                                                                .transaction_type
+                                                                        }
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className='flex items-center gap-2 ml-2'>
+                                                        <button
+                                                            onClick={() =>
+                                                                handlePreviewRule(
+                                                                    rule.id
+                                                                )
+                                                            }
+                                                            className='text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium'
+                                                            title='Preview matching transactions'
+                                                        >
+                                                            👁️ Preview
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRemoveReclassificationRule(
+                                                                    rule.id
+                                                                )
+                                                            }
+                                                            className='text-red-600 hover:text-red-800 transition-colors'
+                                                            title='Delete rule'
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -595,6 +790,132 @@ function CleanAndReclassify() {
                             OK
                         </button>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Preview Modal */}
+            <Modal
+                isOpen={showPreviewModal}
+                onClose={() => setShowPreviewModal(false)}
+                title={`Preview: ${
+                    previewData?.rule_name || 'Reclassification Rule'
+                }`}
+            >
+                <div className='space-y-4'>
+                    {isLoadingPreview ? (
+                        <div className='text-center py-8'>
+                            <div className='animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto'></div>
+                            <p className='mt-4 text-gray-600'>
+                                Loading preview...
+                            </p>
+                        </div>
+                    ) : previewData ? (
+                        <>
+                            <div className='bg-blue-50 p-4 rounded-md border border-blue-200'>
+                                <p className='text-lg font-semibold text-blue-900'>
+                                    {previewData.matching_count}{' '}
+                                    {previewData.matching_count === 1
+                                        ? 'transaction'
+                                        : 'transactions'}{' '}
+                                    will be reclassified
+                                </p>
+                                <p className='text-sm text-gray-600 mt-1'>
+                                    From:{' '}
+                                    <strong>
+                                        {previewData.from_category_name}
+                                    </strong>{' '}
+                                    → To:{' '}
+                                    <strong>
+                                        {previewData.to_category_name}
+                                    </strong>
+                                </p>
+                            </div>
+
+                            {previewData.matching_count > 0 ? (
+                                <>
+                                    <div className='max-h-96 overflow-y-auto border border-gray-200 rounded-md'>
+                                        <table className='min-w-full divide-y divide-gray-200'>
+                                            <thead className='bg-gray-50 sticky top-0'>
+                                                <tr>
+                                                    <th className='px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                                                        Date
+                                                    </th>
+                                                    <th className='px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                                                        Description
+                                                    </th>
+                                                    <th className='px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
+                                                        Category
+                                                    </th>
+                                                    <th className='px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase'>
+                                                        Amount
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className='bg-white divide-y divide-gray-200'>
+                                                {previewData.transactions.map(
+                                                    (
+                                                        txn: PreviewTransaction
+                                                    ) => (
+                                                        <tr
+                                                            key={txn.id}
+                                                            className='hover:bg-gray-50'
+                                                        >
+                                                            <td className='px-3 py-2 text-sm text-gray-900 whitespace-nowrap'>
+                                                                {new Date(
+                                                                    txn.date
+                                                                ).toLocaleDateString()}
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-700'>
+                                                                {
+                                                                    txn.description
+                                                                }
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-gray-600'>
+                                                                {
+                                                                    txn.category_name
+                                                                }
+                                                            </td>
+                                                            <td className='px-3 py-2 text-sm text-right text-gray-900 font-medium'>
+                                                                $
+                                                                {parseFloat(
+                                                                    txn.amount
+                                                                ).toFixed(2)}
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {previewData.matching_count > 50 && (
+                                        <p className='text-xs text-gray-500 italic'>
+                                            Showing first 50 of{' '}
+                                            {previewData.matching_count}{' '}
+                                            matching transactions
+                                        </p>
+                                    )}
+                                </>
+                            ) : (
+                                <div className='text-center py-8 text-gray-500'>
+                                    <p className='text-lg'>
+                                        No matching transactions found
+                                    </p>
+                                    <p className='text-sm mt-2'>
+                                        Try adjusting your rule conditions
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className='flex justify-end gap-3 mt-6'>
+                                <button
+                                    onClick={() => setShowPreviewModal(false)}
+                                    className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </>
+                    ) : null}
                 </div>
             </Modal>
         </div>

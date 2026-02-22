@@ -9,6 +9,7 @@ import {
     updateInvestment,
 } from '../store/slices/investmentsSlice';
 import { Investment } from '../types/investments';
+import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 
 interface InvestmentFormProps {
     investment?: Investment;
@@ -28,8 +29,9 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
         quantity: investment?.quantity || 0,
         purchase_price: investment?.purchase_price || 0,
         current_price: investment?.current_price || '',
-        purchase_date:
-            investment?.purchase_date || new Date().toISOString().split('T')[0],
+        purchase_date: investment?.purchase_date
+            ? toDateInputValue(investment.purchase_date)
+            : getTodayDate(),
         principal_amount: investment?.principal_amount || '',
         interest_rate: investment?.interest_rate || '',
         compounding_frequency: investment?.compounding_frequency || 'annual',
