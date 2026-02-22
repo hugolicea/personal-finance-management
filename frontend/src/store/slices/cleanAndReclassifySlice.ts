@@ -3,6 +3,7 @@ import axios from 'axios';
 
 import type {
     CategoryDeletionRule,
+    CreateReclassificationRulePayload,
     ReclassificationRule,
 } from '../../types/cleanAndReclassify';
 
@@ -31,10 +32,32 @@ export const fetchReclassificationRules = createAsyncThunk(
 
 export const createReclassificationRule = createAsyncThunk(
     'cleanAndReclassify/createReclassificationRule',
-    async (rule: { from_category: number; to_category: number }) => {
+    async (rule: CreateReclassificationRulePayload) => {
         const response = await axios.post(
             '/api/v1/reclassification-rules/',
             rule
+        );
+        return response.data;
+    }
+);
+
+export const previewReclassificationRule = createAsyncThunk(
+    'cleanAndReclassify/previewReclassificationRule',
+    async (ruleId: number) => {
+        const response = await axios.post(
+            '/api/v1/preview-reclassification-rule/',
+            { rule_id: ruleId }
+        );
+        return response.data;
+    }
+);
+
+export const bulkExecuteReclassificationRules = createAsyncThunk(
+    'cleanAndReclassify/bulkExecuteReclassificationRules',
+    async (ruleIds: number[]) => {
+        const response = await axios.post(
+            '/api/v1/bulk-execute-reclassification-rules/',
+            { rule_ids: ruleIds }
         );
         return response.data;
     }

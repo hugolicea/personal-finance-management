@@ -475,7 +475,7 @@ class Transaction(models.Model):
         ordering = ["-date"]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(amount__isnull=False),
+                condition=models.Q(amount__isnull=False),
                 name="transaction_amount_not_null",
             ),
         ]
@@ -485,7 +485,19 @@ class Transaction(models.Model):
 
 
 class ReclassificationRule(models.Model):
-    """Store persistent reclassification rules for Clean and Reclassify feature"""
+    """Store persistent reclassification rules for Clean and Reclassify feature
+
+    Supports advanced conditions:
+    {
+        "description_contains": "Attack FC",
+        "description_not_contains": "exclude_this",
+        "amount_min": 10.00,
+        "amount_max": 100.00,
+        "date_from": "2024-01-01",
+        "date_to": "2024-12-31",
+        "transaction_type": "credit_card"
+    }
+    """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -497,6 +509,8 @@ class ReclassificationRule(models.Model):
         on_delete=models.CASCADE,
         related_name="reclassification_from_rules",
         help_text="Category to reclassify from",
+        null=True,
+        blank=True,
     )
     to_category = models.ForeignKey(
         Category,
@@ -504,19 +518,100 @@ class ReclassificationRule(models.Model):
         related_name="reclassification_to_rules",
         help_text="Category to reclassify to",
     )
+    conditions = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Additional conditions for matching transactions (description, amount range, dates, etc.)",
+    )
+    rule_name = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="Optional name to identify this rule",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(
         default=True, help_text="Whether this rule is active"
     )
 
     class Meta:
-        unique_together = [["user", "from_category"]]
         indexes = [
             models.Index(fields=["user", "is_active"]),
         ]
 
     def __str__(self):
-        return f"{self.from_category.name} → {self.to_category.name}"
+        if self.rule_name:
+            return f"{self.rule_name}: → {self.to_category.name}"
+        if self.from_category:
+            return f"{self.from_category.name} → {self.to_category.name}"
+        return f"Rule → {self.to_category.name}"
+
+    def matches_transaction(self, transaction):
+        """Check if a transaction matches this rule's conditions"""
+        # Check from_category if specified
+        if self.from_category and transaction.category_id != self.from_category_id:
+            return False
+
+        # Check additional conditions
+        if not self.conditions:
+            return True
+
+        # Description contains (ANY of these keywords)
+        if "description_contains" in self.conditions:
+            keywords = self.conditions["description_contains"]
+            if isinstance(keywords, list) and keywords:
+                description_lower = transaction.description.lower()
+                if not any(
+                    keyword.lower() in description_lower for keyword in keywords
+                ):
+                    return False
+            elif isinstance(keywords, str) and keywords:
+                if keywords.lower() not in transaction.description.lower():
+                    return False
+
+        # Description not contains (NONE of these keywords)
+        if "description_not_contains" in self.conditions:
+            keywords = self.conditions["description_not_contains"]
+            if isinstance(keywords, list) and keywords:
+                description_lower = transaction.description.lower()
+                if any(keyword.lower() in description_lower for keyword in keywords):
+                    return False
+            elif isinstance(keywords, str) and keywords:
+                if keywords.lower() in transaction.description.lower():
+                    return False
+
+        # Amount range
+        if "amount_min" in self.conditions:
+            if float(transaction.amount) < float(self.conditions["amount_min"]):
+                return False
+
+        if "amount_max" in self.conditions:
+            if float(transaction.amount) > float(self.conditions["amount_max"]):
+                return False
+
+        # Date range
+        if "date_from" in self.conditions:
+            from datetime import datetime
+
+            date_from = datetime.strptime(
+                self.conditions["date_from"], "%Y-%m-%d"
+            ).date()
+            if transaction.date < date_from:
+                return False
+
+        if "date_to" in self.conditions:
+            from datetime import datetime
+
+            date_to = datetime.strptime(self.conditions["date_to"], "%Y-%m-%d").date()
+            if transaction.date > date_to:
+                return False
+
+        # Transaction type
+        if "transaction_type" in self.conditions:
+            if transaction.transaction_type != self.conditions["transaction_type"]:
+                return False
+
+        return True
 
 
 class CategoryDeletionRule(models.Model):

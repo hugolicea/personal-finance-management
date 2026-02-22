@@ -91,7 +91,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class ReclassificationRuleSerializer(serializers.ModelSerializer):
     from_category_name = serializers.CharField(
-        source="from_category.name", read_only=True
+        source="from_category.name", read_only=True, allow_null=True
     )
     to_category_name = serializers.CharField(source="to_category.name", read_only=True)
 
@@ -103,15 +103,26 @@ class ReclassificationRuleSerializer(serializers.ModelSerializer):
             "to_category",
             "from_category_name",
             "to_category_name",
+            "conditions",
+            "rule_name",
             "created_at",
             "is_active",
         ]
         read_only_fields = ["user", "created_at"]
 
     def validate(self, data):
-        """Prevent circular reclassification"""
-        if data.get("from_category") == data.get("to_category"):
+        """Validate reclassification rule"""
+        from_category = data.get("from_category")
+        to_category = data.get("to_category")
+
+        # Prevent circular reclassification if both are specified
+        if from_category and to_category and from_category == to_category:
             raise serializers.ValidationError("Cannot reclassify to the same category")
+
+        # Ensure to_category is always specified
+        if not to_category:
+            raise serializers.ValidationError("to_category is required")
+
         return data
 
 

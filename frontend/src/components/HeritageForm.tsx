@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { useAppDispatch } from '../hooks/redux';
 import { createHeritage, updateHeritage } from '../store/slices/heritagesSlice';
 import { Heritage } from '../types/heritage';
+import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 
 interface HeritageFormProps {
     heritage?: Heritage;
@@ -23,8 +24,9 @@ const HeritageForm: React.FC<HeritageFormProps> = ({ heritage, onClose }) => {
         area_unit: heritage?.area_unit || 'sq_m',
         purchase_price: heritage?.purchase_price || 0,
         current_value: heritage?.current_value || '',
-        purchase_date:
-            heritage?.purchase_date || new Date().toISOString().split('T')[0],
+        purchase_date: heritage?.purchase_date
+            ? toDateInputValue(heritage.purchase_date)
+            : getTodayDate(),
         monthly_rental_income: heritage?.monthly_rental_income || 0,
         notes: heritage?.notes || '',
     };

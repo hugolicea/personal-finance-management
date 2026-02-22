@@ -25,7 +25,7 @@ max_attempts = 60
 for attempt in range(1, max_attempts + 1):
     try:
         connections['default'].cursor()
-        print(f"✓ Database is ready!")
+        print(f" -> Database is ready!")
         sys.exit(0)
     except OperationalError as e:
         if attempt < max_attempts:
@@ -46,7 +46,7 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo ""
-echo "✓ Setup complete! Starting Django server..."
+echo " -> Setup complete! Starting Django server..."
 echo ""
 
 # Execute the main command

@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="transaction",
             constraint=models.CheckConstraint(
-                check=models.Q(amount__isnull=False),
+                condition=models.Q(amount__isnull=False),
                 name="transaction_amount_not_null",
             ),
         ),
