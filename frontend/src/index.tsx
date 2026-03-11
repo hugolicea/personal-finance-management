@@ -31,8 +31,10 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 
 // Configure axios baseURL from environment variable
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL;
-axios.defaults.baseURL =
-    apiBaseURL !== undefined ? apiBaseURL : 'http://localhost:8000';
+// Only set baseURL if explicitly provided, otherwise use relative URLs
+if (apiBaseURL && apiBaseURL.trim() !== '') {
+    axios.defaults.baseURL = apiBaseURL;
+}
 axios.defaults.timeout = 30000; // 30 seconds timeout
 axios.defaults.withCredentials = true; // Send cookies with requests
 

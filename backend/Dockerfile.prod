@@ -38,12 +38,9 @@ COPY . .
 # Create necessary directories and set permissions
 # Fix line endings for entrypoint.sh (Windows -> Unix)
 RUN mkdir -p /app/staticfiles /app/logs && \
-    useradd -m -u 1000 appuser && \
     sed -i 's/\r$//' /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh && \
-    chown -R appuser:appuser /app
-
-USER appuser
+    chmod 777 /app/staticfiles /app/logs
 
 # Set minimal environment variables needed for collectstatic
 ENV SECRET_KEY=temp-collectstatic-key \

@@ -292,6 +292,7 @@ frontend/build/
 
 # Development files
 .flake8
+dev/
 
 # Requirement
 requirement.md

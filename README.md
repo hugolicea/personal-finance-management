@@ -133,24 +133,38 @@ If you prefer manual configuration:
     **Option A: PostgreSQL (Recommended)**
 
     ```powershell
-    cd docker
+    # Using helper script (easiest)
     Copy-Item .env.postgresql .env
-    # Edit .env if needed
+    .\compose.ps1 dev-up-pg
+
+    # Or using docker compose directly
+    Copy-Item .env.postgresql .env
     docker compose --profile postgres up -d
     ```
 
     **Option B: MySQL**
 
     ```powershell
-    cd docker
+    # Using helper script (easiest)
     Copy-Item .env.mysql .env
-    # Edit .env if needed
+    .\compose.ps1 dev-up-mysql
+
+    # Or using docker compose directly
+    Copy-Item .env.mysql .env
     docker compose --profile mysql up -d
     ```
+
+    > **Note:** `docker compose up` automatically uses
+    > `docker-compose.override.yml` for development settings (hot reload,
+    > Adminer, DEBUG=True)
 
 3. **Run migrations**
 
     ```bash
+    # Using helper script
+    .\compose.ps1 migrate
+
+    # Or using docker compose directly
     # For PostgreSQL
     docker compose --profile postgres exec backend python manage.py migrate
 
@@ -163,6 +177,26 @@ If you prefer manual configuration:
     - Backend API: <http://localhost:8000/api/v1/>
     - Admin Panel: <http://localhost:8000/admin>
     - API Documentation: <http://localhost:8000/api/schema/swagger-ui/>
+    - Adminer (Database): <http://localhost:8080> (dev only)
+
+5. **View logs and useful commands**
+
+    ```powershell
+    # View all available commands
+    .\compose.ps1 help
+
+    # View logs
+    .\compose.ps1 dev-logs
+
+    # Create superuser
+    .\compose.ps1 createsuperuser
+
+    # Django shell
+    .\compose.ps1 shell
+
+    # Stop containers
+    .\compose.ps1 dev-down
+    ```
 
 ### Developer Setup (Code Quality Tools)
 
@@ -225,14 +259,29 @@ For development work with automated code quality checks:
 2. **Deploy with production Docker Compose**
 
     ```bash
-    cd docker
-    docker-compose -f docker-compose.prod.yml up -d --build
+    # Using helper script (easiest)
+    .\compose.ps1 prod-up-mysql
+    # or for PostgreSQL:
+    .\compose.ps1 prod-up-pg
+
+    # Or using docker compose directly
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile mysql up -d --build
+    # or for PostgreSQL:
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile postgres up -d --build
     ```
 
-3. **Deploy with Docker Compose**
+    > **Note:** Production uses explicit override file
+    > (`docker-compose.prod.yml`) with Dockerfile.prod, nginx, resource limits,
+    > and no Adminer
+
+3. **Run migrations in production**
 
     ```bash
-    docker-compose -f docker/docker-compose.yml up -d --build
+    # Using helper script
+    .\compose.ps1 migrate-prod
+
+    # Or using docker compose directly
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend python manage.py migrate
     ```
 
 ## 🏗️ Project Structure

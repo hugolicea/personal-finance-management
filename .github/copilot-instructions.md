@@ -86,12 +86,17 @@ frontend/
 │   └── utils/          # Helper functions
 └── package.json        # Dependencies + @sentry/react
 
-docker/
-├── docker-compose.yml      # Development (supports both PostgreSQL and MySQL)
-├── docker-compose.prod.yml # Production with static_volume
-├── .env.postgresql         # PostgreSQL configuration template
-├── .env.mysql              # MySQL configuration template
-└── nginx-backend.conf      # Nginx config for static files
+# Docker Compose (Override Pattern)
+docker-compose.yml          # Base: Shared config for all environments
+docker-compose.override.yml # Dev: Auto-loaded (hot reload, Adminer, DEBUG=True)
+docker-compose.prod.yml     # Prod: Explicit (Dockerfile.prod, nginx, limits)
+compose.ps1                 # PowerShell helper script
+Makefile                    # Unix/Linux helper (optional)
+nginx/
+└── backend.conf            # Nginx config for backend proxy (prod only)
+.env                        # Environment variables (root level)
+.env.mysql                  # MySQL configuration template
+.env.postgresql             # PostgreSQL configuration template
 ```
 
 ## Development Commands
@@ -106,42 +111,74 @@ docker/
 ### Local Development
 
 ```powershell
-# Start services with PostgreSQL
-cd docker
-docker compose --profile postgres up -d
-
-# OR start services with MySQL
-docker compose --profile mysql up -d
+# Using helper script (easiest)
+.\compose.ps1 dev-up-mysql         # Start services with MySQL
+# OR
+.\compose.ps1 dev-up-pg            # Start services with PostgreSQL
 
 # View logs
-docker compose --profile postgres logs -f backend  # or --profile mysql
-docker compose --profile postgres logs -f frontend
+.\compose.ps1 dev-logs
+.\compose.ps1 dev-logs-backend
 
 # Run migrations
-docker compose --profile postgres exec backend python manage.py makemigrations
-docker compose --profile postgres exec backend python manage.py migrate
+.\compose.ps1 migrate
 
 # Create superuser (or use default: admin/changeme123)
-docker compose --profile postgres exec backend python manage.py createsuperuser
-
-# Collect static files
-docker compose --profile postgres exec backend python manage.py collectstatic --noinput
+.\compose.ps1 createsuperuser
 
 # Run tests
-docker compose --profile postgres exec backend pytest
-cd ../frontend && npm test
+.\compose.ps1 test
+
+# Django shell
+.\compose.ps1 shell
+
+# Stop services
+.\compose.ps1 dev-down
 ```
 
-**Note**: Replace `--profile postgres` with `--profile mysql` if using MySQL.
+**Using Docker Compose directly:**
+
+```powershell
+# Start services (automatically uses docker-compose.override.yml for dev)
+docker compose --profile mysql up -d
+# OR
+docker compose --profile postgres up -d
+
+# View logs
+docker compose --profile mysql logs -f backend
+docker compose --profile mysql logs -f frontend
+
+# Run migrations
+docker compose --profile mysql exec backend python manage.py makemigrations
+docker compose --profile mysql exec backend python manage.py migrate
+
+# Create superuser
+docker compose --profile mysql exec backend python manage.py createsuperuser
+
+# Collect static files
+docker compose --profile mysql exec backend python manage.py collectstatic --noinput
+
+# Run tests
+docker compose --profile mysql exec backend pytest
+cd frontend && npm test
+```
+
+**Note**: Replace `--profile mysql` with `--profile postgres` if using
+PostgreSQL.
 
 ### Production
 
 ```powershell
-cd docker
-docker compose -f docker-compose.prod.yml up -d --build
+# Using helper script (easiest)
+.\compose.ps1 prod-up-mysql
+.\compose.ps1 collectstatic
+.\compose.ps1 prod-logs
+
+# Using docker compose directly
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile mysql up -d --build
 
 # Collect static files to shared volume
-docker compose -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput --clear
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput --clear
 ```
 
 ### Code Quality
@@ -248,7 +285,7 @@ pre-commit autoupdate
 
 ## Environment Variables
 
-**Backend** (`docker/.env`):
+**Backend** (`.env` at project root):
 
 ```bash
 # Database Configuration
@@ -283,10 +320,11 @@ VITE_SENTRY_DSN=https://...  # Optional
 ### Jazzmin Admin Shows Plain HTML
 
 - Run:
-  `docker compose -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput --clear`
-- Restart nginx: `docker compose -f docker-compose.prod.yml restart nginx`
+  `docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput --clear`
+- Restart nginx:
+  `docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx`
 - Check static files:
-  `docker compose -f docker-compose.prod.yml exec nginx ls /app/staticfiles/jazzmin/`
+  `docker compose -f docker-compose.yml -f docker-compose.prod.yml exec nginx ls /app/staticfiles/jazzmin/`
 
 ### Pre-commit Hooks Failing
 
@@ -296,9 +334,18 @@ VITE_SENTRY_DSN=https://...  # Optional
 
 ### Database Connection Errors
 
-- Check postgres is healthy: `docker compose ps postgres`
+- Check database is healthy: `docker compose ps mysql` or
+  `docker compose ps postgres`
 - Check connection: `docker compose exec backend python manage.py dbshell`
-- Reset database: `docker compose down -v && docker compose up -d`
+- Reset database:
+  `docker compose down -v && docker compose --profile mysql up -d`
+
+### Wrong Docker Image (Production vs Development)
+
+- If Vite not running:
+  `docker compose build frontend && docker compose up -d frontend`
+- If nginx in dev: You likely ran prod commands, use `docker compose down` and
+  `docker compose --profile mysql up -d`
 
 ### CI/CD Failures
 

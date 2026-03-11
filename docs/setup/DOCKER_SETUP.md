@@ -24,16 +24,14 @@ frontend/
 
 ### 1. Development Build Failure
 
-**Issue**: `pip install -r requirements.dev.txt` was failing
-**Fix**:
+**Issue**: `pip install -r requirements.dev.txt` was failing **Fix**:
 
 - Added system dependencies (gcc, postgresql-client) to Dockerfile
 - Made dev requirements optional with `|| true`
 
 ### 2. Environment Variables Not Found
 
-**Issue**: Production compose couldn't find .env variables
-**Fix**:
+**Issue**: Production compose couldn't find .env variables **Fix**:
 
 - Created `docker/.env` file with all required variables
 - Added `env_file: - .env` to services
@@ -41,53 +39,100 @@ frontend/
 
 ## 🔧 **Quick Start Commands**
 
-### Development Mode
+### Using Helper Script (Recommended)
 
 ```powershell
-cd docker
+# View all available commands
+.\compose.ps1 help
 
-# Start all services
-docker compose up -d --build
+# Development with MySQL
+.\compose.ps1 dev-up-mysql        # Start dev environment
+.\compose.ps1 dev-logs            # View logs
+.\compose.ps1 migrate             # Run migrations
+.\compose.ps1 createsuperuser     # Create admin user
+.\compose.ps1 dev-down            # Stop services
 
-# Check logs
-docker compose logs -f backend
+# Development with PostgreSQL
+.\compose.ps1 dev-up-pg           # Start dev environment
 
-# Run migrations
-docker compose exec backend python manage.py migrate
+# Production with MySQL
+.\compose.ps1 prod-up-mysql       # Start prod environment
+.\compose.ps1 prod-logs           # View logs
+.\compose.ps1 migrate-prod        # Run migrations
+.\compose.ps1 prod-down           # Stop services
 
-# Create superuser
-docker compose exec backend python manage.py createsuperuser
-
-# Stop services
-docker compose down
+# Other useful commands
+.\compose.ps1 shell               # Django shell
+.\compose.ps1 test                # Run tests
+.\compose.ps1 ps                  # Show container status
+.\compose.ps1 adminer             # Show Adminer connection info
 ```
 
-### Production Mode
+### Using Docker Compose Directly
+
+#### Development Mode
 
 ```powershell
-cd docker
+# Start all services (choose database profile)
+# Note: Automatically uses docker-compose.override.yml for dev settings
+docker compose --profile mysql up -d
+# or
+docker compose --profile postgres up -d
 
+# Check logs
+docker compose --profile mysql logs -f backend
+
+# Run migrations
+docker compose --profile mysql exec backend python manage.py migrate
+
+# Create superuser
+docker compose --profile mysql exec backend python manage.py createsuperuser
+
+# Stop services
+docker compose --profile mysql down
+```
+
+> **Note:** Development automatically loads `docker-compose.override.yml` which
+> provides:
+>
+> - Hot reload (volume mounts)
+> - Adminer database tool on port 8080
+> - DEBUG=True
+> - Exposed database ports
+
+#### Production Mode
+
+```powershell
 # IMPORTANT: Update .env file first!
-# Edit docker/.env and set:
+# Edit .env and set:
 #   - SECRET_KEY (generate a secure one)
 #   - DB_PASSWORD (change from default)
 #   - ALLOWED_HOSTS (your domain)
 
-# Start production services
-docker compose -f docker-compose.prod.yml up -d --build
+# Start production services (explicit override file required)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile mysql up -d --build
 
 # Run migrations
-docker compose -f docker-compose.prod.yml exec backend python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile mysql exec backend python manage.py migrate
 
 # Create superuser
-docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend python manage.py createsuperuser
 
 # Check status
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
 # View logs
-docker compose -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
 ```
+
+> **Note:** Production uses `docker-compose.prod.yml` which provides:
+>
+> - Dockerfile.prod (optimized builds)
+> - Nginx reverse proxy
+> - No volume mounts (no hot reload)
+> - No Adminer
+> - DEBUG=False
+> - Healthchecks and resource limits
 
 ## 🔐 **Environment Configuration**
 
@@ -182,11 +227,13 @@ docker compose exec postgres psql -U user -d personal_finance_management
 - Admin Panel: <http://localhost:8000/admin>
 
 **Default Admin Credentials:**
+
 - Username: `admin`
 - Email: `admin@example.com`
 - Password: `changeme123`
 
-**Note:** A default admin user is automatically created during migrations. Change the password after first login!
+**Note:** A default admin user is automatically created during migrations.
+Change the password after first login!
 
 ### Production
 

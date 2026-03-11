@@ -1,0 +1,76 @@
+# Base Docker Compose Configuration
+# Shared configuration for all environments
+# Development: docker compose up (uses docker-compose.override.yml automatically)
+# Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME:-personal_finance_management}
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    networks:
+      - personal_finance_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user} -d ${DB_NAME:-personal_finance_management}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - postgres
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-personal_finance_management}
+      MYSQL_USER: ${DB_USER:-user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+    networks:
+      - personal_finance_network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-user}", "-p${DB_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - mysql
+
+  backend:
+    env_file:
+      - .env
+    environment:
+      - DB_ENGINE=${DB_ENGINE:-postgresql}
+      - DB_NAME=${DB_NAME:-personal_finance_management}
+      - DB_USER=${DB_USER:-user}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+    networks:
+      - personal_finance_network
+    restart: on-failure
+    profiles:
+      - postgres
+      - mysql
+
+  frontend:
+    depends_on:
+      - backend
+    networks:
+      - personal_finance_network
+    profiles:
+      - postgres
+      - mysql
+
+networks:
+  personal_finance_network:
+    driver: bridge
+
+volumes:
+  postgres_data_dev:
+  mysql_data_dev:
+  postgres_data:
+  mysql_data:
+  static_volume:

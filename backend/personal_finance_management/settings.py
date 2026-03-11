@@ -158,7 +158,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Security Settings (Production)
 if not DEBUG:
     # HTTPS Security
-    SECURE_SSL_REDIRECT = True
+    # Set SECURE_SSL_REDIRECT=False in env when running locally without HTTPS
+    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # HSTS (HTTP Strict Transport Security)
