@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import io
+import json
 from datetime import datetime, timedelta
 
 from django.db.models import Sum
@@ -1085,5 +1086,430 @@ def bulk_delete_transactions_by_category(request):
         logger.exception("Error in bulk_delete_transactions_by_category")
         return Response(
             {"error": "An unexpected error occurred"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+BACKUP_VERSION = "1.0"
+
+
+@extend_schema(
+    responses={
+        200: {
+            "type": "object",
+            "description": "JSON backup file download containing all user data",
+        }
+    },
+    description="Export all user data as a JSON backup file.",
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def backup_database(request):
+    """
+    Export all data belonging to the authenticated user as a JSON backup file.
+    The file can later be restored via the restore endpoint.
+    """
+    from django.http import HttpResponse
+
+    user = request.user
+
+    categories = list(
+        Category.objects.filter(user=user).values(
+            "id", "name", "classification", "monthly_budget"
+        )
+    )
+
+    transactions = list(
+        Transaction.objects.filter(user=user).values(
+            "id",
+            "date",
+            "amount",
+            "description",
+            "transaction_type",
+            "import_source",
+            "reference_id",
+            "category_id",
+        )
+    )
+    for t in transactions:
+        if t["date"]:
+            t["date"] = t["date"].isoformat()
+        if t["amount"] is not None:
+            t["amount"] = str(t["amount"])
+
+    investments = list(
+        Investment.objects.filter(user=user).values(
+            "id",
+            "name",
+            "ticker",
+            "shares",
+            "purchase_price",
+            "current_price",
+            "purchase_date",
+            "notes",
+        )
+    )
+    for inv in investments:
+        if inv["purchase_date"]:
+            inv["purchase_date"] = inv["purchase_date"].isoformat()
+        for field in ("shares", "purchase_price", "current_price"):
+            if inv[field] is not None:
+                inv[field] = str(inv[field])
+
+    heritages = list(
+        Heritage.objects.filter(user=user).values(
+            "id",
+            "name",
+            "property_type",
+            "purchase_price",
+            "current_value",
+            "purchase_date",
+            "address",
+            "notes",
+        )
+    )
+    for h in heritages:
+        if h["purchase_date"]:
+            h["purchase_date"] = h["purchase_date"].isoformat()
+        for field in ("purchase_price", "current_value"):
+            if h[field] is not None:
+                h[field] = str(h[field])
+
+    retirement_accounts = list(
+        RetirementAccount.objects.filter(user=user).values(
+            "id",
+            "name",
+            "account_type",
+            "balance",
+            "employer_contribution",
+            "employee_contribution",
+            "notes",
+        )
+    )
+    for r in retirement_accounts:
+        for field in ("balance", "employer_contribution", "employee_contribution"):
+            if r[field] is not None:
+                r[field] = str(r[field])
+
+    reclassification_rules = list(
+        ReclassificationRule.objects.filter(user=user).values(
+            "id",
+            "rule_name",
+            "from_category_id",
+            "to_category_id",
+            "keyword",
+            "match_type",
+            "conditions",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+    )
+    for rule in reclassification_rules:
+        for field in ("created_at", "updated_at"):
+            if rule[field]:
+                rule[field] = rule[field].isoformat()
+
+    category_deletion_rules = list(
+        CategoryDeletionRule.objects.filter(user=user).values(
+            "id",
+            "category_id",
+            "keyword",
+            "match_type",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+    )
+    for rule in category_deletion_rules:
+        for field in ("created_at", "updated_at"):
+            if rule[field]:
+                rule[field] = rule[field].isoformat()
+
+    backup_data = {
+        "version": BACKUP_VERSION,
+        "exported_at": datetime.now().isoformat(),
+        "username": user.username,
+        "categories": categories,
+        "transactions": transactions,
+        "investments": investments,
+        "heritages": heritages,
+        "retirement_accounts": retirement_accounts,
+        "reclassification_rules": reclassification_rules,
+        "category_deletion_rules": category_deletion_rules,
+    }
+
+    filename = f"backup_{user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    response = HttpResponse(
+        json.dumps(backup_data, indent=2),
+        content_type="application/json",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@extend_schema(
+    request={
+        "multipart/form-data": {
+            "type": "object",
+            "properties": {
+                "file": {"type": "string", "format": "binary"},
+                "replace_existing": {
+                    "type": "boolean",
+                    "description": "If true, deletes all existing user data before restoring",
+                },
+            },
+            "required": ["file"],
+        }
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "message": {"type": "string"},
+                "summary": {"type": "object"},
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+    description="Restore user data from a previously exported JSON backup file.",
+)
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+@permission_classes([IsAuthenticated])
+@throttle_classes([BulkOperationThrottle])
+def restore_database(request):
+    """
+    Restore user data from a JSON backup file.
+    Optionally replaces all existing user data (replace_existing=true).
+    Categories are remapped by name so existing categories are preserved/merged.
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    if "file" not in request.FILES:
+        return Response(
+            {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    uploaded_file = request.FILES["file"]
+
+    if not uploaded_file.name.endswith(".json"):
+        return Response(
+            {"error": "File must be a .json backup file"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    max_size = 50 * 1024 * 1024  # 50 MB
+    if uploaded_file.size > max_size:
+        return Response(
+            {"error": "File too large (max 50 MB)"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        raw = uploaded_file.read().decode("utf-8")
+        data = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return Response(
+            {"error": "Invalid JSON file"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if "categories" not in data or "transactions" not in data:
+        return Response(
+            {"error": "Invalid backup format: missing required fields"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    replace_existing = str(request.data.get("replace_existing", "false")).lower() in (
+        "true",
+        "1",
+        "yes",
+    )
+    user = request.user
+
+    try:
+        from django.db import transaction as db_transaction
+
+        with db_transaction.atomic():
+            if replace_existing:
+                CategoryDeletionRule.objects.filter(user=user).delete()
+                ReclassificationRule.objects.filter(user=user).delete()
+                Transaction.objects.filter(user=user).delete()
+                Investment.objects.filter(user=user).delete()
+                Heritage.objects.filter(user=user).delete()
+                RetirementAccount.objects.filter(user=user).delete()
+                Category.objects.filter(user=user).delete()
+
+            # --- Categories ---
+            old_id_to_category: dict = {}
+            categories_created = 0
+            for cat in data.get("categories", []):
+                obj, created = Category.objects.get_or_create(
+                    name=cat["name"],
+                    user=user,
+                    defaults={
+                        "classification": cat.get("classification", Category.SPEND),
+                        "monthly_budget": cat.get("monthly_budget", 0),
+                    },
+                )
+                old_id_to_category[cat["id"]] = obj
+                if created:
+                    categories_created += 1
+
+            # --- Transactions ---
+            transactions_created = 0
+            for t in data.get("transactions", []):
+                old_cat_id = t.get("category_id")
+                category = old_id_to_category.get(old_cat_id)
+                if not category:
+                    continue
+
+                ref_id = t.get("reference_id") or ""
+                if (
+                    ref_id
+                    and Transaction.objects.filter(
+                        reference_id=ref_id, user=user
+                    ).exists()
+                ):
+                    continue
+
+                try:
+                    date = (
+                        datetime.fromisoformat(t["date"]).date()
+                        if t.get("date")
+                        else None
+                    )
+                except ValueError:
+                    continue
+
+                Transaction.objects.create(
+                    date=date,
+                    amount=t.get("amount", 0),
+                    description=t.get("description", ""),
+                    transaction_type=t.get("transaction_type", Transaction.CREDIT_CARD),
+                    import_source=t.get("import_source", "backup"),
+                    reference_id=ref_id or None,
+                    category=category,
+                    user=user,
+                )
+                transactions_created += 1
+
+            # --- Investments ---
+            investments_created = 0
+            for inv in data.get("investments", []):
+                try:
+                    purchase_date = (
+                        datetime.fromisoformat(inv["purchase_date"]).date()
+                        if inv.get("purchase_date")
+                        else None
+                    )
+                except ValueError:
+                    purchase_date = None
+
+                Investment.objects.create(
+                    name=inv.get("name", ""),
+                    ticker=inv.get("ticker", ""),
+                    shares=inv.get("shares", 0),
+                    purchase_price=inv.get("purchase_price", 0),
+                    current_price=inv.get("current_price", 0),
+                    purchase_date=purchase_date,
+                    notes=inv.get("notes", ""),
+                    user=user,
+                )
+                investments_created += 1
+
+            # --- Heritages ---
+            heritages_created = 0
+            for h in data.get("heritages", []):
+                try:
+                    purchase_date = (
+                        datetime.fromisoformat(h["purchase_date"]).date()
+                        if h.get("purchase_date")
+                        else None
+                    )
+                except ValueError:
+                    purchase_date = None
+
+                Heritage.objects.create(
+                    name=h.get("name", ""),
+                    property_type=h.get("property_type", ""),
+                    purchase_price=h.get("purchase_price", 0),
+                    current_value=h.get("current_value", 0),
+                    purchase_date=purchase_date,
+                    address=h.get("address", ""),
+                    notes=h.get("notes", ""),
+                    user=user,
+                )
+                heritages_created += 1
+
+            # --- Retirement Accounts ---
+            retirement_created = 0
+            for r in data.get("retirement_accounts", []):
+                RetirementAccount.objects.create(
+                    name=r.get("name", ""),
+                    account_type=r.get("account_type", ""),
+                    balance=r.get("balance", 0),
+                    employer_contribution=r.get("employer_contribution", 0),
+                    employee_contribution=r.get("employee_contribution", 0),
+                    notes=r.get("notes", ""),
+                    user=user,
+                )
+                retirement_created += 1
+
+            # --- Reclassification Rules ---
+            rules_created = 0
+            for rule in data.get("reclassification_rules", []):
+                from_cat = old_id_to_category.get(rule.get("from_category_id"))
+                to_cat = old_id_to_category.get(rule.get("to_category_id"))
+                if not from_cat or not to_cat:
+                    continue
+                ReclassificationRule.objects.create(
+                    rule_name=rule.get("rule_name", ""),
+                    from_category=from_cat,
+                    to_category=to_cat,
+                    keyword=rule.get("keyword", ""),
+                    match_type=rule.get("match_type", "contains"),
+                    conditions=rule.get("conditions") or {},
+                    is_active=rule.get("is_active", True),
+                    user=user,
+                )
+                rules_created += 1
+
+            # --- Category Deletion Rules ---
+            deletion_rules_created = 0
+            for rule in data.get("category_deletion_rules", []):
+                cat = old_id_to_category.get(rule.get("category_id"))
+                if not cat:
+                    continue
+                CategoryDeletionRule.objects.create(
+                    category=cat,
+                    keyword=rule.get("keyword", ""),
+                    match_type=rule.get("match_type", "contains"),
+                    is_active=rule.get("is_active", True),
+                    user=user,
+                )
+                deletion_rules_created += 1
+
+        return Response(
+            {
+                "message": "Backup restored successfully",
+                "summary": {
+                    "categories": categories_created,
+                    "transactions": transactions_created,
+                    "investments": investments_created,
+                    "heritages": heritages_created,
+                    "retirement_accounts": retirement_created,
+                    "reclassification_rules": rules_created,
+                    "category_deletion_rules": deletion_rules_created,
+                },
+            }
+        )
+
+    except Exception:
+        logger.exception("Error restoring backup")
+        return Response(
+            {"error": "An unexpected error occurred while restoring the backup"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
