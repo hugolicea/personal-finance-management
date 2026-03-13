@@ -1109,6 +1109,7 @@ def backup_database(request):
     Export all data belonging to the authenticated user as a JSON backup file.
     The file can later be restored via the restore endpoint.
     """
+    from django.core.serializers.json import DjangoJSONEncoder
     from django.http import HttpResponse
 
     user = request.user
@@ -1131,65 +1132,57 @@ def backup_database(request):
             "category_id",
         )
     )
-    for t in transactions:
-        if t["date"]:
-            t["date"] = t["date"].isoformat()
-        if t["amount"] is not None:
-            t["amount"] = str(t["amount"])
 
     investments = list(
         Investment.objects.filter(user=user).values(
             "id",
             "name",
-            "ticker",
-            "shares",
+            "symbol",
+            "investment_type",
+            "quantity",
             "purchase_price",
             "current_price",
             "purchase_date",
+            "principal_amount",
+            "interest_rate",
+            "compounding_frequency",
+            "term_years",
             "notes",
         )
     )
-    for inv in investments:
-        if inv["purchase_date"]:
-            inv["purchase_date"] = inv["purchase_date"].isoformat()
-        for field in ("shares", "purchase_price", "current_price"):
-            if inv[field] is not None:
-                inv[field] = str(inv[field])
 
     heritages = list(
         Heritage.objects.filter(user=user).values(
             "id",
             "name",
-            "property_type",
+            "heritage_type",
+            "address",
+            "area",
+            "area_unit",
             "purchase_price",
             "current_value",
             "purchase_date",
-            "address",
+            "monthly_rental_income",
             "notes",
         )
     )
-    for h in heritages:
-        if h["purchase_date"]:
-            h["purchase_date"] = h["purchase_date"].isoformat()
-        for field in ("purchase_price", "current_value"):
-            if h[field] is not None:
-                h[field] = str(h[field])
 
     retirement_accounts = list(
         RetirementAccount.objects.filter(user=user).values(
             "id",
             "name",
             "account_type",
-            "balance",
-            "employer_contribution",
-            "employee_contribution",
+            "provider",
+            "account_number",
+            "current_balance",
+            "monthly_contribution",
+            "employer_match_percentage",
+            "employer_match_limit",
+            "risk_level",
+            "target_retirement_age",
             "notes",
         )
     )
-    for r in retirement_accounts:
-        for field in ("balance", "employer_contribution", "employee_contribution"):
-            if r[field] is not None:
-                r[field] = str(r[field])
 
     reclassification_rules = list(
         ReclassificationRule.objects.filter(user=user).values(
@@ -1197,34 +1190,20 @@ def backup_database(request):
             "rule_name",
             "from_category_id",
             "to_category_id",
-            "keyword",
-            "match_type",
             "conditions",
             "is_active",
             "created_at",
-            "updated_at",
         )
     )
-    for rule in reclassification_rules:
-        for field in ("created_at", "updated_at"):
-            if rule[field]:
-                rule[field] = rule[field].isoformat()
 
     category_deletion_rules = list(
         CategoryDeletionRule.objects.filter(user=user).values(
             "id",
             "category_id",
-            "keyword",
-            "match_type",
             "is_active",
             "created_at",
-            "updated_at",
         )
     )
-    for rule in category_deletion_rules:
-        for field in ("created_at", "updated_at"):
-            if rule[field]:
-                rule[field] = rule[field].isoformat()
 
     backup_data = {
         "version": BACKUP_VERSION,
@@ -1241,7 +1220,7 @@ def backup_database(request):
 
     filename = f"backup_{user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     response = HttpResponse(
-        json.dumps(backup_data, indent=2),
+        json.dumps(backup_data, indent=2, cls=DjangoJSONEncoder),
         content_type="application/json",
     )
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
@@ -1410,11 +1389,16 @@ def restore_database(request):
 
                 Investment.objects.create(
                     name=inv.get("name", ""),
-                    ticker=inv.get("ticker", ""),
-                    shares=inv.get("shares", 0),
+                    symbol=inv.get("symbol", ""),
+                    investment_type=inv.get("investment_type", Investment.STOCK),
+                    quantity=inv.get("quantity", 0),
                     purchase_price=inv.get("purchase_price", 0),
-                    current_price=inv.get("current_price", 0),
+                    current_price=inv.get("current_price") or None,
                     purchase_date=purchase_date,
+                    principal_amount=inv.get("principal_amount") or None,
+                    interest_rate=inv.get("interest_rate") or None,
+                    compounding_frequency=inv.get("compounding_frequency") or None,
+                    term_years=inv.get("term_years") or None,
                     notes=inv.get("notes", ""),
                     user=user,
                 )
@@ -1434,11 +1418,14 @@ def restore_database(request):
 
                 Heritage.objects.create(
                     name=h.get("name", ""),
-                    property_type=h.get("property_type", ""),
-                    purchase_price=h.get("purchase_price", 0),
-                    current_value=h.get("current_value", 0),
-                    purchase_date=purchase_date,
+                    heritage_type=h.get("heritage_type", Heritage.HOUSE),
                     address=h.get("address", ""),
+                    area=h.get("area") or None,
+                    area_unit=h.get("area_unit", "sq_m"),
+                    purchase_price=h.get("purchase_price", 0),
+                    current_value=h.get("current_value") or None,
+                    purchase_date=purchase_date,
+                    monthly_rental_income=h.get("monthly_rental_income", 0),
                     notes=h.get("notes", ""),
                     user=user,
                 )
@@ -1449,10 +1436,17 @@ def restore_database(request):
             for r in data.get("retirement_accounts", []):
                 RetirementAccount.objects.create(
                     name=r.get("name", ""),
-                    account_type=r.get("account_type", ""),
-                    balance=r.get("balance", 0),
-                    employer_contribution=r.get("employer_contribution", 0),
-                    employee_contribution=r.get("employee_contribution", 0),
+                    account_type=r.get(
+                        "account_type", RetirementAccount.TRADITIONAL_401K
+                    ),
+                    provider=r.get("provider", ""),
+                    account_number=r.get("account_number") or None,
+                    current_balance=r.get("current_balance", 0),
+                    monthly_contribution=r.get("monthly_contribution", 0),
+                    employer_match_percentage=r.get("employer_match_percentage", 0),
+                    employer_match_limit=r.get("employer_match_limit", 0),
+                    risk_level=r.get("risk_level", RetirementAccount.MODERATE),
+                    target_retirement_age=r.get("target_retirement_age", 65),
                     notes=r.get("notes", ""),
                     user=user,
                 )
@@ -1461,16 +1455,18 @@ def restore_database(request):
             # --- Reclassification Rules ---
             rules_created = 0
             for rule in data.get("reclassification_rules", []):
-                from_cat = old_id_to_category.get(rule.get("from_category_id"))
+                old_from_id = rule.get("from_category_id")
+                # from_category is nullable — None means "any category"
+                from_cat = old_id_to_category.get(old_from_id) if old_from_id else None
+                if old_from_id and not from_cat:
+                    continue  # referenced category missing from backup
                 to_cat = old_id_to_category.get(rule.get("to_category_id"))
-                if not from_cat or not to_cat:
+                if not to_cat:
                     continue
                 ReclassificationRule.objects.create(
                     rule_name=rule.get("rule_name", ""),
                     from_category=from_cat,
                     to_category=to_cat,
-                    keyword=rule.get("keyword", ""),
-                    match_type=rule.get("match_type", "contains"),
                     conditions=rule.get("conditions") or {},
                     is_active=rule.get("is_active", True),
                     user=user,
@@ -1483,12 +1479,10 @@ def restore_database(request):
                 cat = old_id_to_category.get(rule.get("category_id"))
                 if not cat:
                     continue
-                CategoryDeletionRule.objects.create(
+                CategoryDeletionRule.objects.get_or_create(
                     category=cat,
-                    keyword=rule.get("keyword", ""),
-                    match_type=rule.get("match_type", "contains"),
-                    is_active=rule.get("is_active", True),
                     user=user,
+                    defaults={"is_active": rule.get("is_active", True)},
                 )
                 deletion_rules_created += 1
 

@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { isAxiosError } from 'axios';
+
+import apiClient from '../../utils/apiClient';
 
 interface BackupState {
     loading: boolean;
@@ -30,7 +32,7 @@ export const downloadBackup = createAsyncThunk(
     'backup/download',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.get('/api/v1/backup/', {
+            const response = await apiClient.get('/api/v1/backup/', {
                 responseType: 'blob',
             });
             const contentDisposition =
@@ -48,7 +50,7 @@ export const downloadBackup = createAsyncThunk(
             window.URL.revokeObjectURL(url);
             return;
         } catch (err: unknown) {
-            if (axios.isAxiosError(err)) {
+            if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.error ?? 'Failed to download backup'
                 );
@@ -71,12 +73,16 @@ export const restoreBackup = createAsyncThunk(
                 'replace_existing',
                 replaceExisting ? 'true' : 'false'
             );
-            const response = await axios.post('/api/v1/restore/', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            const response = await apiClient.post(
+                '/api/v1/restore/',
+                formData,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                }
+            );
             return response.data as RestoreResult;
         } catch (err: unknown) {
-            if (axios.isAxiosError(err)) {
+            if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.error ?? 'Failed to restore backup'
                 );

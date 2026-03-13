@@ -76,21 +76,21 @@ docker compose --profile mysql exec backend python manage.py migrate
 - **Best for:** Complex queries, JSON data, analytics
 - **Port:** 5432
 - **Advantages:**
-    - Superior performance for complex queries
-    - Better JSON support
-    - Advanced indexing options
-    - More robust transaction handling
-    - Better for data analytics and reporting
+  - Superior performance for complex queries
+  - Better JSON support
+  - Advanced indexing options
+  - More robust transaction handling
+  - Better for data analytics and reporting
 
 ### MySQL 8.0
 
 - **Best for:** Traditional applications, wide hosting support
 - **Port:** 3306
 - **Advantages:**
-    - Widely supported by hosting providers
-    - Simpler replication setup
-    - Good performance for read-heavy workloads
-    - Familiar to many developers
+  - Widely supported by hosting providers
+  - Simpler replication setup
+  - Good performance for read-heavy workloads
+  - Familiar to many developers
 
 ### Database Comparison
 

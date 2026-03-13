@@ -1,11 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import type {
     CategoryDeletionRule,
     CreateReclassificationRulePayload,
     ReclassificationRule,
 } from '../../types/cleanAndReclassify';
+import apiClient from '../../utils/apiClient';
 
 interface CleanAndReclassifyState {
     reclassificationRules: ReclassificationRule[];
@@ -25,7 +25,7 @@ const initialState: CleanAndReclassifyState = {
 export const fetchReclassificationRules = createAsyncThunk(
     'cleanAndReclassify/fetchReclassificationRules',
     async () => {
-        const response = await axios.get('/api/v1/reclassification-rules/');
+        const response = await apiClient.get('/api/v1/reclassification-rules/');
         return response.data.results || response.data;
     }
 );
@@ -33,7 +33,7 @@ export const fetchReclassificationRules = createAsyncThunk(
 export const createReclassificationRule = createAsyncThunk(
     'cleanAndReclassify/createReclassificationRule',
     async (rule: CreateReclassificationRulePayload) => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/reclassification-rules/',
             rule
         );
@@ -44,7 +44,7 @@ export const createReclassificationRule = createAsyncThunk(
 export const previewReclassificationRule = createAsyncThunk(
     'cleanAndReclassify/previewReclassificationRule',
     async (ruleId: number) => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/preview-reclassification-rule/',
             { rule_id: ruleId }
         );
@@ -55,7 +55,7 @@ export const previewReclassificationRule = createAsyncThunk(
 export const bulkExecuteReclassificationRules = createAsyncThunk(
     'cleanAndReclassify/bulkExecuteReclassificationRules',
     async (ruleIds: number[]) => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/bulk-execute-reclassification-rules/',
             { rule_ids: ruleIds }
         );
@@ -66,7 +66,7 @@ export const bulkExecuteReclassificationRules = createAsyncThunk(
 export const deleteReclassificationRule = createAsyncThunk(
     'cleanAndReclassify/deleteReclassificationRule',
     async (id: number) => {
-        await axios.delete(`/api/v1/reclassification-rules/${id}/`);
+        await apiClient.delete(`/api/v1/reclassification-rules/${id}/`);
         return id;
     }
 );
@@ -75,7 +75,9 @@ export const deleteReclassificationRule = createAsyncThunk(
 export const fetchCategoryDeletionRules = createAsyncThunk(
     'cleanAndReclassify/fetchCategoryDeletionRules',
     async () => {
-        const response = await axios.get('/api/v1/category-deletion-rules/');
+        const response = await apiClient.get(
+            '/api/v1/category-deletion-rules/'
+        );
         return response.data.results || response.data;
     }
 );
@@ -83,7 +85,7 @@ export const fetchCategoryDeletionRules = createAsyncThunk(
 export const createCategoryDeletionRule = createAsyncThunk(
     'cleanAndReclassify/createCategoryDeletionRule',
     async (rule: { category: number }) => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/category-deletion-rules/',
             rule
         );
@@ -94,7 +96,7 @@ export const createCategoryDeletionRule = createAsyncThunk(
 export const deleteCategoryDeletionRule = createAsyncThunk(
     'cleanAndReclassify/deleteCategoryDeletionRule',
     async (id: number) => {
-        await axios.delete(`/api/v1/category-deletion-rules/${id}/`);
+        await apiClient.delete(`/api/v1/category-deletion-rules/${id}/`);
         return id;
     }
 );
