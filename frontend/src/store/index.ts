@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import loadingReducer from './loadingSlice';
 import authReducer from './slices/authSlice';
+import backupReducer from './slices/backupSlice';
 import categoriesReducer from './slices/categoriesSlice';
 import cleanAndReclassifyReducer from './slices/cleanAndReclassifySlice';
 import heritagesReducer from './slices/heritagesSlice';
@@ -12,6 +13,7 @@ import transactionsReducer from './slices/transactionsSlice';
 export const store = configureStore({
     reducer: {
         auth: authReducer,
+        backup: backupReducer,
         categories: categoriesReducer,
         cleanAndReclassify: cleanAndReclassifyReducer,
         heritages: heritagesReducer,

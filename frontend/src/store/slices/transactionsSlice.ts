@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import type {
     BulkDeleteRequest,
@@ -8,6 +7,7 @@ import type {
     BulkReclassifyResponse,
     Transaction,
 } from '../../types/transactions';
+import apiClient from '../../utils/apiClient';
 
 interface TransactionsState {
     transactions: Transaction[];
@@ -59,7 +59,7 @@ export const fetchTransactions = createAsyncThunk(
             queryParams.append('ordering', params.ordering);
         }
 
-        const response = await axios.get(
+        const response = await apiClient.get(
             `/api/v1/transactions/?${queryParams.toString()}`
         );
         return response.data.results || response.data;
@@ -69,7 +69,10 @@ export const fetchTransactions = createAsyncThunk(
 export const createTransaction = createAsyncThunk(
     'transactions/createTransaction',
     async (transaction: Omit<Transaction, 'id'>) => {
-        const response = await axios.post('/api/v1/transactions/', transaction);
+        const response = await apiClient.post(
+            '/api/v1/transactions/',
+            transaction
+        );
         return response.data;
     }
 );
@@ -77,7 +80,7 @@ export const createTransaction = createAsyncThunk(
 export const updateTransaction = createAsyncThunk(
     'transactions/updateTransaction',
     async ({ id, ...transaction }: Partial<Transaction> & { id: number }) => {
-        const response = await axios.put(
+        const response = await apiClient.put(
             `/api/v1/transactions/${id}/`,
             transaction
         );
@@ -88,7 +91,7 @@ export const updateTransaction = createAsyncThunk(
 export const deleteTransaction = createAsyncThunk(
     'transactions/deleteTransaction',
     async (id: number) => {
-        await axios.delete(`/api/v1/transactions/${id}/`);
+        await apiClient.delete(`/api/v1/transactions/${id}/`);
         return id;
     }
 );
@@ -99,7 +102,7 @@ export const uploadBankStatement = createAsyncThunk(
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/upload-bank-statement/',
             formData,
             {
@@ -115,7 +118,7 @@ export const uploadBankStatement = createAsyncThunk(
 export const bulkReclassifyTransactions = createAsyncThunk(
     'transactions/bulkReclassify',
     async (request: BulkReclassifyRequest): Promise<BulkReclassifyResponse> => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/bulk-reclassify-transactions/',
             request
         );
@@ -126,7 +129,7 @@ export const bulkReclassifyTransactions = createAsyncThunk(
 export const bulkDeleteTransactions = createAsyncThunk(
     'transactions/bulkDelete',
     async (request: BulkDeleteRequest): Promise<BulkDeleteResponse> => {
-        const response = await axios.post(
+        const response = await apiClient.post(
             '/api/v1/bulk-delete-transactions/',
             request
         );

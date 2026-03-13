@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "django_filters",
     "allauth",
@@ -38,8 +39,8 @@ SITE_ID = 1
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "dj_rest_auth.jwt_auth.JWTCookieAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -158,7 +159,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # Security Settings (Production)
 if not DEBUG:
     # HTTPS Security
-    SECURE_SSL_REDIRECT = True
+    # Set SECURE_SSL_REDIRECT=False in env when running locally without HTTPS
+    SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # HSTS (HTTP Strict Transport Security)
@@ -204,8 +206,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),  # Reduced from 5 hours
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
@@ -220,6 +222,14 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_VERIFICATION = "optional"
 
+# Email backend — console by default (prints to Docker logs) so registration
+# never crashes when no SMTP server is configured. Override via env var in
+# production: EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+
 # Authentication Backends
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
@@ -229,7 +239,14 @@ AUTHENTICATION_BACKENDS = [
 # REST Auth Settings
 REST_AUTH = {
     "USE_JWT": True,
-    "JWT_AUTH_HTTPONLY": False,
+    "JWT_AUTH_HTTPONLY": True,
+    "JWT_AUTH_COOKIE": "jwt-access",
+    "JWT_AUTH_REFRESH_COOKIE": "jwt-refresh",
+    "JWT_AUTH_COOKIE_SAMESITE": "Lax",
+    # Set JWT_COOKIE_SECURE=True in production when running over HTTPS.
+    # Default is False so local HTTP development works without extra config.
+    "JWT_AUTH_SECURE": config("JWT_COOKIE_SECURE", default=False, cast=bool),
+    "JWT_AUTH_COOKIE_USE_CSRF": False,
 }
 
 # Ensure logs directory exists

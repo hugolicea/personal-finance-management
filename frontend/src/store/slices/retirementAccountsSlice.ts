@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
+
+import apiClient from '../../utils/apiClient';
 
 interface RetirementAccountApiResponse {
     id: number;
@@ -54,7 +55,7 @@ const initialState: RetirementAccountsState = {
 export const fetchRetirementAccounts = createAsyncThunk(
     'retirementAccounts/fetchRetirementAccounts',
     async () => {
-        const response = await axios.get(
+        const response = await apiClient.get(
             '/api/v1/retirement-accounts/?page_size=10000'
         );
         const data = response.data.results || response.data;
@@ -116,7 +117,10 @@ export const createRetirementAccount = createAsyncThunk(
         target_retirement_age?: number;
         notes?: string;
     }) => {
-        const response = await axios.post('/api/v1/retirement-accounts/', data);
+        const response = await apiClient.post(
+            '/api/v1/retirement-accounts/',
+            data
+        );
         return response.data;
     }
 );
@@ -124,7 +128,7 @@ export const createRetirementAccount = createAsyncThunk(
 export const updateRetirementAccount = createAsyncThunk(
     'retirementAccounts/updateRetirementAccount',
     async ({ id, data }: { id: number; data: Partial<RetirementAccount> }) => {
-        const response = await axios.patch(
+        const response = await apiClient.patch(
             `/api/v1/retirement-accounts/${id}/`,
             data
         );
@@ -135,7 +139,7 @@ export const updateRetirementAccount = createAsyncThunk(
 export const deleteRetirementAccount = createAsyncThunk(
     'retirementAccounts/deleteRetirementAccount',
     async (id: number) => {
-        await axios.delete(`/api/v1/retirement-accounts/${id}/`);
+        await apiClient.delete(`/api/v1/retirement-accounts/${id}/`);
         return id;
     }
 );

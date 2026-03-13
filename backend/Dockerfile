@@ -22,8 +22,9 @@ COPY . .
 # Create logs directory with proper permissions
 RUN mkdir -p /app/logs && chmod 777 /app/logs
 
-# Make entrypoint script executable
-RUN chmod +x /app/entrypoint.sh
+# Fix line endings (Windows CRLF -> Unix LF) and make scripts executable
+RUN sed -i 's/\r$//' /app/entrypoint.sh /app/wait-for-db.sh 2>/dev/null || true && \
+    chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 

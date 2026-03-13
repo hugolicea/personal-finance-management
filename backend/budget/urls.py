@@ -10,12 +10,14 @@ from .views import (
     ReclassificationRuleViewSet,
     RetirementAccountViewSet,
     TransactionViewSet,
+    backup_database,
     balance_by_period,
     bulk_delete_transactions_by_category,
     bulk_execute_reclassification_rules,
     bulk_reclassify_transactions,
     category_spending_by_period,
     preview_reclassification_rule,
+    restore_database,
     upload_bank_statement,
 )
 
@@ -61,4 +63,6 @@ urlpatterns = [
         bulk_delete_transactions_by_category,
         name="bulk_delete_transactions_by_category",
     ),
+    path("backup/", backup_database, name="backup_database"),
+    path("restore/", restore_database, name="restore_database"),
 ]

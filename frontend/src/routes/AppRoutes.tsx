@@ -7,6 +7,7 @@ import Categories from '../pages/Categories';
 import CleanAndReclassify from '../pages/CleanAndReclassify';
 import CreditCardTransactions from '../pages/CreditCardTransactions';
 import Dashboard from '../pages/Dashboard';
+import DatabaseBackup from '../pages/DatabaseBackup';
 import Heritage from '../pages/Heritage';
 import Investments from '../pages/Investments';
 import Login from '../pages/Login';
@@ -96,6 +97,14 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <CleanAndReclassify />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/backup'
+                element={
+                    <PrivateRoute>
+                        <DatabaseBackup />
                     </PrivateRoute>
                 }
             />

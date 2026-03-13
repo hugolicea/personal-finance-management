@@ -42,28 +42,28 @@ The script will:
 #### PostgreSQL
 
 ```powershell
-# Copy configuration
-cd docker
+# Using helper script (easiest)
 Copy-Item .env.postgresql .env
+.\compose.ps1 dev-up-pg
+.\compose.ps1 migrate
 
-# Start services
+# Or using docker compose directly
+Copy-Item .env.postgresql .env
 docker compose --profile postgres up -d
-
-# Run migrations
 docker compose --profile postgres exec backend python manage.py migrate
 ```
 
 #### MySQL
 
 ```powershell
-# Copy configuration
-cd docker
+# Using helper script (easiest)
 Copy-Item .env.mysql .env
+.\compose.ps1 dev-up-mysql
+.\compose.ps1 migrate
 
-# Start services
+# Or using docker compose directly
+Copy-Item .env.mysql .env
 docker compose --profile mysql up -d
-
-# Run migrations
 docker compose --profile mysql exec backend python manage.py migrate
 ```
 
@@ -142,7 +142,7 @@ docker compose --profile postgres down
 
 ```powershell
 # Start services
-docker compose --profile mysql up -d
+docker compose --profile mysql up -d --build
 
 # View logs
 docker compose --profile mysql logs -f backend
@@ -335,7 +335,6 @@ docker compose --profile mysql exec backend python manage.py dumpdata --natural-
 1. **Stop current services:**
 
 ```powershell
-cd docker
 docker compose --profile postgres --profile mysql down -v
 ```
 
@@ -351,7 +350,7 @@ docker compose --profile postgres --profile mysql down -v
 docker compose --profile postgres up -d
 
 # For MySQL
-docker compose --profile mysql up -d
+docker compose --profile mysql up -d --build
 ```
 
 1. **Run migrations:**
@@ -373,15 +372,21 @@ docker compose --profile <new-profile> exec backend python manage.py loaddata ba
 ### PostgreSQL Production
 
 ```powershell
-cd docker
-docker compose -f docker-compose.prod.yml --profile postgres up -d --build
+# Using helper script (easiest)
+.\compose.ps1 prod-up-pg
+
+# Or using docker compose directly
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile postgres up -d --build
 ```
 
 ### MySQL Production
 
 ```powershell
-cd docker
-docker compose -f docker-compose.prod.yml --profile mysql up -d --build
+# Using helper script (easiest)
+.\compose.ps1 prod-up-mysql
+
+# Or using docker compose directly
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile mysql up -d --build
 ```
 
 ### Production Environment Variables

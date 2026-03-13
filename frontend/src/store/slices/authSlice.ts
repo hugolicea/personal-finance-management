@@ -1,9 +1,7 @@
-import {
-    type PayloadAction,
-    createAsyncThunk,
-    createSlice,
-} from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
+
+import apiClient from '../../utils/apiClient';
 
 interface User {
     id: number;
@@ -13,10 +11,11 @@ interface User {
 
 interface AuthState {
     user: User | null;
-    accessToken: string | null;
-    refreshToken: string | null;
     isAuthenticated: boolean;
     loading: boolean;
+    // checkAuth runs once on app mount; while pending we show a spinner
+    // so PrivateRoute doesn't flash the login page before auth is verified.
+    authChecked: boolean;
     error: string | null;
 }
 
@@ -33,32 +32,47 @@ interface RegisterData {
 }
 
 interface AuthResponse {
-    access: string;
-    refresh: string;
     user: User;
 }
 
 const initialState: AuthState = {
     user: null,
-    accessToken: localStorage.getItem('accessToken'),
-    refreshToken: localStorage.getItem('refreshToken'),
-    isAuthenticated: !!localStorage.getItem('accessToken'),
+    isAuthenticated: false,
     loading: false,
+    authChecked: false,
     error: null,
 };
 
-// Login user
+/**
+ * Verify auth state on app mount by hitting /auth/user/.
+ * The browser automatically sends the HttpOnly jwt-access cookie.
+ * If the cookie is missing/expired and refresh also fails, the
+ * apiClient interceptor will redirect to /login.
+ */
+export const checkAuth = createAsyncThunk<User>(
+    'auth/checkAuth',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.get('/api/v1/auth/user/');
+            return response.data;
+        } catch {
+            return rejectWithValue(null);
+        }
+    }
+);
+
+// Login user — server sets HttpOnly jwt-access & jwt-refresh cookies
 export const login = createAsyncThunk<AuthResponse, LoginCredentials>(
     'auth/login',
     async (credentials, { rejectWithValue }) => {
         try {
-            const response = await axios.post(
+            const response = await apiClient.post(
                 '/api/v1/auth/login/',
                 credentials
             );
             return response.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
+            if (isAxiosError(error)) {
                 return rejectWithValue(
                     error.response?.data?.detail || 'Login failed'
                 );
@@ -68,18 +82,18 @@ export const login = createAsyncThunk<AuthResponse, LoginCredentials>(
     }
 );
 
-// Register user
+// Register user — server sets HttpOnly cookies on success
 export const register = createAsyncThunk<AuthResponse, RegisterData>(
     'auth/register',
     async (data, { rejectWithValue }) => {
         try {
-            const response = await axios.post(
+            const response = await apiClient.post(
                 '/api/v1/auth/registration/',
                 data
             );
             return response.data;
         } catch (error) {
-            if (axios.isAxiosError(error)) {
+            if (isAxiosError(error)) {
                 return rejectWithValue(
                     error.response?.data || 'Registration failed'
                 );
@@ -89,41 +103,16 @@ export const register = createAsyncThunk<AuthResponse, RegisterData>(
     }
 );
 
-// Logout user
-export const logout = createAsyncThunk(
-    'auth/logout',
-    async (_, { rejectWithValue }) => {
-        try {
-            await axios.post('/api/v1/auth/logout/');
-            return;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.detail || 'Logout failed'
-                );
-            }
-            return rejectWithValue('Logout failed');
-        }
+// Logout user — ask server to clear the HttpOnly cookies.
+// Always clears local auth state even if the server call fails
+// (e.g. expired tokens when the user sat idle too long).
+export const logout = createAsyncThunk('auth/logout', async () => {
+    try {
+        await apiClient.post('/api/v1/auth/logout/');
+    } catch {
+        // Swallow the error — we clear local state regardless
     }
-);
-
-// Get current user
-export const getCurrentUser = createAsyncThunk<User>(
-    'auth/getCurrentUser',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await axios.get('/api/v1/auth/user/');
-            return response.data;
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                return rejectWithValue(
-                    error.response?.data?.detail || 'Failed to get user'
-                );
-            }
-            return rejectWithValue('Failed to get user');
-        }
-    }
-);
+});
 
 const authSlice = createSlice({
     name: 'auth',
@@ -132,25 +121,24 @@ const authSlice = createSlice({
         clearError: (state) => {
             state.error = null;
         },
-        setCredentials: (state, action: PayloadAction<AuthResponse>) => {
-            state.user = action.payload.user;
-            state.accessToken = action.payload.access;
-            state.refreshToken = action.payload.refresh;
-            state.isAuthenticated = true;
-            localStorage.setItem('accessToken', action.payload.access);
-            localStorage.setItem('refreshToken', action.payload.refresh);
-        },
         clearCredentials: (state) => {
             state.user = null;
-            state.accessToken = null;
-            state.refreshToken = null;
             state.isAuthenticated = false;
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
         },
     },
     extraReducers: (builder) => {
         builder
+            // checkAuth
+            .addCase(checkAuth.fulfilled, (state, action) => {
+                state.user = action.payload;
+                state.isAuthenticated = true;
+                state.authChecked = true;
+            })
+            .addCase(checkAuth.rejected, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+                state.authChecked = true;
+            })
             // Login
             .addCase(login.pending, (state) => {
                 state.loading = true;
@@ -159,11 +147,8 @@ const authSlice = createSlice({
             .addCase(login.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
-                state.accessToken = action.payload.access;
-                state.refreshToken = action.payload.refresh;
                 state.isAuthenticated = true;
-                localStorage.setItem('accessToken', action.payload.access);
-                localStorage.setItem('refreshToken', action.payload.refresh);
+                state.authChecked = true;
             })
             .addCase(login.rejected, (state, action) => {
                 state.loading = false;
@@ -177,44 +162,30 @@ const authSlice = createSlice({
             .addCase(register.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.user;
-                state.accessToken = action.payload.access;
-                state.refreshToken = action.payload.refresh;
                 state.isAuthenticated = true;
-                localStorage.setItem('accessToken', action.payload.access);
-                localStorage.setItem('refreshToken', action.payload.refresh);
+                state.authChecked = true;
             })
             .addCase(register.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
             })
-            // Logout
+            // Logout — clear auth state immediately (pending) so PrivateRoute
+            // redirects to /login before any dashboard fetch effects can fire.
+            .addCase(logout.pending, (state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+            })
+            // Logout — always clear state whether server succeeded or not
             .addCase(logout.fulfilled, (state) => {
                 state.user = null;
-                state.accessToken = null;
-                state.refreshToken = null;
                 state.isAuthenticated = false;
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
             })
-            // Get current user
-            .addCase(getCurrentUser.pending, (state) => {
-                state.loading = true;
-            })
-            .addCase(getCurrentUser.fulfilled, (state, action) => {
-                state.loading = false;
-                state.user = action.payload;
-            })
-            .addCase(getCurrentUser.rejected, (state) => {
-                state.loading = false;
+            .addCase(logout.rejected, (state) => {
+                state.user = null;
                 state.isAuthenticated = false;
-                state.accessToken = null;
-                state.refreshToken = null;
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
             });
     },
 });
 
-export const { clearError, setCredentials, clearCredentials } =
-    authSlice.actions;
+export const { clearError, clearCredentials } = authSlice.actions;
 export default authSlice.reducer;

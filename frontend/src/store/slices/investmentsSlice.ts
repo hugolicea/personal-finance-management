@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import { Investment } from '../../types/investments';
+import apiClient from '../../utils/apiClient';
 
 interface InvestmentApiResponse {
     id: number;
@@ -42,7 +42,7 @@ const initialState: InvestmentsState = {
 export const fetchInvestments = createAsyncThunk(
     'investments/fetchInvestments',
     async () => {
-        const response = await axios.get(
+        const response = await apiClient.get(
             '/api/v1/investments/?page_size=10000'
         );
         const data = response.data.results || response.data;
@@ -109,7 +109,7 @@ export const createInvestment = createAsyncThunk(
         compounding_frequency?: string;
         term_years?: number;
     }) => {
-        const response = await axios.post('/api/v1/investments/', data);
+        const response = await apiClient.post('/api/v1/investments/', data);
         return response.data;
     }
 );
@@ -117,7 +117,10 @@ export const createInvestment = createAsyncThunk(
 export const updateInvestment = createAsyncThunk(
     'investments/updateInvestment',
     async ({ id, data }: { id: number; data: Partial<Investment> }) => {
-        const response = await axios.patch(`/api/v1/investments/${id}/`, data);
+        const response = await apiClient.patch(
+            `/api/v1/investments/${id}/`,
+            data
+        );
         return response.data;
     }
 );
@@ -125,7 +128,7 @@ export const updateInvestment = createAsyncThunk(
 export const deleteInvestment = createAsyncThunk(
     'investments/deleteInvestment',
     async (id: number) => {
-        await axios.delete(`/api/v1/investments/${id}/`);
+        await apiClient.delete(`/api/v1/investments/${id}/`);
         return id;
     }
 );

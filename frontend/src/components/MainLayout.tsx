@@ -84,6 +84,7 @@ function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
             label: 'Clean & Reclassify',
             icon: '🧹',
         },
+        { path: '/backup', label: 'Backup & Restore', icon: '💾' },
     ];
 
     return (

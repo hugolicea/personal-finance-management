@@ -1,0 +1,54 @@
+# Development Override Configuration
+# This file is automatically loaded by `docker compose up` (no -f flag needed!)
+# It provides development-specific settings like hot reload, debug mode, and Adminer
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  mysql:
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app  # Hot reload support
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev-secret-key-not-for-production
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app  # Hot reload support
+    ports:
+      - "3000:3000"
+    environment:
+      - HOST=0.0.0.0
+
+  # Adminer: Database management tool (dev only)
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - personal_finance_network
+    environment:
+      - ADMINER_DEFAULT_SERVER=mysql
+      - ADMINER_DESIGN=pepa-linha
+    profiles:
+      - postgres
+      - mysql
+    restart: unless-stopped

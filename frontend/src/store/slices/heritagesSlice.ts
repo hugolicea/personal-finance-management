@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 import { Heritage } from '../../types/heritage';
+import apiClient from '../../utils/apiClient';
 
 interface HeritageApiResponse {
     id: number;
@@ -38,7 +38,9 @@ const initialState: HeritagesState = {
 export const fetchHeritages = createAsyncThunk(
     'heritages/fetchHeritages',
     async () => {
-        const response = await axios.get('/api/v1/heritages/?page_size=10000');
+        const response = await apiClient.get(
+            '/api/v1/heritages/?page_size=10000'
+        );
         const data = response.data.results || response.data;
         // Transform string fields to numbers with error handling
         return data.map((heritage: HeritageApiResponse) => ({
@@ -97,7 +99,7 @@ export const createHeritage = createAsyncThunk(
         monthly_rental_income?: number;
         notes?: string;
     }) => {
-        const response = await axios.post('/api/v1/heritages/', data);
+        const response = await apiClient.post('/api/v1/heritages/', data);
         return response.data;
     }
 );
@@ -105,7 +107,10 @@ export const createHeritage = createAsyncThunk(
 export const updateHeritage = createAsyncThunk(
     'heritages/updateHeritage',
     async ({ id, data }: { id: number; data: Partial<Heritage> }) => {
-        const response = await axios.patch(`/api/v1/heritages/${id}/`, data);
+        const response = await apiClient.patch(
+            `/api/v1/heritages/${id}/`,
+            data
+        );
         return response.data;
     }
 );
@@ -113,7 +118,7 @@ export const updateHeritage = createAsyncThunk(
 export const deleteHeritage = createAsyncThunk(
     'heritages/deleteHeritage',
     async (id: number) => {
-        await axios.delete(`/api/v1/heritages/${id}/`);
+        await apiClient.delete(`/api/v1/heritages/${id}/`);
         return id;
     }
 );
