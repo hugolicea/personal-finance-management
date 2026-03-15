@@ -20,7 +20,6 @@ import {
     YAxis,
 } from 'recharts';
 
-import Navigation from '../components/Navigation';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCategories } from '../store/slices/categoriesSlice';
 import { fetchTransactions } from '../store/slices/transactionsSlice';
@@ -154,262 +153,238 @@ function Reports() {
         }, [transactions]);
 
     return (
-        <div className='min-h-screen bg-gray-100'>
-            <Navigation />
+        <div className='space-y-6'>
+            <div className='mb-6'>
+                <h1 className='text-2xl font-bold text-gray-900 mb-4'>
+                    Financial Reports
+                </h1>
 
-            <main className='max-w-7xl mx-auto py-6 sm:px-6 lg:px-8'>
-                <div className='px-4 py-6 sm:px-0'>
-                    <div className='mb-6'>
-                        <h1 className='text-2xl font-bold text-gray-900 mb-4'>
-                            Financial Reports
-                        </h1>
+                {/* Period Selector */}
+                <div className='mb-6'>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                        Report Period
+                    </label>
+                    <select
+                        value={selectedPeriod}
+                        onChange={(e) =>
+                            setSelectedPeriod(
+                                e.target.value as
+                                    | '3months'
+                                    | '6months'
+                                    | '1year'
+                                    | 'all'
+                            )
+                        }
+                        className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                    >
+                        <option value='3months'>Last 3 Months</option>
+                        <option value='6months'>Last 6 Months</option>
+                        <option value='1year'>Last Year</option>
+                        <option value='all'>All Time</option>
+                    </select>
+                </div>
 
-                        {/* Period Selector */}
-                        <div className='mb-6'>
-                            <label className='block text-sm font-medium text-gray-700 mb-2'>
-                                Report Period
-                            </label>
-                            <select
-                                value={selectedPeriod}
-                                onChange={(e) =>
-                                    setSelectedPeriod(
-                                        e.target.value as
-                                            | '3months'
-                                            | '6months'
-                                            | '1year'
-                                            | 'all'
-                                    )
-                                }
-                                className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
-                            >
-                                <option value='3months'>Last 3 Months</option>
-                                <option value='6months'>Last 6 Months</option>
-                                <option value='1year'>Last Year</option>
-                                <option value='all'>All Time</option>
-                            </select>
-                        </div>
-
-                        {/* Summary Cards */}
-                        <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
-                                <div className='p-5'>
-                                    <div className='flex items-center'>
-                                        <div className='flex-shrink-0'>
-                                            <div className='w-8 h-8 bg-green-500 rounded-md flex items-center justify-center'>
-                                                <span
-                                                    aria-hidden='true'
-                                                    className='text-white text-sm font-bold'
-                                                >
-                                                    💰
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className='ml-5 w-0 flex-1'>
-                                            <dl>
-                                                <dt className='text-sm font-medium text-gray-500 truncate'>
-                                                    Total Income
-                                                </dt>
-                                                <dd className='text-lg font-medium text-gray-900'>
-                                                    {formatCurrency(
-                                                        totalIncome
-                                                    )}
-                                                </dd>
-                                            </dl>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
-                                <div className='p-5'>
-                                    <div className='flex items-center'>
-                                        <div className='flex-shrink-0'>
-                                            <div className='w-8 h-8 bg-red-500 rounded-md flex items-center justify-center'>
-                                                <span
-                                                    aria-hidden='true'
-                                                    className='text-white text-sm font-bold'
-                                                >
-                                                    💸
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className='ml-5 w-0 flex-1'>
-                                            <dl>
-                                                <dt className='text-sm font-medium text-gray-500 truncate'>
-                                                    Total Expenses
-                                                </dt>
-                                                <dd className='text-lg font-medium text-gray-900'>
-                                                    {formatCurrency(
-                                                        totalExpenses
-                                                    )}
-                                                </dd>
-                                            </dl>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
-                                <div className='p-5'>
-                                    <div className='flex items-center'>
-                                        <div className='flex-shrink-0'>
-                                            <div
-                                                className={`w-8 h-8 rounded-md flex items-center justify-center ${
-                                                    netBalance >= 0
-                                                        ? 'bg-green-500'
-                                                        : 'bg-red-500'
-                                                }`}
-                                            >
-                                                <span
-                                                    aria-hidden='true'
-                                                    className='text-white text-sm font-bold'
-                                                >
-                                                    {netBalance >= 0
-                                                        ? '📈'
-                                                        : '📉'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className='ml-5 w-0 flex-1'>
-                                            <dl>
-                                                <dt className='text-sm font-medium text-gray-500 truncate'>
-                                                    Net Balance
-                                                </dt>
-                                                <dd
-                                                    className={`text-lg font-medium ${
-                                                        netBalance >= 0
-                                                            ? 'text-green-600'
-                                                            : 'text-red-600'
-                                                    }`}
-                                                >
-                                                    {formatCurrency(netBalance)}
-                                                </dd>
-                                            </dl>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
-                                <div className='p-5'>
-                                    <div className='flex items-center'>
-                                        <div className='flex-shrink-0'>
-                                            <div className='w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center'>
-                                                <span
-                                                    aria-hidden='true'
-                                                    className='text-white text-sm font-bold'
-                                                >
-                                                    📊
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className='ml-5 w-0 flex-1'>
-                                            <dl>
-                                                <dt className='text-sm font-medium text-gray-500 truncate'>
-                                                    Transactions
-                                                </dt>
-                                                <dd className='text-lg font-medium text-gray-900'>
-                                                    {transactionCount}
-                                                </dd>
-                                            </dl>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Charts */}
-                        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                            {/* Income vs Expenses Trend */}
-                            <div className='bg-white p-6 rounded-lg shadow'>
-                                <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                                    Income vs Expenses Trend
-                                </h3>
-                                <div className='h-80'>
-                                    <ResponsiveContainer
-                                        width='100%'
-                                        height='100%'
-                                    >
-                                        <LineChart data={monthlyData}>
-                                            <CartesianGrid strokeDasharray='3 3' />
-                                            <XAxis dataKey='month' />
-                                            <YAxis />
-                                            <Tooltip
-                                                formatter={(
-                                                    value: number | undefined
-                                                ) => [
-                                                    formatCurrency(value ?? 0),
-                                                    '',
-                                                ]}
-                                            />
-                                            <Legend />
-                                            <Line
-                                                type='monotone'
-                                                dataKey='income'
-                                                stroke='#22c55e'
-                                                strokeWidth={2}
-                                                name='Income'
-                                            />
-                                            <Line
-                                                type='monotone'
-                                                dataKey='expenses'
-                                                stroke='#ef4444'
-                                                strokeWidth={2}
-                                                name='Expenses'
-                                            />
-                                            <Line
-                                                type='monotone'
-                                                dataKey='net'
-                                                stroke='#3b82f6'
-                                                strokeWidth={2}
-                                                name='Net'
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
-
-                            {/* Top Spending Categories */}
-                            <div className='bg-white p-6 rounded-lg shadow'>
-                                <h3 className='text-lg font-medium text-gray-900 mb-4'>
-                                    Top Spending Categories
-                                </h3>
-                                <div className='h-80'>
-                                    <ResponsiveContainer
-                                        width='100%'
-                                        height='100%'
-                                    >
-                                        <BarChart
-                                            data={categoryData}
-                                            layout='horizontal'
+                {/* Summary Cards */}
+                <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-8'>
+                    <div className='bg-white overflow-hidden shadow rounded-lg'>
+                        <div className='p-5'>
+                            <div className='flex items-center'>
+                                <div className='flex-shrink-0'>
+                                    <div className='w-8 h-8 bg-green-500 rounded-md flex items-center justify-center'>
+                                        <span
+                                            aria-hidden='true'
+                                            className='text-white text-sm font-bold'
                                         >
-                                            <CartesianGrid strokeDasharray='3 3' />
-                                            <XAxis type='number' />
-                                            <YAxis
-                                                dataKey='name'
-                                                type='category'
-                                                width={100}
-                                            />
-                                            <Tooltip
-                                                formatter={(
-                                                    value: number | undefined
-                                                ) => [
-                                                    formatCurrency(value ?? 0),
-                                                    'Amount',
-                                                ]}
-                                            />
-                                            <Bar
-                                                dataKey='amount'
-                                                fill='#ef4444'
-                                            />
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                            💰
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className='ml-5 w-0 flex-1'>
+                                    <dl>
+                                        <dt className='text-sm font-medium text-gray-500 truncate'>
+                                            Total Income
+                                        </dt>
+                                        <dd className='text-lg font-medium text-gray-900'>
+                                            {formatCurrency(totalIncome)}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='bg-white overflow-hidden shadow rounded-lg'>
+                        <div className='p-5'>
+                            <div className='flex items-center'>
+                                <div className='flex-shrink-0'>
+                                    <div className='w-8 h-8 bg-red-500 rounded-md flex items-center justify-center'>
+                                        <span
+                                            aria-hidden='true'
+                                            className='text-white text-sm font-bold'
+                                        >
+                                            💸
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className='ml-5 w-0 flex-1'>
+                                    <dl>
+                                        <dt className='text-sm font-medium text-gray-500 truncate'>
+                                            Total Expenses
+                                        </dt>
+                                        <dd className='text-lg font-medium text-gray-900'>
+                                            {formatCurrency(totalExpenses)}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='bg-white overflow-hidden shadow rounded-lg'>
+                        <div className='p-5'>
+                            <div className='flex items-center'>
+                                <div className='flex-shrink-0'>
+                                    <div
+                                        className={`w-8 h-8 rounded-md flex items-center justify-center ${
+                                            netBalance >= 0
+                                                ? 'bg-green-500'
+                                                : 'bg-red-500'
+                                        }`}
+                                    >
+                                        <span
+                                            aria-hidden='true'
+                                            className='text-white text-sm font-bold'
+                                        >
+                                            {netBalance >= 0 ? '📈' : '📉'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className='ml-5 w-0 flex-1'>
+                                    <dl>
+                                        <dt className='text-sm font-medium text-gray-500 truncate'>
+                                            Net Balance
+                                        </dt>
+                                        <dd
+                                            className={`text-lg font-medium ${
+                                                netBalance >= 0
+                                                    ? 'text-green-600'
+                                                    : 'text-red-600'
+                                            }`}
+                                        >
+                                            {formatCurrency(netBalance)}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='bg-white overflow-hidden shadow rounded-lg'>
+                        <div className='p-5'>
+                            <div className='flex items-center'>
+                                <div className='flex-shrink-0'>
+                                    <div className='w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center'>
+                                        <span
+                                            aria-hidden='true'
+                                            className='text-white text-sm font-bold'
+                                        >
+                                            📊
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className='ml-5 w-0 flex-1'>
+                                    <dl>
+                                        <dt className='text-sm font-medium text-gray-500 truncate'>
+                                            Transactions
+                                        </dt>
+                                        <dd className='text-lg font-medium text-gray-900'>
+                                            {transactionCount}
+                                        </dd>
+                                    </dl>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+
+                {/* Charts */}
+                <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                    {/* Income vs Expenses Trend */}
+                    <div className='bg-white p-6 rounded-lg shadow'>
+                        <h3 className='text-lg font-medium text-gray-900 mb-4'>
+                            Income vs Expenses Trend
+                        </h3>
+                        <div className='h-80'>
+                            <ResponsiveContainer width='100%' height='100%'>
+                                <LineChart data={monthlyData}>
+                                    <CartesianGrid strokeDasharray='3 3' />
+                                    <XAxis dataKey='month' />
+                                    <YAxis />
+                                    <Tooltip
+                                        formatter={(
+                                            value: number | undefined
+                                        ) => [formatCurrency(value ?? 0), '']}
+                                    />
+                                    <Legend />
+                                    <Line
+                                        type='monotone'
+                                        dataKey='income'
+                                        stroke='#22c55e'
+                                        strokeWidth={2}
+                                        name='Income'
+                                    />
+                                    <Line
+                                        type='monotone'
+                                        dataKey='expenses'
+                                        stroke='#ef4444'
+                                        strokeWidth={2}
+                                        name='Expenses'
+                                    />
+                                    <Line
+                                        type='monotone'
+                                        dataKey='net'
+                                        stroke='#3b82f6'
+                                        strokeWidth={2}
+                                        name='Net'
+                                    />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Top Spending Categories */}
+                    <div className='bg-white p-6 rounded-lg shadow'>
+                        <h3 className='text-lg font-medium text-gray-900 mb-4'>
+                            Top Spending Categories
+                        </h3>
+                        <div className='h-80'>
+                            <ResponsiveContainer width='100%' height='100%'>
+                                <BarChart
+                                    data={categoryData}
+                                    layout='horizontal'
+                                >
+                                    <CartesianGrid strokeDasharray='3 3' />
+                                    <XAxis type='number' />
+                                    <YAxis
+                                        dataKey='name'
+                                        type='category'
+                                        width={100}
+                                    />
+                                    <Tooltip
+                                        formatter={(
+                                            value: number | undefined
+                                        ) => [
+                                            formatCurrency(value ?? 0),
+                                            'Amount',
+                                        ]}
+                                    />
+                                    <Bar dataKey='amount' fill='#ef4444' />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
