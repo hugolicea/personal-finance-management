@@ -9,6 +9,11 @@ import axios from 'axios';
  * Token storage in HttpOnly cookies means JS never has direct access to the
  * tokens — the browser attaches them automatically and they cannot be read
  * by client-side scripts (XSS protection).
+ *
+ * When the refresh token itself is expired or invalid, the interceptor fires
+ * a `auth:session-expired` CustomEvent on `window` so the app can clear
+ * Redux auth state and redirect to /login without a circular dependency on
+ * the Redux store.
  */
 
 const apiClient: AxiosInstance = axios.create({
@@ -50,12 +55,9 @@ apiClient.interceptors.response.use(
             if (!refreshPromise) {
                 refreshPromise = apiClient
                     .post('/api/v1/auth/token/refresh/')
-                    .then(() => {
+                    .then(() => {})
+                    .finally(() => {
                         refreshPromise = null;
-                    })
-                    .catch((refreshError) => {
-                        refreshPromise = null;
-                        return Promise.reject(refreshError);
                     });
             }
 
@@ -63,8 +65,11 @@ apiClient.interceptors.response.use(
                 await refreshPromise;
                 return apiClient(originalRequest);
             } catch {
-                // Refresh failed — let React Router handle the redirect via
-                // PrivateRoute; just propagate the rejection.
+                // Both access and refresh tokens are expired — clear Redux auth
+                // state so PrivateRoute can redirect to /login. We use a
+                // CustomEvent to avoid a circular dependency
+                // (store → slices → apiClient → store).
+                window.dispatchEvent(new CustomEvent('auth:session-expired'));
                 return Promise.reject(error);
             }
         }

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -20,6 +21,46 @@ interface InvestmentsChartProps {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 function InvestmentsChart({ investments }: InvestmentsChartProps) {
+    const { pieData, topInvestments, totalValue, totalGainLoss, avgGainLoss } =
+        useMemo(() => {
+            const byType: Record<string, number> = {};
+            let totalValue = 0;
+            let totalGainLoss = 0;
+            for (const inv of investments) {
+                const type = inv.investment_type
+                    .replace('_', ' ')
+                    .toUpperCase();
+                byType[type] = (byType[type] ?? 0) + (inv.current_value || 0);
+                totalValue += inv.current_value || 0;
+                totalGainLoss += inv.gain_loss || 0;
+            }
+
+            const pieData = Object.entries(byType).map(([type, value]) => ({
+                name: type,
+                value: Math.round(value),
+            }));
+
+            const topInvestments = [...investments]
+                .sort((a, b) => (b.current_value || 0) - (a.current_value || 0))
+                .slice(0, 5)
+                .map((inv) => ({
+                    name: inv.symbol || 'Unknown',
+                    value: Math.round(inv.current_value || 0),
+                    gain: inv.gain_loss_percentage || 0,
+                }));
+
+            const avgGainLoss =
+                investments.length > 0 ? totalGainLoss / investments.length : 0;
+
+            return {
+                pieData,
+                topInvestments,
+                totalValue,
+                totalGainLoss,
+                avgGainLoss,
+            };
+        }, [investments]);
+
     // Handle empty or invalid data
     if (!investments || investments.length === 0) {
         return (
@@ -28,48 +69,6 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
             </div>
         );
     }
-
-    // Calculate investments by type
-    const investmentsByType = investments.reduce(
-        (acc, investment) => {
-            const type = investment.investment_type
-                .replace('_', ' ')
-                .toUpperCase();
-            const value = investment.current_value || 0;
-            if (!acc[type]) {
-                acc[type] = 0;
-            }
-            acc[type] += value;
-            return acc;
-        },
-        {} as Record<string, number>
-    );
-
-    const pieData = Object.entries(investmentsByType).map(([type, value]) => ({
-        name: type,
-        value: Math.round(value),
-    }));
-
-    // Calculate top 5 investments by current value
-    const topInvestments = [...investments]
-        .sort((a, b) => (b.current_value || 0) - (a.current_value || 0))
-        .slice(0, 5)
-        .map((investment) => ({
-            name: investment.symbol || 'Unknown',
-            value: Math.round(investment.current_value || 0),
-            gain: investment.gain_loss_percentage || 0,
-        }));
-
-    const totalValue = investments.reduce(
-        (sum, inv) => sum + (inv.current_value || 0),
-        0
-    );
-    const totalGainLoss = investments.reduce(
-        (sum, inv) => sum + (inv.gain_loss || 0),
-        0
-    );
-    const avgGainLoss =
-        investments.length > 0 ? totalGainLoss / investments.length : 0;
 
     return (
         <div className='space-y-6'>

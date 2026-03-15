@@ -4,7 +4,8 @@ import io
 import json
 from datetime import datetime, timedelta
 
-from django.db.models import Sum
+from django.db.models import Count, Sum
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 
 import django_filters
@@ -24,6 +25,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import (
+    BankAccount,
     Category,
     CategoryDeletionRule,
     Heritage,
@@ -33,6 +35,7 @@ from .models import (
     Transaction,
 )
 from .serializers import (
+    BankAccountSerializer,
     CategoryDeletionRuleSerializer,
     CategorySerializer,
     HeritageSerializer,
@@ -44,6 +47,7 @@ from .serializers import (
 from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 
+@extend_schema(tags=["Categories"])
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -60,6 +64,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Investments"])
 class InvestmentViewSet(viewsets.ModelViewSet):
     queryset = Investment.objects.all()
     serializer_class = InvestmentSerializer
@@ -76,6 +81,7 @@ class InvestmentViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Heritage"])
 class HeritageViewSet(viewsets.ModelViewSet):
     queryset = Heritage.objects.all()
     serializer_class = HeritageSerializer
@@ -108,6 +114,28 @@ class RetirementAccountViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+class BankAccountViewSet(viewsets.ModelViewSet):
+    queryset = BankAccount.objects.all()
+    serializer_class = BankAccountSerializer
+    ordering = ["name"]
+
+    def get_queryset(self):
+        from decimal import Decimal
+
+        return (
+            BankAccount.objects.filter(user=self.request.user)
+            .select_related("user")
+            .annotate(
+                transaction_count=Count("transactions"),
+                total_balance=Coalesce(Sum("transactions__amount"), Decimal("0.00")),
+            )
+            .order_by("name")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
 class TransactionFilter(django_filters.FilterSet):
     """Custom filter for Transaction to support date range queries"""
 
@@ -116,7 +144,7 @@ class TransactionFilter(django_filters.FilterSet):
 
     class Meta:
         model = Transaction
-        fields = ["category", "transaction_type", "date__gte", "date__lte"]
+        fields = ["category", "account", "date__gte", "date__lte"]
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -130,7 +158,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (
             Transaction.objects.filter(user=self.request.user)
-            .select_related("category")
+            .select_related("category", "account")
             .order_by("-date")
         )
 
@@ -138,6 +166,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Reclassification Rules"])
 class ReclassificationRuleViewSet(viewsets.ModelViewSet):
     queryset = ReclassificationRule.objects.all()
     serializer_class = ReclassificationRuleSerializer
@@ -154,6 +183,7 @@ class ReclassificationRuleViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Category Deletion Rules"])
 class CategoryDeletionRuleViewSet(viewsets.ModelViewSet):
     queryset = CategoryDeletionRule.objects.all()
     serializer_class = CategoryDeletionRuleSerializer
@@ -500,6 +530,37 @@ def upload_bank_statement(request):
                         defaults={"classification": Category.SPEND},
                     )
 
+                # Resolve the target bank account
+                account_id = request.data.get("account_id")
+                account = None
+                if account_id:
+                    try:
+                        account = BankAccount.objects.get(
+                            id=int(account_id), user=request.user
+                        )
+                    except (BankAccount.DoesNotExist, ValueError):
+                        pass
+
+                if account is None:
+                    # Fall back to auto-selecting by CSV type
+                    account_type = (
+                        BankAccount.CHECKING
+                        if is_account_csv
+                        else BankAccount.CREDIT_CARD
+                    )
+                    account, _ = BankAccount.objects.get_or_create(
+                        user=request.user,
+                        account_type=account_type,
+                        defaults={
+                            "name": (
+                                "My Checking Account"
+                                if is_account_csv
+                                else "My Credit Card"
+                            ),
+                            "currency": "USD",
+                        },
+                    )
+
                 # Create transaction
                 transaction = Transaction.objects.create(
                     date=date,
@@ -507,11 +568,7 @@ def upload_bank_statement(request):
                     description=description,
                     category=category,
                     user=request.user,
-                    transaction_type=(
-                        Transaction.ACCOUNT
-                        if is_account_csv
-                        else Transaction.CREDIT_CARD
-                    ),
+                    account=account,
                     import_source="bank_statement",
                     reference_id=reference_id,
                 )
@@ -1126,7 +1183,7 @@ def backup_database(request):
             "date",
             "amount",
             "description",
-            "transaction_type",
+            "account_id",
             "import_source",
             "reference_id",
             "category_id",
@@ -1363,11 +1420,29 @@ def restore_database(request):
                 except ValueError:
                     continue
 
+                # Resolve account from backup data (use default checking account)
+                account_id = t.get("account")
+                account = None
+                if account_id:
+                    try:
+                        account = BankAccount.objects.get(id=int(account_id), user=user)
+                    except (BankAccount.DoesNotExist, ValueError):
+                        pass
+                if account is None:
+                    account, _ = BankAccount.objects.get_or_create(
+                        user=user,
+                        account_type=BankAccount.CHECKING,
+                        defaults={
+                            "name": "My Checking Account",
+                            "currency": "USD",
+                        },
+                    )
+
                 Transaction.objects.create(
                     date=date,
                     amount=t.get("amount", 0),
                     description=t.get("description", ""),
-                    transaction_type=t.get("transaction_type", Transaction.CREDIT_CARD),
+                    account=account,
                     import_source=t.get("import_source", "backup"),
                     reference_id=ref_id or None,
                     category=category,

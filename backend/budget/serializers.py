@@ -1,6 +1,9 @@
+from django.db.models import Sum
+
 from rest_framework import serializers
 
 from .models import (
+    BankAccount,
     Category,
     CategoryDeletionRule,
     Heritage,
@@ -14,7 +17,15 @@ from .models import (
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "name",
+            "classification",
+            "monthly_budget",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["user"]
 
 
@@ -47,7 +58,29 @@ class InvestmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Investment
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "symbol",
+            "name",
+            "investment_type",
+            "quantity",
+            "purchase_price",
+            "current_price",
+            "purchase_date",
+            "principal_amount",
+            "interest_rate",
+            "compounding_frequency",
+            "term_years",
+            "notes",
+            "created_at",
+            "updated_at",
+            "total_invested",
+            "current_value",
+            "gain_loss",
+            "gain_loss_percentage",
+            "due_date",
+        ]
         read_only_fields = ["user"]
 
 
@@ -67,7 +100,26 @@ class HeritageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Heritage
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "name",
+            "heritage_type",
+            "address",
+            "area",
+            "area_unit",
+            "purchase_price",
+            "current_value",
+            "purchase_date",
+            "monthly_rental_income",
+            "notes",
+            "created_at",
+            "updated_at",
+            "gain_loss",
+            "gain_loss_percentage",
+            "annual_rental_income",
+            "rental_yield_percentage",
+        ]
         read_only_fields = ["user"]
 
 
@@ -82,11 +134,78 @@ class RetirementAccountSerializer(serializers.ModelSerializer):
         read_only_fields = ["user"]
 
 
+class BankAccountSerializer(serializers.ModelSerializer):
+    transaction_count = serializers.SerializerMethodField()
+    total_balance = serializers.SerializerMethodField()
+
+    def get_transaction_count(self, instance: BankAccount) -> int:
+        # Use queryset annotation when available to avoid N+1 on list endpoints
+        if hasattr(instance, "transaction_count"):
+            return instance.transaction_count  # type: ignore[return-value]
+        return instance.transactions.count()
+
+    def get_total_balance(self, instance: BankAccount) -> float:
+        # Use queryset annotation when available to avoid N+1 on list endpoints
+        if hasattr(instance, "total_balance"):
+            val = instance.total_balance  # type: ignore[attr-defined]
+            return float(val) if val is not None else 0.0
+        total = instance.transactions.aggregate(total=Sum("amount"))["total"]
+        return float(total) if total is not None else 0.0
+
+    class Meta:
+        model = BankAccount
+        fields = [
+            "id",
+            "name",
+            "account_type",
+            "institution",
+            "account_number",
+            "currency",
+            "notes",
+            "is_active",
+            "created_at",
+            "updated_at",
+            "transaction_count",
+            "total_balance",
+        ]
+        read_only_fields = ["created_at", "updated_at"]
+
+
 class TransactionSerializer(serializers.ModelSerializer):
+    account_name = serializers.CharField(
+        source="account.name", read_only=True, allow_null=True
+    )
+    account_type = serializers.CharField(
+        source="account.account_type", read_only=True, allow_null=True
+    )
+    category_name = serializers.CharField(
+        source="category.name", read_only=True, allow_null=True
+    )
+
     class Meta:
         model = Transaction
-        fields = "__all__"
-        read_only_fields = ["user"]
+        fields = [
+            "id",
+            "date",
+            "amount",
+            "description",
+            "category",
+            "category_name",
+            "account",
+            "import_source",
+            "import_date",
+            "reference_id",
+            "created_at",
+            "updated_at",
+            "account_name",
+            "account_type",
+        ]
+        read_only_fields = [
+            "import_date",
+            "reference_id",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class ReclassificationRuleSerializer(serializers.ModelSerializer):

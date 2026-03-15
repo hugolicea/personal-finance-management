@@ -302,3 +302,6 @@ staticfiles/
 
 # Agent files
 .agents/
+
+# skill files
+SKILL.md

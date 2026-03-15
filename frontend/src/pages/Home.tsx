@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import CategoryForm from '../components/CategoryForm';
@@ -69,6 +69,12 @@ function Home() {
     );
     const [deletingTransaction, setDeletingTransaction] =
         useState<Transaction | null>(null);
+    const [categoryDeleteError, setCategoryDeleteError] = useState<
+        string | null
+    >(null);
+    const [transactionDeleteError, setTransactionDeleteError] = useState<
+        string | null
+    >(null);
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -79,51 +85,67 @@ function Home() {
     }, [dispatch]);
 
     // Filter transactions based on selected period
-    const filteredTransactions = transactions.filter((transaction) => {
-        try {
-            const transactionDate = new Date(transaction.date);
-            // Check if date is valid
-            if (isNaN(transactionDate.getTime())) {
-                return false;
-            }
-            const transactionYear = transactionDate.getFullYear();
-            const transactionMonth = transactionDate.getMonth() + 1; // JS months are 0-based
-            const matchesPeriod = filterByYear
-                ? transactionYear === selectedYear
-                : transactionYear === selectedYear &&
-                  transactionMonth === selectedMonth;
+    const filteredTransactions = useMemo(
+        () =>
+            transactions.filter((transaction) => {
+                try {
+                    const transactionDate = new Date(transaction.date);
+                    if (isNaN(transactionDate.getTime())) return false;
+                    const transactionYear = transactionDate.getFullYear();
+                    const transactionMonth = transactionDate.getMonth() + 1;
+                    return filterByYear
+                        ? transactionYear === selectedYear
+                        : transactionYear === selectedYear &&
+                              transactionMonth === selectedMonth;
+                } catch {
+                    return false;
+                }
+            }),
+        [transactions, filterByYear, selectedYear, selectedMonth]
+    );
 
-            return matchesPeriod;
-        } catch (error) {
-            // Skip invalid transactions
-            return false;
-        }
-    });
+    const filteredCategories = useMemo(
+        () =>
+            categories.filter((category) =>
+                filteredTransactions.some(
+                    (transaction) => transaction.category === category.id
+                )
+            ),
+        [categories, filteredTransactions]
+    );
 
-    const filteredCategories = categories.filter((category) => {
-        // Include categories that have transactions in the filtered period
-        return filteredTransactions.some(
-            (transaction) => transaction.category === category.id
-        );
-    });
+    // Pre-sorted recent transactions to avoid inline sort during render
+    const recentTransactions = useMemo(
+        () =>
+            [...filteredTransactions]
+                .sort(
+                    (a, b) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                )
+                .slice(0, 5),
+        [filteredTransactions]
+    );
 
     // No Add transaction from Home; button and modal removed.
 
-    const confirmDeleteCategory = async () => {
+    const confirmDeleteCategory = useCallback(async () => {
         if (deletingCategory) {
             try {
                 await dispatch(deleteCategory(deletingCategory.id)).unwrap();
                 dispatch(fetchCategories());
                 setShowDeleteCategoryDialog(false);
                 setDeletingCategory(null);
+                setCategoryDeleteError(null);
             } catch (error) {
                 console.error('Failed to delete category:', error);
-                alert('Failed to delete category. Please try again.');
+                setCategoryDeleteError(
+                    'Failed to delete category. Please try again.'
+                );
             }
         }
-    };
+    }, [deletingCategory, dispatch]);
 
-    const confirmDeleteTransaction = async () => {
+    const confirmDeleteTransaction = useCallback(async () => {
         if (deletingTransaction) {
             try {
                 await dispatch(
@@ -132,21 +154,36 @@ function Home() {
                 dispatch(fetchTransactions({}));
                 setShowDeleteTransactionDialog(false);
                 setDeletingTransaction(null);
+                setTransactionDeleteError(null);
             } catch (error) {
                 console.error('Failed to delete transaction:', error);
-                alert('Failed to delete transaction. Please try again.');
+                setTransactionDeleteError(
+                    'Failed to delete transaction. Please try again.'
+                );
             }
         }
-    };
+    }, [deletingTransaction, dispatch]);
 
-    const closeModals = () => {
+    const handleCloseCategoryDeleteModal = useCallback(() => {
+        setShowDeleteCategoryDialog(false);
+        setCategoryDeleteError(null);
+    }, []);
+
+    const handleCloseTransactionDeleteModal = useCallback(() => {
+        setShowDeleteTransactionDialog(false);
+        setTransactionDeleteError(null);
+    }, []);
+
+    const closeModals = useCallback(() => {
         setShowCategoryModal(false);
         setShowDeleteCategoryDialog(false);
         setShowDeleteTransactionDialog(false);
         setEditingCategory(null);
         setDeletingCategory(null);
         setDeletingTransaction(null);
-    };
+        setCategoryDeleteError(null);
+        setTransactionDeleteError(null);
+    }, []);
 
     return (
         <div className='min-h-screen bg-gray-100'>
@@ -357,18 +394,8 @@ function Home() {
                                                         period
                                                     </p>
                                                 ) : (
-                                                    filteredTransactions
-                                                        .sort(
-                                                            (a, b) =>
-                                                                new Date(
-                                                                    b.date
-                                                                ).getTime() -
-                                                                new Date(
-                                                                    a.date
-                                                                ).getTime()
-                                                        )
-                                                        .slice(0, 5)
-                                                        .map((transaction) => (
+                                                    recentTransactions.map(
+                                                        (transaction) => (
                                                             <div
                                                                 key={
                                                                     transaction.id
@@ -410,7 +437,8 @@ function Home() {
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                        ))
+                                                        )
+                                                    )
                                                 )}
                                             </div>
                                         </div>
@@ -492,7 +520,7 @@ function Home() {
             {/* Delete Confirmation Modals */}
             <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
-                onClose={() => setShowDeleteCategoryDialog(false)}
+                onClose={handleCloseCategoryDeleteModal}
                 onConfirm={confirmDeleteCategory}
                 title='Delete Category'
                 message={
@@ -500,6 +528,11 @@ function Home() {
                         Are you sure you want to delete the category "
                         <strong>{deletingCategory?.name}</strong>"? This action
                         cannot be undone.
+                        {categoryDeleteError && (
+                            <p className='mt-2 text-sm text-red-600'>
+                                {categoryDeleteError}
+                            </p>
+                        )}
                     </>
                 }
                 confirmLabel='Delete'
@@ -509,7 +542,7 @@ function Home() {
 
             <ConfirmModal
                 isOpen={showDeleteTransactionDialog}
-                onClose={() => setShowDeleteTransactionDialog(false)}
+                onClose={handleCloseTransactionDeleteModal}
                 onConfirm={confirmDeleteTransaction}
                 title='Delete Transaction'
                 message={
@@ -517,6 +550,11 @@ function Home() {
                         Are you sure you want to delete the transaction "
                         <strong>{deletingTransaction?.description}</strong>"?
                         This action cannot be undone.
+                        {transactionDeleteError && (
+                            <p className='mt-2 text-sm text-red-600'>
+                                {transactionDeleteError}
+                            </p>
+                        )}
                     </>
                 }
                 confirmLabel='Delete'

@@ -4,7 +4,9 @@ export interface Transaction {
     amount: number;
     description: string;
     category: number;
-    transaction_type: string;
+    account: number;
+    account_name?: string;
+    account_type?: string;
 }
 
 export interface BulkReclassifyRequest {

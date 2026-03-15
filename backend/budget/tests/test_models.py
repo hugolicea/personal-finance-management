@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from budget.models import Category, Transaction
+from budget.models import BankAccount, Category, Transaction
 
 
 class CategoryModelTest(TestCase):
@@ -30,6 +30,11 @@ class TransactionModelTest(TestCase):
             username="testuser", password="testpass123"
         )
         self.category = Category.objects.create(name="Food", user=self.user)
+        self.account = BankAccount.objects.create(
+            user=self.user,
+            name="My Checking Account",
+            account_type="checking",
+        )
 
     def test_transaction_creation(self):
         """Test that a transaction can be created"""
@@ -40,6 +45,7 @@ class TransactionModelTest(TestCase):
             description="Test transaction",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
         self.assertEqual(transaction.amount, -50.00)
@@ -55,6 +61,7 @@ class TransactionModelTest(TestCase):
             description="Income",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
         expected_str = f"Income - 100.00 ({date.today()})"
@@ -69,6 +76,7 @@ class TransactionModelTest(TestCase):
             description="Salary",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
         self.assertEqual(transaction.amount, 200.00)

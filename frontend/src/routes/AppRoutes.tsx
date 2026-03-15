@@ -1,11 +1,11 @@
 import { Route, Routes } from 'react-router-dom';
 
 import PrivateRoute from '../components/PrivateRoute';
-import AccountTransactions from '../pages/AccountTransactions';
+import AccountsList from '../pages/AccountsList';
+import AccountTransactionsPage from '../pages/AccountTransactionsPage';
 import Balance from '../pages/Balance';
 import Categories from '../pages/Categories';
 import CleanAndReclassify from '../pages/CleanAndReclassify';
-import CreditCardTransactions from '../pages/CreditCardTransactions';
 import Dashboard from '../pages/Dashboard';
 import DatabaseBackup from '../pages/DatabaseBackup';
 import Heritage from '../pages/Heritage';
@@ -29,18 +29,18 @@ function AppRoutes() {
                 }
             />
             <Route
-                path='/credit-card-transactions'
+                path='/accounts'
                 element={
                     <PrivateRoute>
-                        <CreditCardTransactions />
+                        <AccountsList />
                     </PrivateRoute>
                 }
             />
             <Route
-                path='/account-transactions'
+                path='/accounts/:accountId'
                 element={
                     <PrivateRoute>
-                        <AccountTransactions />
+                        <AccountTransactionsPage />
                     </PrivateRoute>
                 }
             />

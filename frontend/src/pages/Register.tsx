@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -17,7 +17,7 @@ function Register() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/');
+            navigate('/', { replace: true });
         }
     }, [isAuthenticated, navigate]);
 
@@ -27,13 +27,13 @@ function Register() {
         };
     }, [dispatch]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         const result = await dispatch(
             register({ username, email, password1, password2 })
         );
         if (register.fulfilled.match(result)) {
-            navigate('/');
+            navigate('/', { replace: true });
         }
     };
 
@@ -56,11 +56,24 @@ function Register() {
                 </div>
                 <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
                     {error && (
-                        <div className='rounded-md bg-red-50 p-4'>
+                        <div role='alert' className='rounded-md bg-red-50 p-4'>
                             <div className='text-sm text-red-700'>
                                 {typeof error === 'string'
                                     ? error
-                                    : JSON.stringify(error)}
+                                    : Object.entries(
+                                          error as Record<
+                                              string,
+                                              string | string[]
+                                          >
+                                      )
+                                          .flatMap(([, msgs]) =>
+                                              Array.isArray(msgs)
+                                                  ? msgs
+                                                  : [String(msgs)]
+                                          )
+                                          .map((msg, i) => (
+                                              <p key={i}>{msg}</p>
+                                          ))}
                             </div>
                         </div>
                     )}

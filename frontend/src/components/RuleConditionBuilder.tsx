@@ -129,7 +129,7 @@ function RuleConditionBuilder({
                         onChange={(e) =>
                             setDescriptionContainsInput(e.target.value)
                         }
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 handleAddDescriptionContains();
@@ -186,7 +186,7 @@ function RuleConditionBuilder({
                         onChange={(e) =>
                             setDescriptionNotContainsInput(e.target.value)
                         }
-                        onKeyPress={(e) => {
+                        onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
                                 handleAddDescriptionNotContains();

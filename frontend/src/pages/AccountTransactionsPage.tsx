@@ -1,0 +1,622 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import BankStatementUpload from '../components/BankStatementUpload';
+import CategorySelect from '../components/CategorySelect';
+import ConfirmModal from '../components/ConfirmModal';
+import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
+import Modal from '../components/Modal';
+import TransactionForm from '../components/TransactionForm';
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { fetchAccounts } from '../store/slices/accountsSlice';
+import { fetchCategories } from '../store/slices/categoriesSlice';
+import {
+    deleteTransaction,
+    fetchTransactions,
+} from '../store/slices/transactionsSlice';
+import { ACCOUNT_TYPE_ICONS } from '../types/accounts';
+import type { Transaction } from '../types/transactions';
+import { formatDateForDisplay } from '../utils/dateHelpers';
+import { formatCurrency } from '../utils/formatters';
+
+function AccountTransactionsPage() {
+    const { accountId } = useParams<{ accountId: string }>();
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+
+    const { accounts } = useAppSelector((state) => state.accounts);
+    const { categories } = useAppSelector((state) => state.categories);
+    const {
+        transactions,
+        loading: transactionsLoading,
+        deleting,
+    } = useAppSelector((state) => state.transactions);
+
+    const accountIdNum = accountId ? parseInt(accountId) : null;
+    const account = accounts.find((a) => a.id === accountIdNum);
+
+    const [showTransactionModal, setShowTransactionModal] = useState(false);
+    const [editingTransaction, setEditingTransaction] =
+        useState<Transaction | null>(null);
+    const [showDeleteTransactionDialog, setShowDeleteTransactionDialog] =
+        useState(false);
+    const [deletingTransaction, setDeletingTransaction] =
+        useState<Transaction | null>(null);
+    const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedTransactions, setSelectedTransactions] = useState<number[]>(
+        []
+    );
+
+    // Filter state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(
+        new Date().getMonth() + 1
+    );
+    const [filterByYear, setFilterByYear] = useState(false);
+    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+
+    useEffect(() => {
+        dispatch(fetchCategories());
+        dispatch(fetchAccounts());
+    }, [dispatch]);
+
+    // Re-fetch transactions when filters or account changes
+    useEffect(() => {
+        if (!accountIdNum) return;
+
+        const dateAfter = filterByYear
+            ? `${selectedYear}-01-01`
+            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+
+        const lastDay = new Date(
+            filterByYear ? selectedYear : selectedYear,
+            filterByYear ? 12 : selectedMonth,
+            0
+        ).getDate();
+        const dateBefore = `${
+            filterByYear ? selectedYear : selectedYear
+        }-${String(filterByYear ? 12 : selectedMonth).padStart(
+            2,
+            '0'
+        )}-${String(lastDay).padStart(2, '0')}`;
+
+        dispatch(
+            fetchTransactions({
+                account: accountIdNum,
+                category: selectedCategory || undefined,
+                search: searchTerm || undefined,
+                date_after: dateAfter,
+                date_before: dateBefore,
+                ordering: '-date',
+            })
+        );
+    }, [
+        dispatch,
+        accountIdNum,
+        filterByYear,
+        selectedYear,
+        selectedMonth,
+        selectedCategory,
+        searchTerm,
+    ]);
+
+    const handleEditTransaction = (transaction: Transaction) => {
+        setEditingTransaction(transaction);
+        setShowTransactionModal(true);
+    };
+
+    const handleDeleteRequest = (transaction: Transaction) => {
+        setDeletingTransaction(transaction);
+        setShowDeleteTransactionDialog(true);
+    };
+
+    const confirmDeleteTransaction = async () => {
+        if (!deletingTransaction) return;
+        try {
+            await dispatch(deleteTransaction(deletingTransaction.id)).unwrap();
+            setShowDeleteTransactionDialog(false);
+            setDeletingTransaction(null);
+        } catch (error) {
+            console.error('Failed to delete transaction:', error);
+        }
+    };
+
+    const handleSelectTransaction = (id: number, checked: boolean) => {
+        setSelectedTransactions((prev) =>
+            checked ? [...prev, id] : prev.filter((x) => x !== id)
+        );
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        setSelectedTransactions(
+            checked ? filteredTransactions.map((t) => t.id) : []
+        );
+    };
+
+    const confirmBulkDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await Promise.all(
+                selectedTransactions.map((id) =>
+                    dispatch(deleteTransaction(id)).unwrap()
+                )
+            );
+            setSelectedTransactions([]);
+            setShowBulkDeleteDialog(false);
+        } catch (error) {
+            console.error('Bulk delete failed:', error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const filteredTransactions = transactions.filter((t) => !isNaN(t.amount));
+    const spendTransactions = filteredTransactions.filter((t) => t.amount < 0);
+    const incomeTransactions = filteredTransactions.filter(
+        (t) => t.amount >= 0
+    );
+    const totalSpends = spendTransactions.reduce(
+        (sum, t) => sum + Math.abs(t.amount),
+        0
+    );
+    const totalIncomes = incomeTransactions.reduce(
+        (sum, t) => sum + t.amount,
+        0
+    );
+    const totalAmount = filteredTransactions.reduce(
+        (sum, t) => sum + t.amount,
+        0
+    );
+
+    // O(1) category lookups — build once when categories change (js-index-maps)
+    const categoryMap = useMemo(
+        () => new Map(categories.map((c) => [c.id, c.name])),
+        [categories]
+    );
+    const getCategoryName = (categoryId: number) =>
+        categoryMap.get(categoryId) ?? 'Unknown';
+
+    const renderTransactionList = (list: Transaction[], label: string) => (
+        <div className='bg-white rounded-lg shadow'>
+            <div className='p-4 border-b flex justify-between items-center'>
+                <h2 className='font-semibold text-gray-800'>
+                    {label} ({list.length})
+                </h2>
+                {selectedTransactions.length > 0 && (
+                    <button
+                        onClick={() => setShowBulkDeleteDialog(true)}
+                        className='text-sm text-red-600 hover:text-red-800'
+                    >
+                        Delete selected ({selectedTransactions.length})
+                    </button>
+                )}
+            </div>
+
+            {viewMode === 'table' ? (
+                <div className='overflow-x-auto'>
+                    <table className='w-full text-sm'>
+                        <thead>
+                            <tr className='bg-gray-50 text-gray-600'>
+                                <th className='p-3 text-left'>
+                                    <input
+                                        type='checkbox'
+                                        aria-label='Select all transactions'
+                                        checked={
+                                            list.length > 0 &&
+                                            list.every((t) =>
+                                                selectedTransactions.includes(
+                                                    t.id
+                                                )
+                                            )
+                                        }
+                                        onChange={(e) =>
+                                            handleSelectAll(e.target.checked)
+                                        }
+                                    />
+                                </th>
+                                <th className='p-3 text-left'>Date</th>
+                                <th className='p-3 text-left'>Description</th>
+                                <th className='p-3 text-left'>Category</th>
+                                <th className='p-3 text-right'>Amount</th>
+                                <th className='p-3'></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {list.map((t) => (
+                                <tr
+                                    key={t.id}
+                                    className='border-t hover:bg-gray-50'
+                                >
+                                    <td className='p-3'>
+                                        <input
+                                            type='checkbox'
+                                            aria-label={`Select transaction: ${t.description}`}
+                                            checked={selectedTransactions.includes(
+                                                t.id
+                                            )}
+                                            onChange={(e) =>
+                                                handleSelectTransaction(
+                                                    t.id,
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                    </td>
+                                    <td className='p-3 text-gray-600'>
+                                        {formatDateForDisplay(t.date)}
+                                    </td>
+                                    <td className='p-3 text-gray-900'>
+                                        {t.description}
+                                    </td>
+                                    <td className='p-3 text-gray-600'>
+                                        {getCategoryName(t.category)}
+                                    </td>
+                                    <td
+                                        className={`p-3 text-right font-medium ${
+                                            t.amount < 0
+                                                ? 'text-red-600'
+                                                : 'text-green-600'
+                                        }`}
+                                    >
+                                        {formatCurrency(t.amount)}
+                                    </td>
+                                    <td className='p-3'>
+                                        <EditDeleteIconButtons
+                                            onEdit={() =>
+                                                handleEditTransaction(t)
+                                            }
+                                            onDelete={() =>
+                                                handleDeleteRequest(t)
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className='divide-y'>
+                    {list.map((t) => (
+                        <div
+                            key={t.id}
+                            className='p-4 flex items-center gap-3 hover:bg-gray-50'
+                        >
+                            <input
+                                type='checkbox'
+                                aria-label={`Select transaction: ${t.description}`}
+                                checked={selectedTransactions.includes(t.id)}
+                                onChange={(e) =>
+                                    handleSelectTransaction(
+                                        t.id,
+                                        e.target.checked
+                                    )
+                                }
+                            />
+                            <div className='flex-1 min-w-0'>
+                                <p className='font-medium text-gray-900 truncate'>
+                                    {t.description}
+                                </p>
+                                <p className='text-sm text-gray-500'>
+                                    {formatDateForDisplay(t.date)} ·{' '}
+                                    {getCategoryName(t.category)}
+                                </p>
+                            </div>
+                            <span
+                                className={`font-bold ${
+                                    t.amount < 0
+                                        ? 'text-red-600'
+                                        : 'text-green-600'
+                                }`}
+                            >
+                                {formatCurrency(t.amount)}
+                            </span>
+                            <EditDeleteIconButtons
+                                onEdit={() => handleEditTransaction(t)}
+                                onDelete={() => handleDeleteRequest(t)}
+                            />
+                        </div>
+                    ))}
+                    {list.length === 0 && (
+                        <p className='p-6 text-center text-gray-400'>
+                            No transactions found.
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+
+    return (
+        <div className='space-y-6'>
+            {/* Header */}
+            <div className='flex items-start justify-between'>
+                <div className='flex items-center gap-3'>
+                    <button
+                        onClick={() => navigate('/accounts')}
+                        className='text-gray-400 hover:text-gray-600 transition-colors'
+                        title='Back to Accounts'
+                    >
+                        ← Back
+                    </button>
+                    <div>
+                        <div className='flex items-center gap-2'>
+                            <span className='text-2xl'>
+                                {account
+                                    ? ACCOUNT_TYPE_ICONS[
+                                          account.account_type
+                                      ] ?? '🏦'
+                                    : '🏦'}
+                            </span>
+                            <h1 className='text-2xl font-bold text-gray-900'>
+                                {account?.name ?? 'Account'}
+                            </h1>
+                        </div>
+                        {account?.institution && (
+                            <p className='text-sm text-gray-500 ml-8'>
+                                {account.institution}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className='flex gap-2'>
+                    <button
+                        onClick={() => {
+                            setEditingTransaction(null);
+                            setShowTransactionModal(true);
+                        }}
+                        className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors'
+                    >
+                        + Add Transaction
+                    </button>
+                </div>
+            </div>
+
+            {/* Summary cards */}
+            <div className='grid grid-cols-3 gap-4'>
+                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                    <p className='text-sm text-gray-500'>Expenses</p>
+                    <p className='text-xl font-bold text-red-600'>
+                        {formatCurrency(-totalSpends)}
+                    </p>
+                </div>
+                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                    <p className='text-sm text-gray-500'>Income</p>
+                    <p className='text-xl font-bold text-green-600'>
+                        +{formatCurrency(totalIncomes)}
+                    </p>
+                </div>
+                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                    <p className='text-sm text-gray-500'>Net</p>
+                    <p
+                        className={`text-xl font-bold ${
+                            totalAmount >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}
+                    >
+                        {formatCurrency(totalAmount)}
+                    </p>
+                </div>
+            </div>
+
+            {/* Filters */}
+            <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='grid grid-cols-1 md:grid-cols-6 gap-4'>
+                    <div>
+                        <label
+                            htmlFor='filter-search'
+                            className='block text-sm font-medium text-gray-700 mb-1'
+                        >
+                            Search
+                        </label>
+                        <input
+                            id='filter-search'
+                            type='text'
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder='Search transactions…'
+                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        />
+                    </div>
+                    <div>
+                        <label
+                            htmlFor='filter-category'
+                            className='block text-sm font-medium text-gray-700 mb-1'
+                        >
+                            Category
+                        </label>
+                        <CategorySelect
+                            id='filter-category'
+                            categories={categories}
+                            placeholder='All Categories'
+                            value={selectedCategory}
+                            onChange={(e) =>
+                                setSelectedCategory(e.target.value)
+                            }
+                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        />
+                    </div>
+                    <div>
+                        <label
+                            htmlFor='filter-year'
+                            className='block text-sm font-medium text-gray-700 mb-1'
+                        >
+                            Year
+                        </label>
+                        <select
+                            id='filter-year'
+                            value={selectedYear}
+                            onChange={(e) =>
+                                setSelectedYear(parseInt(e.target.value))
+                            }
+                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        >
+                            {Array.from({ length: 5 }, (_, i) => {
+                                const y = new Date().getFullYear() - 2 + i;
+                                return (
+                                    <option key={y} value={y}>
+                                        {y}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            htmlFor='filter-month'
+                            className='block text-sm font-medium text-gray-700 mb-1'
+                        >
+                            Month
+                        </label>
+                        <select
+                            id='filter-month'
+                            value={selectedMonth}
+                            onChange={(e) =>
+                                setSelectedMonth(parseInt(e.target.value))
+                            }
+                            disabled={filterByYear}
+                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                        >
+                            {[
+                                'January',
+                                'February',
+                                'March',
+                                'April',
+                                'May',
+                                'June',
+                                'July',
+                                'August',
+                                'September',
+                                'October',
+                                'November',
+                                'December',
+                            ].map((name, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                    {name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                            Period
+                        </label>
+                        <div className='flex gap-2'>
+                            <button
+                                onClick={() => setFilterByYear(false)}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                    !filterByYear
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                Month
+                            </button>
+                            <button
+                                onClick={() => setFilterByYear(true)}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                    filterByYear
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                Year
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                            View
+                        </label>
+                        <div className='flex gap-2'>
+                            <button
+                                onClick={() => setViewMode('cards')}
+                                aria-label='Cards view'
+                                aria-pressed={viewMode === 'cards'}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                    viewMode === 'cards'
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                <span aria-hidden='true'>📋</span>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                aria-label='Table view'
+                                aria-pressed={viewMode === 'table'}
+                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                    viewMode === 'table'
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                            >
+                                <span aria-hidden='true'>📊</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CSV Upload */}
+            <BankStatementUpload accountId={accountIdNum ?? undefined} />
+
+            {/* Transaction lists */}
+            {transactionsLoading ? (
+                <div className='flex justify-center items-center h-32'>
+                    <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600'></div>
+                </div>
+            ) : (
+                <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                    {renderTransactionList(spendTransactions, '💸 Expenses')}
+                    {renderTransactionList(incomeTransactions, '💰 Income')}
+                </div>
+            )}
+
+            {/* Add / Edit transaction modal */}
+            <Modal
+                isOpen={showTransactionModal}
+                onClose={() => {
+                    setShowTransactionModal(false);
+                    setEditingTransaction(null);
+                }}
+            >
+                <TransactionForm
+                    transaction={editingTransaction ?? undefined}
+                    accountId={accountIdNum ?? undefined}
+                    onClose={() => {
+                        setShowTransactionModal(false);
+                        setEditingTransaction(null);
+                    }}
+                />
+            </Modal>
+
+            {/* Delete single transaction */}
+            <ConfirmModal
+                isOpen={showDeleteTransactionDialog}
+                onClose={() => {
+                    setShowDeleteTransactionDialog(false);
+                    setDeletingTransaction(null);
+                }}
+                onConfirm={confirmDeleteTransaction}
+                title='Delete Transaction'
+                message={`Delete "${deletingTransaction?.description ?? ''}"?`}
+                isConfirming={deleting}
+            />
+
+            {/* Bulk delete */}
+            <ConfirmModal
+                isOpen={showBulkDeleteDialog}
+                onClose={() => setShowBulkDeleteDialog(false)}
+                onConfirm={confirmBulkDelete}
+                title='Delete Selected Transactions'
+                message={`Delete ${selectedTransactions.length} transaction(s)?`}
+                isConfirming={isDeleting}
+            />
+        </div>
+    );
+}
+
+export default AccountTransactionsPage;

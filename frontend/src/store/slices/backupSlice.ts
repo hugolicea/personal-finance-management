@@ -4,7 +4,8 @@ import { isAxiosError } from 'axios';
 import apiClient from '../../utils/apiClient';
 
 interface BackupState {
-    loading: boolean;
+    downloadLoading: boolean;
+    restoreLoading: boolean;
     error: string | null;
     restoreResult: RestoreResult | null;
 }
@@ -23,7 +24,8 @@ export interface RestoreResult {
 }
 
 const initialState: BackupState = {
-    loading: false,
+    downloadLoading: false,
+    restoreLoading: false,
     error: null,
     restoreResult: null,
 };
@@ -104,27 +106,27 @@ const backupSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(downloadBackup.pending, (state) => {
-                state.loading = true;
+                state.downloadLoading = true;
                 state.error = null;
             })
             .addCase(downloadBackup.fulfilled, (state) => {
-                state.loading = false;
+                state.downloadLoading = false;
             })
             .addCase(downloadBackup.rejected, (state, action) => {
-                state.loading = false;
+                state.downloadLoading = false;
                 state.error = action.payload as string;
             })
             .addCase(restoreBackup.pending, (state) => {
-                state.loading = true;
+                state.restoreLoading = true;
                 state.error = null;
                 state.restoreResult = null;
             })
             .addCase(restoreBackup.fulfilled, (state, action) => {
-                state.loading = false;
+                state.restoreLoading = false;
                 state.restoreResult = action.payload;
             })
             .addCase(restoreBackup.rejected, (state, action) => {
-                state.loading = false;
+                state.restoreLoading = false;
                 state.error = action.payload as string;
             });
     },

@@ -49,21 +49,23 @@ function Investments() {
         dispatch(fetchInvestments());
     }, [dispatch]);
 
-    const handleEditInvestment = useCallback(
-        (investment: Partial<Investment>) => {
-            setEditingInvestment(investment as Investment);
-            setShowInvestmentModal(true);
-        },
-        []
-    );
+    const handleOpenModal = useCallback(() => {
+        setShowInvestmentModal(true);
+    }, []);
 
-    const handleDeleteInvestment = useCallback(
-        (investment: Partial<Investment>) => {
-            setDeletingInvestment(investment as Investment);
-            setShowDeleteInvestmentDialog(true);
-        },
-        []
-    );
+    const handleEditInvestment = useCallback((investment: Investment) => {
+        setEditingInvestment(investment);
+        setShowInvestmentModal(true);
+    }, []);
+
+    const handleDeleteInvestment = useCallback((investment: Investment) => {
+        setDeletingInvestment(investment);
+        setShowDeleteInvestmentDialog(true);
+    }, []);
+
+    const handleCloseDeleteModal = useCallback(() => {
+        if (!deleting) setShowDeleteInvestmentDialog(false);
+    }, [deleting]);
 
     const confirmDeleteInvestment = useCallback(async () => {
         if (deletingInvestment) {
@@ -102,7 +104,7 @@ function Investments() {
                 cell: ({ row }) => (
                     <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
                         {row.original.investment_type
-                            .replace('_', ' ')
+                            .replace(/_/g, ' ')
                             .toUpperCase()}
                     </span>
                 ),
@@ -255,27 +257,23 @@ function Investments() {
         },
     });
 
-    const totalPortfolioValue = useMemo(() => {
-        return investments.reduce(
-            (sum, investment) => sum + investment.current_value,
-            0
-        );
-    }, [investments]);
-
-    const totalGainLoss = useMemo(() => {
-        return investments.reduce(
-            (sum, investment) => sum + investment.gain_loss,
-            0
-        );
-    }, [investments]);
-
-    const totalGainLossPercentage = useMemo(() => {
-        const totalInvested = investments.reduce(
-            (sum, investment) => sum + investment.total_invested,
-            0
-        );
-        return totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
-    }, [investments, totalGainLoss]);
+    const { totalPortfolioValue, totalGainLoss, totalGainLossPercentage } =
+        useMemo(() => {
+            let portfolioValue = 0;
+            let gainLoss = 0;
+            let invested = 0;
+            for (const inv of investments) {
+                portfolioValue += inv.current_value;
+                gainLoss += inv.gain_loss;
+                invested += inv.total_invested;
+            }
+            return {
+                totalPortfolioValue: portfolioValue,
+                totalGainLoss: gainLoss,
+                totalGainLossPercentage:
+                    invested > 0 ? (gainLoss / invested) * 100 : 0,
+            };
+        }, [investments]);
 
     if (loading) {
         return (
@@ -302,7 +300,7 @@ function Investments() {
             <div className='mt-6 flex justify-center sm:justify-start'>
                 <button
                     type='button'
-                    onClick={() => setShowInvestmentModal(true)}
+                    onClick={handleOpenModal}
                     className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
                 >
                     <svg
@@ -329,7 +327,10 @@ function Investments() {
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <div className='w-8 h-8 bg-green-500 rounded-md flex items-center justify-center'>
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        aria-hidden='true'
+                                        className='text-white text-sm font-bold'
+                                    >
                                         $
                                     </span>
                                 </div>
@@ -359,7 +360,10 @@ function Investments() {
                                             : 'bg-red-500'
                                     }`}
                                 >
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        aria-hidden='true'
+                                        className='text-white text-sm font-bold'
+                                    >
                                         {totalGainLoss >= 0 ? '+' : '-'}
                                     </span>
                                 </div>
@@ -396,7 +400,10 @@ function Investments() {
                                             : 'bg-red-500'
                                     }`}
                                 >
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        aria-hidden='true'
+                                        className='text-white text-sm font-bold'
+                                    >
                                         %
                                     </span>
                                 </div>
@@ -650,6 +657,16 @@ function Investments() {
                                                     (header) => (
                                                         <th
                                                             key={header.id}
+                                                            scope='col'
+                                                            aria-sort={
+                                                                header.column.getIsSorted() ===
+                                                                'asc'
+                                                                    ? 'ascending'
+                                                                    : header.column.getIsSorted() ===
+                                                                        'desc'
+                                                                      ? 'descending'
+                                                                      : 'none'
+                                                            }
                                                             className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
@@ -662,12 +679,14 @@ function Investments() {
                                                                           .header,
                                                                       header.getContext()
                                                                   )}
-                                                            {{
-                                                                asc: ' 🔼',
-                                                                desc: ' 🔽',
-                                                            }[
-                                                                header.column.getIsSorted() as string
-                                                            ] ?? null}
+                                                            {header.column.getIsSorted() && (
+                                                                <span aria-hidden='true'>
+                                                                    {header.column.getIsSorted() ===
+                                                                    'asc'
+                                                                        ? ' 🔼'
+                                                                        : ' 🔽'}
+                                                                </span>
+                                                            )}
                                                         </th>
                                                     )
                                                 )}
@@ -720,9 +739,7 @@ function Investments() {
             {/* Delete Confirmation Modal */}
             <ConfirmModal
                 isOpen={showDeleteInvestmentDialog}
-                onClose={() =>
-                    !deleting && setShowDeleteInvestmentDialog(false)
-                }
+                onClose={handleCloseDeleteModal}
                 onConfirm={confirmDeleteInvestment}
                 title='Delete Investment'
                 message={
@@ -752,7 +769,7 @@ function Investments() {
                                             </span>{' '}
                                             <span className='text-gray-900 capitalize'>
                                                 {deletingInvestment.investment_type.replace(
-                                                    '_',
+                                                    /_/g,
                                                     ' '
                                                 )}
                                             </span>
@@ -794,8 +811,9 @@ function Investments() {
                         )}
                         <div className='mt-3'>
                             <p className='text-sm text-red-600 font-medium'>
-                                ⚠️ This will permanently remove all data
-                                associated with this investment.
+                                <span aria-hidden='true'>⚠️ </span>This will
+                                permanently remove all data associated with this
+                                investment.
                             </p>
                         </div>
                     </>

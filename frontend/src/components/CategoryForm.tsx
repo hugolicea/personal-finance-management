@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -15,7 +13,20 @@ interface CategoryFormProps {
     onClose: () => void;
 }
 
-const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
+const validationSchema = Yup.object({
+    name: Yup.string()
+        .required('Category name is required')
+        .min(2, 'Name must be at least 2 characters')
+        .max(50, 'Name must be less than 50 characters'),
+    classification: Yup.string()
+        .oneOf(['spend', 'income'], 'Invalid classification')
+        .required('Classification is required'),
+    monthly_budget: Yup.number()
+        .min(0, 'Budget must be positive')
+        .required('Monthly budget is required'),
+});
+
+function CategoryForm({ category, onClose }: CategoryFormProps) {
     const dispatch = useAppDispatch();
 
     const initialValues = {
@@ -23,19 +34,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
         classification: category?.classification || 'spend',
         monthly_budget: category?.monthly_budget || 0,
     };
-
-    const validationSchema = Yup.object({
-        name: Yup.string()
-            .required('Category name is required')
-            .min(2, 'Name must be at least 2 characters')
-            .max(50, 'Name must be less than 50 characters'),
-        classification: Yup.string()
-            .oneOf(['spend', 'income'], 'Invalid classification')
-            .required('Classification is required'),
-        monthly_budget: Yup.number()
-            .min(0, 'Budget must be positive')
-            .required('Monthly budget is required'),
-    });
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
@@ -165,6 +163,6 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ category, onClose }) => {
             </Formik>
         </div>
     );
-};
+}
 
 export default CategoryForm;

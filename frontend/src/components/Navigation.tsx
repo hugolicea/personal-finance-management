@@ -45,7 +45,7 @@ function Navigation({ onMenuClick }: NavigationProps) {
 
                         <div className='flex-shrink-0 flex items-center ml-4 lg:ml-0'>
                             <h1 className='text-xl font-bold text-gray-900'>
-                                💰 Personal Finance Managment
+                                💰 Personal Finance 365
                             </h1>
                         </div>
                     </div>

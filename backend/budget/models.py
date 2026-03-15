@@ -26,6 +26,8 @@ class Category(models.Model):
         default=0,
         help_text="Monthly budget amount for this category",
     )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -120,6 +122,8 @@ class Investment(models.Model):
     notes = models.TextField(
         blank=True, null=True, help_text="Additional notes about the investment"
     )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         unique_together = [["user", "symbol"]]
@@ -269,6 +273,8 @@ class Heritage(models.Model):
     notes = models.TextField(
         blank=True, null=True, help_text="Additional notes about the property"
     )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     @property
     def gain_loss(self):
@@ -399,6 +405,8 @@ class RetirementAccount(models.Model):
     notes = models.TextField(
         blank=True, null=True, help_text="Additional notes about the account"
     )
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     @property
     def annual_contribution(self):
@@ -428,27 +436,76 @@ class RetirementAccount(models.Model):
         return f"{self.name} ({self.get_account_type_display()}){provider_display}"
 
 
-class Transaction(models.Model):
+class BankAccount(models.Model):
+    CHECKING = "checking"
+    SAVINGS = "savings"
     CREDIT_CARD = "credit_card"
-    ACCOUNT = "account"
-    TRANSACTION_TYPE_CHOICES = [
+    CASH = "cash"
+    INVESTMENT = "investment"
+    OTHER = "other"
+    ACCOUNT_TYPE_CHOICES = [
+        (CHECKING, "Checking"),
+        (SAVINGS, "Savings"),
         (CREDIT_CARD, "Credit Card"),
-        (ACCOUNT, "Account"),
+        (CASH, "Cash"),
+        (INVESTMENT, "Investment"),
+        (OTHER, "Other"),
     ]
 
     user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bank_accounts",
+    )
+    name = models.CharField(max_length=100)
+    account_type = models.CharField(
+        max_length=20,
+        choices=ACCOUNT_TYPE_CHOICES,
+        default=CHECKING,
+        help_text="Type of bank account",
+    )
+    institution = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Bank or financial institution name",
+    )
+    account_number = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Last 4 digits of account number (for reference only)",
+    )
+    currency = models.CharField(max_length=3, default="USD")
+    notes = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [["user", "name"]]
+        indexes = [
+            models.Index(fields=["user", "account_type"]),
+            models.Index(fields=["user", "is_active"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.get_account_type_display()})"
+
+
+class Transaction(models.Model):
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="transactions"
+    )
+    account = models.ForeignKey(
+        BankAccount,
+        on_delete=models.PROTECT,
+        related_name="transactions",
+        help_text="Bank account this transaction belongs to",
     )
     date = models.DateField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    transaction_type = models.CharField(
-        max_length=20,
-        choices=TRANSACTION_TYPE_CHOICES,
-        default=ACCOUNT,
-        help_text="Type of transaction: credit card or account",
-    )
     # Bank statement import fields
     import_source = models.CharField(
         max_length=100, blank=True, null=True
@@ -495,7 +552,7 @@ class ReclassificationRule(models.Model):
         "amount_max": 100.00,
         "date_from": "2024-01-01",
         "date_to": "2024-12-31",
-        "transaction_type": "credit_card"
+        "account_type": "credit_card"
     }
     """
 
@@ -530,6 +587,7 @@ class ReclassificationRule(models.Model):
         help_text="Optional name to identify this rule",
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     is_active = models.BooleanField(
         default=True, help_text="Whether this rule is active"
     )
@@ -606,9 +664,12 @@ class ReclassificationRule(models.Model):
             if transaction.date > date_to:
                 return False
 
-        # Transaction type
-        if "transaction_type" in self.conditions:
-            if transaction.transaction_type != self.conditions["transaction_type"]:
+        # Account type condition
+        if "account_type" in self.conditions:
+            tx_account_type = (
+                transaction.account.account_type if transaction.account_id else None
+            )
+            if tx_account_type != self.conditions["account_type"]:
                 return False
 
         return True
@@ -626,6 +687,7 @@ class CategoryDeletionRule(models.Model):
         Category, on_delete=models.CASCADE, related_name="deletion_rules"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
     is_active = models.BooleanField(
         default=True, help_text="Whether this rule is active"
     )

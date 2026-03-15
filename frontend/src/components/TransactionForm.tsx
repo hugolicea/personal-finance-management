@@ -16,13 +16,13 @@ import CategorySelect from './CategorySelect';
 interface TransactionFormProps {
     transaction?: Partial<Transaction>;
     onClose: () => void;
-    transactionType?: 'account' | 'credit_card';
+    accountId?: number;
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
     transaction,
     onClose,
-    transactionType = 'account',
+    accountId,
 }) => {
     const dispatch = useAppDispatch();
     const { categories, loading: categoriesLoading } = useAppSelector(
@@ -89,11 +89,11 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                     })
                 ).unwrap();
             } else {
-                // Create new transaction - include transaction_type
+                // Create new transaction
                 await dispatch(
                     createTransaction({
                         ...baseData,
-                        transaction_type: transactionType,
+                        account: accountId!,
                     })
                 ).unwrap();
             }

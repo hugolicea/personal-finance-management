@@ -8,7 +8,7 @@ import MainLayout from './components/MainLayout';
 import { useAppDispatch } from './hooks/redux';
 import AppRoutes from './routes/AppRoutes';
 import { RootState } from './store';
-import { checkAuth } from './store/slices/authSlice';
+import { checkAuth, clearCredentials } from './store/slices/authSlice';
 
 function App() {
     const dispatch = useAppDispatch();
@@ -27,6 +27,22 @@ function App() {
             dispatch(checkAuth());
         }
     }, [dispatch, isAuthPage]);
+
+    // When both access and refresh tokens expire, apiClient fires this event
+    // (to avoid a circular dependency on the Redux store). Clearing credentials
+    // sets isAuthenticated=false so PrivateRoute redirects to /login.
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            dispatch(clearCredentials());
+        };
+        window.addEventListener('auth:session-expired', handleSessionExpired);
+        return () => {
+            window.removeEventListener(
+                'auth:session-expired',
+                handleSessionExpired
+            );
+        };
+    }, [dispatch]);
 
     // Don't render routes until we know whether the user is authenticated
     // (prevents PrivateRoute from flashing /login on page refresh)

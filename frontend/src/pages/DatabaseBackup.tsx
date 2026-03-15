@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
@@ -7,39 +7,60 @@ import {
     restoreBackup,
 } from '../store/slices/backupSlice';
 
-const DatabaseBackup: React.FC = () => {
+function DatabaseBackup() {
     const dispatch = useAppDispatch();
-    const { loading, error, restoreResult } = useAppSelector(
-        (state) => state.backup
-    );
+    const { downloadLoading, restoreLoading, error, restoreResult } =
+        useAppSelector((state) => state.backup);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [replaceExisting, setReplaceExisting] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [confirmReplace, setConfirmReplace] = useState(false);
+    const [confirmError, setConfirmError] = useState<string | null>(null);
 
-    const handleDownload = () => {
+    const handleDownload = useCallback(() => {
         dispatch(downloadBackup());
-    };
+    }, [dispatch]);
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] ?? null;
-        setSelectedFile(file);
-        dispatch(clearRestoreResult());
-    };
+    const handleFileSelect = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            const file = e.target.files?.[0] ?? null;
+            setSelectedFile(file);
+            dispatch(clearRestoreResult());
+        },
+        [dispatch]
+    );
 
-    const handleRestore = async () => {
+    const handleReplaceExistingChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setReplaceExisting(e.target.checked);
+            setConfirmReplace(false);
+            setConfirmError(null);
+        },
+        []
+    );
+
+    const handleConfirmReplaceChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setConfirmReplace(e.target.checked);
+            setConfirmError(null);
+        },
+        []
+    );
+
+    const handleRestore = useCallback(async () => {
         if (!selectedFile) return;
         if (replaceExisting && !confirmReplace) {
-            alert(
+            setConfirmError(
                 'Check the confirmation checkbox to confirm you want to replace all existing data.'
             );
             return;
         }
+        setConfirmError(null);
         await dispatch(restoreBackup({ file: selectedFile, replaceExisting }));
         setSelectedFile(null);
         setConfirmReplace(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
-    };
+    }, [confirmReplace, dispatch, replaceExisting, selectedFile]);
 
     return (
         <div className='max-w-2xl mx-auto space-y-8'>
@@ -65,11 +86,12 @@ const DatabaseBackup: React.FC = () => {
                 </p>
                 <button
                     onClick={handleDownload}
-                    disabled={loading}
+                    disabled={downloadLoading}
                     className='inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                    {loading ? (
+                    {downloadLoading ? (
                         <svg
+                            aria-hidden='true'
                             className='animate-spin h-4 w-4'
                             viewBox='0 0 24 24'
                             fill='none'
@@ -89,7 +111,7 @@ const DatabaseBackup: React.FC = () => {
                             />
                         </svg>
                     ) : (
-                        '⬇️'
+                        <span aria-hidden='true'>⬇️</span>
                     )}
                     Download Backup
                 </button>
@@ -107,10 +129,14 @@ const DatabaseBackup: React.FC = () => {
                 </p>
 
                 <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    <label
+                        htmlFor='backup-file'
+                        className='block text-sm font-medium text-gray-700 mb-1'
+                    >
                         Backup file
                     </label>
                     <input
+                        id='backup-file'
                         ref={fileInputRef}
                         type='file'
                         accept='.json'
@@ -125,10 +151,7 @@ const DatabaseBackup: React.FC = () => {
                         <input
                             type='checkbox'
                             checked={replaceExisting}
-                            onChange={(e) => {
-                                setReplaceExisting(e.target.checked);
-                                setConfirmReplace(false);
-                            }}
+                            onChange={handleReplaceExistingChange}
                             className='h-4 w-4 rounded border-gray-300 text-red-600'
                         />
                         <span className='text-sm font-medium text-yellow-800'>
@@ -145,9 +168,7 @@ const DatabaseBackup: React.FC = () => {
                             <input
                                 type='checkbox'
                                 checked={confirmReplace}
-                                onChange={(e) =>
-                                    setConfirmReplace(e.target.checked)
-                                }
+                                onChange={handleConfirmReplaceChange}
                                 className='h-4 w-4 rounded border-red-400 text-red-600'
                             />
                             <span className='text-xs font-semibold text-red-700'>
@@ -160,11 +181,12 @@ const DatabaseBackup: React.FC = () => {
 
                 <button
                     onClick={handleRestore}
-                    disabled={loading || !selectedFile}
+                    disabled={restoreLoading || !selectedFile}
                     className='inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                    {loading ? (
+                    {restoreLoading ? (
                         <svg
+                            aria-hidden='true'
                             className='animate-spin h-4 w-4'
                             viewBox='0 0 24 24'
                             fill='none'
@@ -184,16 +206,24 @@ const DatabaseBackup: React.FC = () => {
                             />
                         </svg>
                     ) : (
-                        '⬆️'
+                        <span aria-hidden='true'>⬆️</span>
                     )}
                     Restore Backup
                 </button>
+                {confirmError && (
+                    <p role='alert' className='text-sm text-red-600'>
+                        {confirmError}
+                    </p>
+                )}
             </div>
 
             {/* Error message */}
             {error && (
                 <div className='rounded-md bg-red-50 border border-red-200 p-4'>
-                    <p className='text-sm text-red-700'>❌ {error}</p>
+                    <p className='text-sm text-red-700'>
+                        <span aria-hidden='true'>❌ </span>
+                        {error}
+                    </p>
                 </div>
             )}
 
@@ -201,7 +231,8 @@ const DatabaseBackup: React.FC = () => {
             {restoreResult && (
                 <div className='rounded-md bg-green-50 border border-green-200 p-4 space-y-3'>
                     <p className='text-sm font-medium text-green-800'>
-                        ✅ {restoreResult.message}
+                        <span aria-hidden='true'>✅ </span>
+                        {restoreResult.message}
                     </p>
                     <table className='min-w-full text-sm'>
                         <tbody>
@@ -223,6 +254,6 @@ const DatabaseBackup: React.FC = () => {
             )}
         </div>
     );
-};
+}
 
 export default DatabaseBackup;

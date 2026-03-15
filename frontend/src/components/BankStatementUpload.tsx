@@ -30,7 +30,9 @@ interface UploadResult {
     };
 }
 
-const BankStatementUpload: React.FC = () => {
+const BankStatementUpload: React.FC<{ accountId?: number }> = ({
+    accountId,
+}) => {
     const dispatch = useAppDispatch();
     const { loading, error } = useAppSelector((state) => state.transactions);
     const [showModal, setShowModal] = useState(false);
@@ -45,7 +47,9 @@ const BankStatementUpload: React.FC = () => {
         }
 
         try {
-            const result = await dispatch(uploadBankStatement(file)).unwrap();
+            const result = await dispatch(
+                uploadBankStatement({ file, accountId })
+            ).unwrap();
             setUploadResult(result);
             setShowModal(true);
 
@@ -101,68 +105,43 @@ const BankStatementUpload: React.FC = () => {
 
     return (
         <div className='bg-white overflow-hidden shadow rounded-lg'>
-            <div className='p-5'>
-                <div className='flex items-center justify-between'>
-                    <div>
-                        <h3 className='text-lg leading-6 font-medium text-gray-900'>
-                            Transaction Upload
-                        </h3>
-                        <p className='mt-1 text-sm text-gray-500'>
-                            Upload a CSV file to import transactions from your
-                            bank statements (credit card or account)
-                        </p>
-                    </div>
-                </div>
-
-                <div className='mt-5'>
+            <div className='px-4 py-3'>
+                <div className='flex items-center gap-4'>
+                    {/* Drop zone */}
                     <div
-                        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                        className={`flex-1 border-2 border-dashed rounded-lg px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
                             dragActive
                                 ? 'border-blue-400 bg-blue-50'
-                                : 'border-gray-300 hover:border-gray-400'
+                                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
                         }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onClick={handleClick}
                     >
-                        <div className='space-y-4'>
-                            <div className='mx-auto w-12 h-12 text-gray-400'>
-                                <svg
-                                    fill='none'
-                                    stroke='currentColor'
-                                    viewBox='0 0 48 48'
-                                >
-                                    <path
-                                        strokeLinecap='round'
-                                        strokeLinejoin='round'
-                                        strokeWidth={2}
-                                        d='M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02'
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className='text-lg font-medium text-gray-900'>
-                                    {loading
-                                        ? 'Uploading...'
-                                        : 'Drop your CSV file here'}
-                                </p>
-                                <p className='text-sm text-gray-500'>
-                                    or click to browse files
-                                </p>
-                            </div>
-                            <div className='text-xs text-gray-400'>
-                                <strong>Credit Card CSV:</strong> Transaction
-                                Date,Description,Amount,Category (optional)
-                                <br />
-                                <strong>Account CSV:</strong> Details,Posting
-                                Date,Description,Amount,Type
-                                <br />
-                                Supported date formats: MM/DD/YYYY, YYYY-MM-DD
-                                <br />
-                                Alternative column names supported for
-                                flexibility
-                            </div>
+                        <svg
+                            className='h-6 w-6 text-gray-400 flex-shrink-0'
+                            fill='none'
+                            stroke='currentColor'
+                            viewBox='0 0 24 24'
+                        >
+                            <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                strokeWidth={2}
+                                d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'
+                            />
+                        </svg>
+                        <div className='min-w-0'>
+                            <p className='text-sm font-medium text-gray-700'>
+                                {loading
+                                    ? 'Uploading…'
+                                    : 'Drop CSV here or click to browse'}
+                            </p>
+                            <p className='text-xs text-gray-400 truncate'>
+                                Credit Card: Date,Description,Amount &nbsp;|
+                                &nbsp; Account: Details,PostingDate,Amount,Type
+                            </p>
                         </div>
                         <input
                             ref={fileInputRef}
@@ -173,12 +152,22 @@ const BankStatementUpload: React.FC = () => {
                         />
                     </div>
 
-                    {error && (
-                        <div className='mt-4 p-4 bg-red-50 border border-red-200 rounded-md'>
-                            <p className='text-sm text-red-600'>{error}</p>
-                        </div>
-                    )}
+                    {/* Upload button */}
+                    <button
+                        type='button'
+                        onClick={handleClick}
+                        disabled={loading}
+                        className='flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                    >
+                        {loading ? 'Uploading…' : 'Upload CSV'}
+                    </button>
                 </div>
+
+                {error && (
+                    <div className='mt-2 p-2 bg-red-50 border border-red-200 rounded-md'>
+                        <p className='text-sm text-red-600'>{error}</p>
+                    </div>
+                )}
             </div>
 
             {/* Upload Result Modal */}

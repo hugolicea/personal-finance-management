@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -36,13 +36,21 @@ interface TableCategory extends Category {
     stats: CategoryStats;
 }
 
+const EMPTY_STATS: CategoryStats = {
+    count: 0,
+    spendCount: 0,
+    incomeCount: 0,
+    totalSpends: 0,
+    totalIncomes: 0,
+    total: 0,
+    average: 0,
+};
+
 function Balance() {
     const dispatch = useAppDispatch();
-    const {
-        categories,
-        categorySpending,
-        loading: categoriesLoading,
-    } = useAppSelector((state) => state.categories);
+    const { categories, loading: categoriesLoading } = useAppSelector(
+        (state) => state.categories
+    );
     const { transactions } = useAppSelector((state) => state.transactions);
 
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -64,123 +72,84 @@ function Balance() {
         );
     }, [dispatch, selectedYear, selectedMonth]);
 
-    // Add error handling for categorySpending fetch
-    useEffect(() => {
-        if (categorySpending && categorySpending.length === 0) {
-            // If categorySpending is empty, try fetching again
-            dispatch(
-                fetchCategorySpending(
-                    `${selectedYear}-${selectedMonth
-                        .toString()
-                        .padStart(2, '0')}`
-                )
-            );
+    // Build a per-category stats map in a single pass over transactions
+    const categoryStatsMap = useMemo(() => {
+        const map = new Map<number, CategoryStats>();
+        for (const cat of categories) {
+            map.set(cat.id, { ...EMPTY_STATS });
         }
-    }, [categorySpending, selectedYear, selectedMonth, dispatch]);
-
-    // Calculate category statistics
-    const getCategoryStats = useCallback(
-        (categoryId: number) => {
-            // Filter transactions by category and selected period
-            const categoryTransactions = transactions.filter((t) => {
-                if (t.category !== categoryId) return false;
-
-                const transactionDate = new Date(t.date);
-                const transactionYear = transactionDate.getFullYear();
-                const transactionMonth = transactionDate.getMonth() + 1; // JS months are 0-based
-
-                return (
-                    transactionYear === selectedYear &&
-                    transactionMonth === selectedMonth
-                );
-            });
-
-            const spendTransactions = categoryTransactions.filter(
-                (t) => t.amount < 0
-            );
-            const incomeTransactions = categoryTransactions.filter(
-                (t) => t.amount >= 0
-            );
-
-            const totalSpends = spendTransactions.reduce(
-                (sum, t) => sum + t.amount,
-                0
-            );
-            const totalIncomes = incomeTransactions.reduce(
-                (sum, t) => sum + t.amount,
-                0
-            );
-            const transactionCount = categoryTransactions.length;
-            const spendCount = spendTransactions.length;
-            const incomeCount = incomeTransactions.length;
-
-            return {
-                count: transactionCount,
-                spendCount,
-                incomeCount,
-                totalSpends,
-                totalIncomes,
-                total: totalSpends + totalIncomes,
-                average:
-                    transactionCount > 0
-                        ? (totalSpends + totalIncomes) / transactionCount
-                        : 0,
-            };
-        },
-        [transactions, selectedYear, selectedMonth]
-    );
+        for (const t of transactions) {
+            const tDate = new Date(t.date);
+            if (
+                tDate.getFullYear() !== selectedYear ||
+                tDate.getMonth() + 1 !== selectedMonth
+            )
+                continue;
+            const stats = map.get(t.category);
+            if (!stats) continue;
+            stats.count++;
+            if (t.amount < 0) {
+                stats.spendCount++;
+                stats.totalSpends += t.amount;
+            } else {
+                stats.incomeCount++;
+                stats.totalIncomes += t.amount;
+            }
+            stats.total = stats.totalSpends + stats.totalIncomes;
+            stats.average = stats.count > 0 ? stats.total / stats.count : 0;
+        }
+        return map;
+    }, [transactions, categories, selectedYear, selectedMonth]);
 
     // Separate categories into spends and incomes
     const spendCategories = useMemo(
         () =>
-            categories.filter((category) => {
-                const stats = getCategoryStats(category.id);
-                return stats.spendCount > 0;
-            }),
-        [categories, getCategoryStats]
+            categories.filter(
+                (c) => (categoryStatsMap.get(c.id)?.spendCount ?? 0) > 0
+            ),
+        [categories, categoryStatsMap]
     );
 
     const incomeCategories = useMemo(
         () =>
-            categories.filter((category) => {
-                const stats = getCategoryStats(category.id);
-                return stats.incomeCount > 0;
-            }),
-        [categories, getCategoryStats]
+            categories.filter(
+                (c) => (categoryStatsMap.get(c.id)?.incomeCount ?? 0) > 0
+            ),
+        [categories, categoryStatsMap]
     );
 
     // Prepare table data for spends and incomes separately
-    const spendTableData = useMemo(() => {
-        return spendCategories
-            .filter((category) => getCategoryStats(category.id).spendCount > 0)
-            .map((category) => ({
-                ...category,
-                stats: getCategoryStats(category.id),
-            }));
-    }, [spendCategories, getCategoryStats]);
+    const spendTableData = useMemo(
+        () =>
+            spendCategories.map((c) => ({
+                ...c,
+                stats: categoryStatsMap.get(c.id) ?? EMPTY_STATS,
+            })),
+        [spendCategories, categoryStatsMap]
+    );
 
-    const spendTotalAmount = useMemo(() => {
-        return spendTableData.reduce(
-            (sum, c) => sum + Math.abs(c.stats.totalSpends),
-            0
-        );
-    }, [spendTableData]);
+    const spendTotalAmount = useMemo(
+        () =>
+            spendTableData.reduce(
+                (sum, c) => sum + Math.abs(c.stats.totalSpends),
+                0
+            ),
+        [spendTableData]
+    );
 
-    const incomeTableData = useMemo(() => {
-        return incomeCategories
-            .filter((category) => getCategoryStats(category.id).incomeCount > 0)
-            .map((category) => ({
-                ...category,
-                stats: getCategoryStats(category.id),
-            }));
-    }, [incomeCategories, getCategoryStats]);
+    const incomeTableData = useMemo(
+        () =>
+            incomeCategories.map((c) => ({
+                ...c,
+                stats: categoryStatsMap.get(c.id) ?? EMPTY_STATS,
+            })),
+        [incomeCategories, categoryStatsMap]
+    );
 
-    const incomeTotalAmount = useMemo(() => {
-        return incomeTableData.reduce(
-            (sum, c) => sum + c.stats.totalIncomes,
-            0
-        );
-    }, [incomeTableData]);
+    const incomeTotalAmount = useMemo(
+        () => incomeTableData.reduce((sum, c) => sum + c.stats.totalIncomes, 0),
+        [incomeTableData]
+    );
 
     // Define columns for spends table
     const spendColumns = useMemo<ColumnDef<TableCategory>[]>(
@@ -327,9 +296,6 @@ function Balance() {
             pagination: {
                 pageSize: 10,
             },
-            sorting: [
-                { id: 'totalAmount', desc: true }, // sort by amount descending
-            ],
         },
     });
 
@@ -358,9 +324,6 @@ function Balance() {
             pagination: {
                 pageSize: 10,
             },
-            sorting: [
-                { id: 'totalAmount', desc: true }, // sort by amount descending
-            ],
         },
     });
 
@@ -468,7 +431,10 @@ function Balance() {
                                 <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
                                     <div className='flex items-center justify-between'>
                                         <div className='flex items-center'>
-                                            <span className='text-lg font-medium text-red-900'>
+                                            <span
+                                                aria-hidden='true'
+                                                className='text-lg font-medium text-red-900'
+                                            >
                                                 💸
                                             </span>
                                             <h3 className='ml-3 text-lg font-medium text-gray-900'>
@@ -498,9 +464,10 @@ function Balance() {
                                 ) : (
                                     <div className='divide-y divide-gray-200'>
                                         {spendCategories.map((category) => {
-                                            const stats = getCategoryStats(
-                                                category.id
-                                            );
+                                            const stats =
+                                                categoryStatsMap.get(
+                                                    category.id
+                                                ) ?? EMPTY_STATS;
                                             if (stats.spendCount === 0)
                                                 return null;
                                             return (
@@ -602,7 +569,10 @@ function Balance() {
                                 <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
                                     <div className='flex items-center justify-between'>
                                         <div className='flex items-center'>
-                                            <span className='text-lg font-medium text-green-700'>
+                                            <span
+                                                aria-hidden='true'
+                                                className='text-lg font-medium text-green-700'
+                                            >
                                                 💰
                                             </span>
                                             <h3 className='ml-3 text-lg font-medium text-gray-900'>
@@ -632,9 +602,10 @@ function Balance() {
                                 ) : (
                                     <div className='divide-y divide-gray-200'>
                                         {incomeCategories.map((category) => {
-                                            const stats = getCategoryStats(
-                                                category.id
-                                            );
+                                            const stats =
+                                                categoryStatsMap.get(
+                                                    category.id
+                                                ) ?? EMPTY_STATS;
                                             if (stats.incomeCount === 0)
                                                 return null;
                                             return (
@@ -688,7 +659,10 @@ function Balance() {
                                 <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
                                     <div className='flex items-center justify-between'>
                                         <div className='flex items-center'>
-                                            <span className='text-lg font-medium text-red-900'>
+                                            <span
+                                                aria-hidden='true'
+                                                className='text-lg font-medium text-red-900'
+                                            >
                                                 💸
                                             </span>
                                             <h3 className='ml-3 text-lg font-medium text-gray-900'>
@@ -740,6 +714,16 @@ function Balance() {
                                                                     key={
                                                                         header.id
                                                                     }
+                                                                    scope='col'
+                                                                    aria-sort={
+                                                                        header.column.getIsSorted() ===
+                                                                        'asc'
+                                                                            ? 'ascending'
+                                                                            : header.column.getIsSorted() ===
+                                                                                'desc'
+                                                                              ? 'descending'
+                                                                              : 'none'
+                                                                    }
                                                                     className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                                     onClick={header.column.getToggleSortingHandler()}
                                                                 >
@@ -752,12 +736,14 @@ function Balance() {
                                                                                   .header,
                                                                               header.getContext()
                                                                           )}
-                                                                    {{
-                                                                        asc: ' 🔼',
-                                                                        desc: ' 🔽',
-                                                                    }[
-                                                                        header.column.getIsSorted() as string
-                                                                    ] ?? null}
+                                                                    {header.column.getIsSorted() && (
+                                                                        <span aria-hidden='true'>
+                                                                            {header.column.getIsSorted() ===
+                                                                            'asc'
+                                                                                ? ' 🔼'
+                                                                                : ' 🔽'}
+                                                                        </span>
+                                                                    )}
                                                                 </th>
                                                             )
                                                         )}
@@ -804,7 +790,10 @@ function Balance() {
                                 <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
                                     <div className='flex items-center justify-between'>
                                         <div className='flex items-center'>
-                                            <span className='text-lg font-medium text-green-700'>
+                                            <span
+                                                aria-hidden='true'
+                                                className='text-lg font-medium text-green-700'
+                                            >
                                                 💰
                                             </span>
                                             <h3 className='ml-3 text-lg font-medium text-gray-900'>
@@ -856,6 +845,16 @@ function Balance() {
                                                                     key={
                                                                         header.id
                                                                     }
+                                                                    scope='col'
+                                                                    aria-sort={
+                                                                        header.column.getIsSorted() ===
+                                                                        'asc'
+                                                                            ? 'ascending'
+                                                                            : header.column.getIsSorted() ===
+                                                                                'desc'
+                                                                              ? 'descending'
+                                                                              : 'none'
+                                                                    }
                                                                     className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                                     onClick={header.column.getToggleSortingHandler()}
                                                                 >
@@ -868,12 +867,14 @@ function Balance() {
                                                                                   .header,
                                                                               header.getContext()
                                                                           )}
-                                                                    {{
-                                                                        asc: ' 🔼',
-                                                                        desc: ' 🔽',
-                                                                    }[
-                                                                        header.column.getIsSorted() as string
-                                                                    ] ?? null}
+                                                                    {header.column.getIsSorted() && (
+                                                                        <span aria-hidden='true'>
+                                                                            {header.column.getIsSorted() ===
+                                                                            'asc'
+                                                                                ? ' 🔼'
+                                                                                : ' 🔽'}
+                                                                        </span>
+                                                                    )}
                                                                 </th>
                                                             )
                                                         )}
