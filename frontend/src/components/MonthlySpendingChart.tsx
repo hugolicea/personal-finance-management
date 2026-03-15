@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -10,6 +11,21 @@ import {
 import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
 
+const MONTH_NAMES = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+];
+
 interface MonthlySpendingChartProps {
     transactions: Transaction[];
     year?: number;
@@ -19,6 +35,63 @@ function MonthlySpendingChart({
     transactions,
     year,
 }: MonthlySpendingChartProps) {
+    const selectedYear = year ?? new Date().getFullYear();
+
+    const { chartData, totalSpending, avgMonthlySpending, maxSpendingMonth } =
+        useMemo(() => {
+            const monthlySpending = transactions
+                .filter((t) => {
+                    const d = new Date(t.date);
+                    return (
+                        !isNaN(d.getTime()) &&
+                        d.getFullYear() === selectedYear &&
+                        typeof t.amount === 'number' &&
+                        t.amount < 0
+                    );
+                })
+                .reduce(
+                    (acc, t) => {
+                        const month = new Date(t.date).toLocaleString(
+                            'default',
+                            { month: 'short' }
+                        );
+                        acc[month] =
+                            (acc[month] ?? 0) + Math.abs(t.amount as number);
+                        return acc;
+                    },
+                    {} as Record<string, number>
+                );
+
+            const chartData = MONTH_NAMES.map((month) => ({
+                month,
+                spending: Math.round(monthlySpending[month] ?? 0),
+            }));
+
+            const totalSpending = chartData.reduce(
+                (sum, m) => sum + m.spending,
+                0
+            );
+            const avgMonthlySpending = totalSpending / 12;
+
+            let maxSpendingMonth: { month: string; spending: number } | null =
+                null;
+            for (const m of chartData) {
+                if (
+                    maxSpendingMonth === null ||
+                    m.spending > maxSpendingMonth.spending
+                ) {
+                    maxSpendingMonth = m;
+                }
+            }
+
+            return {
+                chartData,
+                totalSpending,
+                avgMonthlySpending,
+                maxSpendingMonth,
+            };
+        }, [transactions, selectedYear]);
+
     // Handle empty or invalid data
     if (!transactions || transactions.length === 0) {
         return (
@@ -27,71 +100,6 @@ function MonthlySpendingChart({
             </div>
         );
     }
-
-    // Aggregate spending by month for the selected year (or current year if not provided)
-    const selectedYear = year || new Date().getFullYear();
-
-    const monthlySpending = transactions
-        .filter((transaction) => {
-            const transactionDate = new Date(transaction.date);
-            if (isNaN(transactionDate.getTime())) return false;
-            return (
-                transactionDate.getFullYear() === selectedYear &&
-                typeof transaction.amount === 'number' &&
-                transaction.amount < 0
-            );
-        })
-        .reduce(
-            (acc, transaction) => {
-                const date = new Date(transaction.date);
-                const monthKey = date.toLocaleString('default', {
-                    month: 'short',
-                });
-                const amount = Math.abs(transaction.amount as number);
-
-                if (!acc[monthKey]) {
-                    acc[monthKey] = 0;
-                }
-                acc[monthKey] += amount;
-                return acc;
-            },
-            {} as Record<string, number>
-        );
-
-    // Create data for all months, filling in zeros for months with no spending
-    const monthNames = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-    ];
-
-    const chartData = monthNames.map((month) => ({
-        month,
-        spending: Math.round(monthlySpending[month] || 0),
-    }));
-
-    const totalSpending = chartData.reduce(
-        (sum, month) => sum + month.spending,
-        0
-    );
-    const avgMonthlySpending = totalSpending / 12;
-    const maxSpendingMonth =
-        chartData.length > 0
-            ? chartData.reduce(
-                  (max, month) =>
-                      month.spending > (max?.spending ?? 0) ? month : max,
-                  chartData[0]
-              )
-            : null;
 
     return (
         <div className='space-y-6'>
@@ -135,9 +143,6 @@ function MonthlySpendingChart({
                 className='bg-white p-4 rounded-lg shadow'
                 style={{ minHeight: '400px' }}
             >
-                {/* <h4 className='text-lg font-medium text-gray-900 mb-4'>
-                    Monthly Spending Throughout {selectedYear}
-                </h4> */}
                 <ResponsiveContainer
                     width='100%'
                     height={400}

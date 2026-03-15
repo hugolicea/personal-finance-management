@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -37,6 +38,47 @@ interface RetirementChartProps {
 const COLORS = ['#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 function RetirementChart({ retirementAccounts }: RetirementChartProps) {
+    const { pieData, topAccounts, totalBalance, totalContributionsThisYear } =
+        useMemo(() => {
+            const byType: Record<string, number> = {};
+            let totalBalance = 0;
+            let totalContributionsThisYear = 0;
+            for (const a of retirementAccounts) {
+                const type = a.account_type.replace('_', ' ').toUpperCase();
+                byType[type] = (byType[type] ?? 0) + (a.current_balance || 0);
+                totalBalance += a.current_balance || 0;
+                totalContributionsThisYear += a.annual_contribution || 0;
+            }
+
+            const pieData = Object.entries(byType).map(([type, value]) => ({
+                name: type,
+                value: Math.round(value),
+            }));
+
+            const topAccounts = [...retirementAccounts]
+                .sort(
+                    (a, b) =>
+                        (b.current_balance || 0) - (a.current_balance || 0)
+                )
+                .slice(0, 5)
+                .map((a) => ({
+                    name:
+                        a.name.length > 15
+                            ? a.name.substring(0, 15) + '...'
+                            : a.name,
+                    balance: Math.round(a.current_balance || 0),
+                    contributions: a.annual_contribution || 0,
+                    projected: a.current_balance || 0,
+                }));
+
+            return {
+                pieData,
+                topAccounts,
+                totalBalance,
+                totalContributionsThisYear,
+            };
+        }, [retirementAccounts]);
+
     // Handle empty or invalid data
     if (!retirementAccounts || retirementAccounts.length === 0) {
         return (
@@ -45,51 +87,6 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
             </div>
         );
     }
-
-    // Calculate retirement accounts by type
-    const accountsByType = retirementAccounts.reduce(
-        (acc, account) => {
-            const type = account.account_type.replace('_', ' ').toUpperCase();
-            if (!acc[type]) {
-                acc[type] = 0;
-            }
-            acc[type] += account.current_balance || 0;
-            return acc;
-        },
-        {} as Record<string, number>
-    );
-
-    const pieData = Object.entries(accountsByType).map(([type, value]) => ({
-        name: type,
-        value: Math.round(value),
-    }));
-
-    // Calculate top 5 accounts by balance
-    const topAccounts = [...retirementAccounts]
-        .sort((a, b) => (b.current_balance || 0) - (a.current_balance || 0))
-        .slice(0, 5)
-        .map((account) => ({
-            name:
-                account.name.length > 15
-                    ? account.name.substring(0, 15) + '...'
-                    : account.name,
-            balance: Math.round(account.current_balance || 0),
-            contributions: account.annual_contribution || 0,
-            projected: account.current_balance || 0, // Using current balance as projected since we don't have the projected field
-        }));
-
-    const totalBalance = retirementAccounts.reduce(
-        (sum, a) => sum + (a.current_balance || 0),
-        0
-    );
-    const totalContributionsThisYear = retirementAccounts.reduce(
-        (sum, a) => sum + (a.annual_contribution || 0),
-        0
-    );
-    const totalProjectedValue = retirementAccounts.reduce(
-        (sum, a) => sum + (a.current_balance || 0),
-        0
-    ); // Using current balance as projected
 
     return (
         <div className='space-y-6'>
@@ -112,11 +109,11 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                     </div>
                 </div>
                 <div className='bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white'>
-                    <div className='text-2xl font-bold'>
-                        {formatCurrency(totalProjectedValue)}
-                    </div>
                     <div className='text-sm font-medium opacity-90'>
                         Projected at Retirement
+                    </div>
+                    <div className='text-2xl font-bold'>
+                        {formatCurrency(totalBalance)}
                     </div>
                 </div>
             </div>

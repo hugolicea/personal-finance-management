@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
@@ -24,7 +24,7 @@ interface DashboardFiltersProps {
     onFilterToggle: (byYear: boolean) => void;
 }
 
-const DashboardFilters = React.memo(
+const DashboardFilters = memo(
     ({
         selectedYear,
         selectedMonth,
@@ -144,13 +144,11 @@ function Dashboard() {
     );
 
     // Filter states
-    const [selectedYear, setSelectedYear] = React.useState(
-        new Date().getFullYear()
-    );
-    const [selectedMonth, setSelectedMonth] = React.useState(
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState(
         new Date().getMonth() + 1
     );
-    const [filterByYear, setFilterByYear] = React.useState(false);
+    const [filterByYear, setFilterByYear] = useState(false);
 
     // Memoize handlers to prevent unnecessary re-renders
     const handleYearChange = useCallback((year: number) => {
@@ -194,16 +192,14 @@ function Dashboard() {
         );
     }, [dispatch, filterByYear, selectedYear, selectedMonth]);
 
-    // Transactions are already filtered by the server, no need for client-side filtering
-    const filteredTransactions = transactions;
-
-    const filteredCategories = useMemo(() => {
-        return categories.filter((category) =>
-            transactions.some(
-                (transaction) => transaction.category === category.id
-            )
-        );
-    }, [categories, transactions]);
+    const activeCategoryIds = useMemo(
+        () => new Set(transactions.map((t) => t.category)),
+        [transactions]
+    );
+    const filteredCategories = useMemo(
+        () => categories.filter((c) => activeCategoryIds.has(c.id)),
+        [categories, activeCategoryIds]
+    );
 
     return (
         <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
@@ -242,7 +238,7 @@ function Dashboard() {
                         selectedYear={selectedYear}
                         selectedMonth={selectedMonth}
                         filterByYear={filterByYear}
-                        transactionCount={filteredTransactions.length}
+                        transactionCount={transactions.length}
                         onYearChange={handleYearChange}
                         onMonthChange={handleMonthChange}
                         onFilterToggle={handleFilterToggle}
@@ -254,7 +250,7 @@ function Dashboard() {
                 <div className='space-y-8'>
                     {/* Balance Overview */}
                     <div className='transform transition-all duration-200 hover:scale-[1.01]'>
-                        <BalanceOverview transactions={filteredTransactions} />
+                        <BalanceOverview transactions={transactions} />
                     </div>
                     {/* First Row - 2 Spending Charts */}
                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -288,17 +284,14 @@ function Dashboard() {
                                         </h3>
                                     </div>
                                     <span className='text-sm text-white/80'>
-                                        {filteredTransactions.length}{' '}
-                                        transaction
-                                        {filteredTransactions.length !== 1
-                                            ? 's'
-                                            : ''}
+                                        {transactions.length} transaction
+                                        {transactions.length !== 1 ? 's' : ''}
                                     </span>
                                 </div>
                             </div>
                             <div className='p-6'>
                                 <MonthlySpendingChart
-                                    transactions={filteredTransactions}
+                                    transactions={transactions}
                                     year={selectedYear}
                                 />
                             </div>
@@ -334,7 +327,7 @@ function Dashboard() {
                             </div>
                             <div className='p-6'>
                                 <SpendingChart
-                                    transactions={filteredTransactions}
+                                    transactions={transactions}
                                     categories={filteredCategories}
                                 />
                             </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
@@ -28,7 +28,6 @@ interface PreviewTransaction {
     description: string;
     category: number;
     category_name: string;
-    transaction_type: string;
 }
 
 interface PreviewData {
@@ -66,6 +65,8 @@ function CleanAndReclassify() {
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [previewData, setPreviewData] = useState<PreviewData | null>(null);
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+    const [ruleFormError, setRuleFormError] = useState<string | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -73,17 +74,20 @@ function CleanAndReclassify() {
         dispatch(fetchCategoryDeletionRules());
     }, [dispatch]);
 
-    useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchReclassificationRules());
-        dispatch(fetchCategoryDeletionRules());
-    }, [dispatch]);
+    const availableCategories = useMemo(
+        () => categories.filter((cat) => cat.name),
+        [categories]
+    );
 
-    const availableCategories = categories.filter((cat) => cat.name);
+    const deletionCategoryIds = useMemo(
+        () => new Set(categoryDeletionRules.map((r) => r.category)),
+        [categoryDeletionRules]
+    );
 
-    const handleAddReclassificationRule = async () => {
+    const handleAddReclassificationRule = useCallback(async () => {
+        setRuleFormError(null);
         if (!selectedToCategory) {
-            alert('Please select a target category');
+            setRuleFormError('Please select a target category');
             return;
         }
 
@@ -91,16 +95,7 @@ function CleanAndReclassify() {
             selectedFromCategory &&
             selectedFromCategory === selectedToCategory
         ) {
-            alert('Cannot reclassify to the same category');
-            return;
-        }
-
-        const toCategory = categories.find(
-            (c) => c.id === Number(selectedToCategory)
-        );
-
-        if (!toCategory) {
-            alert('Invalid target category');
+            setRuleFormError('Cannot reclassify to the same category');
             return;
         }
 
@@ -125,166 +120,169 @@ function CleanAndReclassify() {
             setConditions({});
         } catch (error) {
             console.error('Failed to create reclassification rule:', error);
-            alert('Failed to save reclassification rule.');
-        }
-    };
-
-    const handleRemoveReclassificationRule = async (ruleId: number) => {
-        try {
-            await dispatch(deleteReclassificationRule(ruleId)).unwrap();
-        } catch (error) {
-            console.error('Failed to delete reclassification rule:', error);
-            alert('Failed to delete reclassification rule.');
-        }
-    };
-
-    const handlePreviewRule = async (ruleId: number) => {
-        setIsLoadingPreview(true);
-        try {
-            const result = await dispatch(
-                previewReclassificationRule(ruleId)
-            ).unwrap();
-            setPreviewData(result);
-            setShowPreviewModal(true);
-        } catch (error) {
-            console.error('Failed to preview rule:', error);
-            alert('Failed to preview rule. Please try again.');
-        } finally {
-            setIsLoadingPreview(false);
-        }
-    };
-
-    const handleToggleDeleteCategory = async (categoryId: number) => {
-        const existingRule = categoryDeletionRules.find(
-            (rule) => rule.category === categoryId
-        );
-
-        if (existingRule) {
-            // Remove the rule
-            try {
-                await dispatch(
-                    deleteCategoryDeletionRule(existingRule.id)
-                ).unwrap();
-            } catch (error) {
-                console.error('Failed to remove deletion rule:', error);
-                alert('Failed to remove deletion rule.');
-            }
-        } else {
-            // Add the rule
-            try {
-                await dispatch(
-                    createCategoryDeletionRule({
-                        category: categoryId,
-                    })
-                ).unwrap();
-            } catch (error) {
-                console.error('Failed to create deletion rule:', error);
-                alert('Failed to create deletion rule.');
-            }
-        }
-    };
-
-    const handleExecuteOperations = async () => {
-        if (
-            reclassificationRules.length === 0 &&
-            categoryDeletionRules.length === 0
-        ) {
-            alert(
-                'Please add at least one reclassification rule or select categories to delete.'
+            setRuleFormError(
+                'Failed to save reclassification rule. Please try again.'
             );
-            return;
         }
+    }, [
+        dispatch,
+        selectedFromCategory,
+        selectedToCategory,
+        conditions,
+        ruleName,
+    ]);
 
+    const handleRemoveReclassificationRule = useCallback(
+        async (ruleId: number) => {
+            try {
+                await dispatch(deleteReclassificationRule(ruleId)).unwrap();
+            } catch (error) {
+                console.error('Failed to delete reclassification rule:', error);
+                setActionError(
+                    'Failed to delete reclassification rule. Please try again.'
+                );
+            }
+        },
+        [dispatch]
+    );
+
+    const handlePreviewRule = useCallback(
+        async (ruleId: number) => {
+            setPreviewData(null);
+            setIsLoadingPreview(true);
+            setShowPreviewModal(true);
+            try {
+                const result = await dispatch(
+                    previewReclassificationRule(ruleId)
+                ).unwrap();
+                setPreviewData(result);
+            } catch (error) {
+                console.error('Failed to preview rule:', error);
+                setShowPreviewModal(false);
+                setActionError('Failed to preview rule. Please try again.');
+            } finally {
+                setIsLoadingPreview(false);
+            }
+        },
+        [dispatch]
+    );
+
+    const handleToggleDeleteCategory = useCallback(
+        async (categoryId: number) => {
+            const existingRule = categoryDeletionRules.find(
+                (rule) => rule.category === categoryId
+            );
+
+            try {
+                if (existingRule) {
+                    await dispatch(
+                        deleteCategoryDeletionRule(existingRule.id)
+                    ).unwrap();
+                } else {
+                    await dispatch(
+                        createCategoryDeletionRule({ category: categoryId })
+                    ).unwrap();
+                }
+            } catch (error) {
+                console.error('Failed to update deletion rule:', error);
+                setActionError(
+                    'Failed to update deletion rule. Please try again.'
+                );
+            }
+        },
+        [dispatch, categoryDeletionRules]
+    );
+
+    const handleExecuteOperations = useCallback(async () => {
         setShowConfirmModal(false);
         setIsProcessing(true);
 
-        try {
-            let totalReclassified = 0;
-            let totalDeleted = 0;
+        const messages: string[] = [];
+        let totalReclassified = 0;
+        let totalDeleted = 0;
 
-            // Execute reclassification rules (bulk operation for performance)
-            if (reclassificationRules.length > 0) {
-                try {
-                    const ruleIds = reclassificationRules.map(
-                        (rule) => rule.id
-                    );
-                    const result = await dispatch(
-                        bulkExecuteReclassificationRules(ruleIds)
-                    ).unwrap();
-                    totalReclassified = result.total_transactions_updated;
-                } catch (error) {
-                    console.error(
-                        'Failed to apply reclassification rules:',
-                        error
-                    );
-                }
+        // Execute reclassification rules (bulk operation for performance)
+        if (reclassificationRules.length > 0) {
+            try {
+                const ruleIds = reclassificationRules.map((rule) => rule.id);
+                const result = await dispatch(
+                    bulkExecuteReclassificationRules(ruleIds)
+                ).unwrap();
+                totalReclassified = result.total_transactions_updated;
+            } catch (error) {
+                console.error('Failed to apply reclassification rules:', error);
+                messages.push('❌ Failed to apply reclassification rules.');
             }
-
-            // Execute deletion
-            if (categoryDeletionRules.length > 0) {
-                try {
-                    const categoryIds = categoryDeletionRules.map(
-                        (rule) => rule.category
-                    );
-                    const result = await dispatch(
-                        bulkDeleteTransactions({
-                            category_ids: categoryIds,
-                        })
-                    ).unwrap();
-                    totalDeleted = result.transactions_deleted;
-                } catch (error) {
-                    console.error('Failed to delete transactions:', error);
-                }
-            }
-
-            // Refresh transactions
-            await dispatch(fetchTransactions({}));
-
-            // Show success message
-            const messages = [];
-            if (totalReclassified > 0) {
-                messages.push(
-                    `✅ ${totalReclassified} transaction(s) reclassified`
-                );
-            }
-            if (totalDeleted > 0) {
-                messages.push(`🗑️ ${totalDeleted} transaction(s) deleted`);
-            }
-
-            setSuccessMessage(messages);
-            setShowSuccessModal(true);
-        } catch (error) {
-            console.error('Failed to execute operations:', error);
-            setSuccessMessage([
-                '❌ Some operations failed. Please check the console for details.',
-            ]);
-            setShowSuccessModal(true);
-        } finally {
-            setIsProcessing(false);
         }
-    };
 
-    const getCategoryName = (categoryId: number | null) => {
-        if (!categoryId) return 'All Categories';
-        const category = categories.find((c) => c.id === categoryId);
-        return category?.name || 'Unknown';
-    };
+        // Execute deletion
+        if (categoryDeletionRules.length > 0) {
+            try {
+                const categoryIds = categoryDeletionRules.map(
+                    (rule) => rule.category
+                );
+                const result = await dispatch(
+                    bulkDeleteTransactions({ category_ids: categoryIds })
+                ).unwrap();
+                totalDeleted = result.transactions_deleted;
+            } catch (error) {
+                console.error('Failed to delete transactions:', error);
+                messages.push('❌ Failed to delete transactions.');
+            }
+        }
+
+        // Refresh transactions (non-critical)
+        try {
+            await dispatch(fetchTransactions({}));
+        } catch {
+            // Silent — refresh failure doesn't affect reported results
+        }
+
+        if (totalReclassified > 0) {
+            messages.unshift(
+                `✅ ${totalReclassified} transaction(s) reclassified`
+            );
+        }
+        if (totalDeleted > 0) {
+            messages.unshift(`🗑️ ${totalDeleted} transaction(s) deleted`);
+        }
+        if (messages.length === 0) {
+            messages.push(
+                'No operations were completed. Check if your rules match any transactions.'
+            );
+        }
+
+        setSuccessMessage(messages);
+        setShowSuccessModal(true);
+        setIsProcessing(false);
+    }, [dispatch, reclassificationRules, categoryDeletionRules]);
 
     const hasOperations =
         reclassificationRules.length > 0 || categoryDeletionRules.length > 0;
 
-    const isCategorySelectedForDeletion = (categoryId: number) => {
-        return categoryDeletionRules.some(
-            (rule) => rule.category === categoryId
-        );
-    };
+    const handleCloseSuccessModal = useCallback(
+        () => setShowSuccessModal(false),
+        []
+    );
+    const handleClosePreviewModal = useCallback(
+        () => setShowPreviewModal(false),
+        []
+    );
+    const handleCloseConfirmModal = useCallback(
+        () => setShowConfirmModal(false),
+        []
+    );
+    const handleOpenConfirmModal = useCallback(
+        () => setShowConfirmModal(true),
+        []
+    );
 
     return (
         <div className='pt-20 pb-6'>
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='mb-6'>
                     <h1 className='text-3xl font-bold text-gray-900 mb-2'>
-                        🧹 Clean and Reclassify
+                        <span aria-hidden='true'>🧹</span> Clean and Reclassify
                     </h1>
                     <p className='text-gray-600'>
                         Set up reclassification rules and select categories to
@@ -293,11 +291,29 @@ function CleanAndReclassify() {
                     </p>
                 </div>
 
+                {actionError && (
+                    <div
+                        role='alert'
+                        className='mb-4 flex items-center justify-between bg-red-50 border border-red-200 rounded-md p-3'
+                    >
+                        <p className='text-sm text-red-700'>{actionError}</p>
+                        <button
+                            onClick={() => setActionError(null)}
+                            aria-label='Dismiss error'
+                            className='ml-2 text-red-500 hover:text-red-700 font-bold'
+                        >
+                            &times;
+                        </button>
+                    </div>
+                )}
+
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                     {/* Reclassification Section */}
                     <div className='bg-white shadow-md rounded-lg p-6'>
                         <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                            <span className='text-2xl mr-2'>🔄</span>
+                            <span className='text-2xl mr-2' aria-hidden='true'>
+                                🔄
+                            </span>
                             Reclassification Rules
                         </h2>
                         <p className='text-sm text-gray-600 mb-4'>
@@ -396,8 +412,16 @@ function CleanAndReclassify() {
                                 disabled={!selectedToCategory}
                                 className='w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                             >
-                                ➕ Add Rule
+                                <span aria-hidden='true'>➕</span> Add Rule
                             </button>
+                            {ruleFormError && (
+                                <p
+                                    role='alert'
+                                    className='text-sm text-red-600 mt-2'
+                                >
+                                    {ruleFormError}
+                                </p>
+                            )}
                         </div>
 
                         {/* Rules List */}
@@ -427,17 +451,16 @@ function CleanAndReclassify() {
                                                         )}
                                                         <div className='flex items-center space-x-2 text-sm'>
                                                             <span className='font-medium text-gray-700'>
-                                                                {getCategoryName(
-                                                                    rule.from_category
-                                                                )}
+                                                                {rule.from_category_name ??
+                                                                    'All Categories'}
                                                             </span>
                                                             <span className='text-blue-600'>
                                                                 →
                                                             </span>
                                                             <span className='font-medium text-gray-700'>
-                                                                {getCategoryName(
-                                                                    rule.to_category
-                                                                )}
+                                                                {
+                                                                    rule.to_category_name
+                                                                }
                                                             </span>
                                                         </div>
                                                         {hasConditions && (
@@ -551,10 +574,17 @@ function CleanAndReclassify() {
                                                                     rule.id
                                                                 )
                                                             }
+                                                            aria-label={`Preview rule: ${
+                                                                rule.rule_name ??
+                                                                rule.to_category_name
+                                                            }`}
                                                             className='text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium'
                                                             title='Preview matching transactions'
                                                         >
-                                                            👁️ Preview
+                                                            <span aria-hidden='true'>
+                                                                👁️
+                                                            </span>{' '}
+                                                            Preview
                                                         </button>
                                                         <button
                                                             onClick={() =>
@@ -562,10 +592,16 @@ function CleanAndReclassify() {
                                                                     rule.id
                                                                 )
                                                             }
+                                                            aria-label={`Delete rule: ${
+                                                                rule.rule_name ??
+                                                                rule.to_category_name
+                                                            }`}
                                                             className='text-red-600 hover:text-red-800 transition-colors'
                                                             title='Delete rule'
                                                         >
-                                                            🗑️
+                                                            <span aria-hidden='true'>
+                                                                🗑️
+                                                            </span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -580,7 +616,9 @@ function CleanAndReclassify() {
                     {/* Deletion Section */}
                     <div className='bg-white shadow-md rounded-lg p-6'>
                         <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
-                            <span className='text-2xl mr-2'>🗑️</span>
+                            <span className='text-2xl mr-2' aria-hidden='true'>
+                                🗑️
+                            </span>
                             Delete Transactions
                         </h2>
                         <p className='text-sm text-gray-600 mb-4'>
@@ -600,7 +638,7 @@ function CleanAndReclassify() {
                                     >
                                         <input
                                             type='checkbox'
-                                            checked={isCategorySelectedForDeletion(
+                                            checked={deletionCategoryIds.has(
                                                 category.id
                                             )}
                                             onChange={() =>
@@ -673,7 +711,7 @@ function CleanAndReclassify() {
                         </div>
 
                         <button
-                            onClick={() => setShowConfirmModal(true)}
+                            onClick={handleOpenConfirmModal}
                             disabled={isProcessing || categoriesLoading}
                             className='w-full bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-700 hover:to-red-700 text-white font-bold px-6 py-4 rounded-md transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-lg'
                         >
@@ -701,7 +739,10 @@ function CleanAndReclassify() {
                                     Processing... Please wait
                                 </span>
                             ) : (
-                                '🧹 Execute Clean and Reclassify'
+                                <>
+                                    <span aria-hidden='true'>🧹</span> Execute
+                                    Clean and Reclassify
+                                </>
                             )}
                         </button>
                     </div>
@@ -720,7 +761,7 @@ function CleanAndReclassify() {
             {/* Confirmation Modal */}
             <ConfirmModal
                 isOpen={showConfirmModal}
-                onClose={() => setShowConfirmModal(false)}
+                onClose={handleCloseConfirmModal}
                 onConfirm={handleExecuteOperations}
                 title='Confirm Clean and Reclassify Operations'
                 message={
@@ -773,7 +814,7 @@ function CleanAndReclassify() {
             {/* Success Modal */}
             <Modal
                 isOpen={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
+                onClose={handleCloseSuccessModal}
                 title='Operations Completed Successfully!'
             >
                 <div className='space-y-4'>
@@ -784,7 +825,7 @@ function CleanAndReclassify() {
                     ))}
                     <div className='flex justify-end mt-6'>
                         <button
-                            onClick={() => setShowSuccessModal(false)}
+                            onClick={handleCloseSuccessModal}
                             className='bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors'
                         >
                             OK
@@ -796,7 +837,7 @@ function CleanAndReclassify() {
             {/* Preview Modal */}
             <Modal
                 isOpen={showPreviewModal}
-                onClose={() => setShowPreviewModal(false)}
+                onClose={handleClosePreviewModal}
                 title={`Preview: ${
                     previewData?.rule_name || 'Reclassification Rule'
                 }`}
@@ -908,7 +949,7 @@ function CleanAndReclassify() {
 
                             <div className='flex justify-end gap-3 mt-6'>
                                 <button
-                                    onClick={() => setShowPreviewModal(false)}
+                                    onClick={handleClosePreviewModal}
                                     className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
                                 >
                                     Close

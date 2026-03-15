@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -15,7 +15,7 @@ function Login() {
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/');
+            navigate('/', { replace: true });
         }
     }, [isAuthenticated, navigate]);
 
@@ -25,11 +25,11 @@ function Login() {
         };
     }, [dispatch]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         const result = await dispatch(login({ email, password }));
         if (login.fulfilled.match(result)) {
-            navigate('/');
+            navigate('/', { replace: true });
         }
     };
 
@@ -52,7 +52,7 @@ function Login() {
                 </div>
                 <form className='mt-8 space-y-6' onSubmit={handleSubmit}>
                     {error && (
-                        <div className='rounded-md bg-red-50 p-4'>
+                        <div role='alert' className='rounded-md bg-red-50 p-4'>
                             <div className='text-sm text-red-700'>
                                 {typeof error === 'string'
                                     ? error

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
+    Table,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -23,6 +24,93 @@ import {
 import { Category } from '../types/categories';
 import { formatCurrency } from '../utils/formatters';
 
+type CategoryPanelProps = {
+    title: string;
+    count: number;
+    colorScheme: 'red' | 'green';
+    table: Table<Category>;
+    searchValue: string;
+    onSearchChange: (value: string) => void;
+};
+
+const CategoryPanel = memo(function CategoryPanel({
+    title,
+    count,
+    colorScheme,
+    table,
+    searchValue,
+    onSearchChange,
+}: CategoryPanelProps) {
+    const isRed = colorScheme === 'red';
+    const headerCls = isRed
+        ? 'bg-red-50 border-b border-red-200 text-red-900'
+        : 'bg-green-50 border-b border-green-200 text-green-900';
+    const ringCls = isRed ? 'focus:ring-red-500' : 'focus:ring-green-500';
+    const searchPlaceholder = isRed
+        ? 'Search spending categories...'
+        : 'Search income categories...';
+
+    return (
+        <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+            <div className={`px-6 py-4 ${headerCls}`}>
+                <h3 className='text-lg font-medium'>
+                    {title} ({count})
+                </h3>
+            </div>
+            <div className='px-6 py-4 border-b border-gray-200'>
+                <input
+                    type='text'
+                    placeholder={searchPlaceholder}
+                    value={searchValue}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 ${ringCls}`}
+                />
+            </div>
+            <div className='overflow-x-auto'>
+                <table className='w-full table-auto divide-y divide-gray-200'>
+                    <thead className='bg-gray-50'>
+                        {table.getHeaderGroups().map((hg) => (
+                            <tr key={hg.id}>
+                                {hg.headers.map((h) => (
+                                    <th
+                                        key={h.id}
+                                        className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                                    >
+                                        {h.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                  h.column.columnDef.header,
+                                                  h.getContext()
+                                              )}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody className='bg-white divide-y divide-gray-200'>
+                        {table.getRowModel().rows.map((row) => (
+                            <tr key={row.id} className='hover:bg-gray-50'>
+                                {row.getVisibleCells().map((cell) => (
+                                    <td
+                                        key={cell.id}
+                                        className='px-4 py-2 whitespace-nowrap'
+                                    >
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext()
+                                        )}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <Paginator table={table} />
+        </div>
+    );
+});
+
 function Categories() {
     const dispatch = useAppDispatch();
     const { categories, loading } = useAppSelector((state) => state.categories);
@@ -37,6 +125,7 @@ function Categories() {
         null
     );
     const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const [spendGlobalFilter, setSpendGlobalFilter] = useState('');
     const [incomeGlobalFilter, setIncomeGlobalFilter] = useState('');
@@ -60,26 +149,26 @@ function Categories() {
         setShowDeleteCategoryDialog(true);
     }, []);
 
-    const confirmDeleteCategory = async () => {
-        if (deletingCategory) {
-            try {
-                await dispatch(deleteCategory(deletingCategory.id)).unwrap();
-                dispatch(fetchCategories());
-                setShowDeleteCategoryDialog(false);
-                setDeletingCategory(null);
-            } catch (error) {
-                console.error('Failed to delete category:', error);
-                alert('Failed to delete category. Please try again.');
-            }
+    const confirmDeleteCategory = useCallback(async () => {
+        if (!deletingCategory) return;
+        setDeleteError(null);
+        try {
+            await dispatch(deleteCategory(deletingCategory.id)).unwrap();
+            setShowDeleteCategoryDialog(false);
+            setDeletingCategory(null);
+        } catch (error) {
+            console.error('Failed to delete category:', error);
+            setDeleteError('Failed to delete category. Please try again.');
         }
-    };
+    }, [deletingCategory, dispatch]);
 
-    const closeModals = () => {
+    const closeModals = useCallback(() => {
         setShowCategoryModal(false);
         setShowDeleteCategoryDialog(false);
         setEditingCategory(null);
         setDeletingCategory(null);
-    };
+        setDeleteError(null);
+    }, []);
 
     // Separate categories for card view
     const spendCategories = useMemo(
@@ -156,12 +245,12 @@ function Categories() {
     // Per-table pagination state
     const [spendPagination, setSpendPagination] = useState({
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: 5,
     });
 
     const [incomePagination, setIncomePagination] = useState({
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: 5,
     });
 
     const spendTable = useReactTable({
@@ -174,7 +263,6 @@ function Categories() {
         onPaginationChange: setSpendPagination,
         onGlobalFilterChange: setSpendGlobalFilter,
         state: { pagination: spendPagination, globalFilter: spendGlobalFilter },
-        initialState: { pagination: { pageSize: 5 } },
     });
 
     const incomeTable = useReactTable({
@@ -190,11 +278,7 @@ function Categories() {
             pagination: incomePagination,
             globalFilter: incomeGlobalFilter,
         },
-        initialState: { pagination: { pageSize: 5 } },
     });
-
-    // Memoized values for performance (after table creation)
-    // (removed unused filteredRows/currentColumnFilters)
 
     return (
         <div className='pt-20 pb-6'>
@@ -341,28 +425,18 @@ function Categories() {
                                                             💰 Income
                                                         </span>
                                                     </div>
-                                                    <div className='flex space-x-2'>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleEditCategory(
-                                                                    category
-                                                                )
-                                                            }
-                                                            className='text-blue-600 hover:text-blue-800 text-sm'
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleDeleteCategory(
-                                                                    category
-                                                                )
-                                                            }
-                                                            className='text-red-600 hover:text-red-800 text-sm'
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
+                                                    <EditDeleteIconButtons
+                                                        onEdit={() =>
+                                                            handleEditCategory(
+                                                                category
+                                                            )
+                                                        }
+                                                        onDelete={() =>
+                                                            handleDeleteCategory(
+                                                                category
+                                                            )
+                                                        }
+                                                    />
                                                 </div>
 
                                                 {/* Category Details */}
@@ -387,181 +461,22 @@ function Categories() {
                         </div>
                     ) : (
                         <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-                                <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
-                                    <h3 className='text-lg font-medium text-red-900'>
-                                        💸 Spending Categories (
-                                        {spendCategories.length})
-                                    </h3>
-                                </div>
-                                <div className='px-6 py-4 border-b border-gray-200'>
-                                    <div className='flex gap-4'>
-                                        <div className='flex-1'>
-                                            <input
-                                                type='text'
-                                                placeholder='Search spending categories...'
-                                                value={spendGlobalFilter ?? ''}
-                                                onChange={(event) =>
-                                                    setSpendGlobalFilter(
-                                                        event.target.value
-                                                    )
-                                                }
-                                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='overflow-x-auto'>
-                                    <table className='w-full table-auto divide-y divide-gray-200'>
-                                        <thead className='bg-gray-50'>
-                                            {spendTable
-                                                .getHeaderGroups()
-                                                .map((headerGroup) => (
-                                                    <tr key={headerGroup.id}>
-                                                        {headerGroup.headers.map(
-                                                            (header) => (
-                                                                <th
-                                                                    key={
-                                                                        header.id
-                                                                    }
-                                                                    className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </th>
-                                                            )
-                                                        )}
-                                                    </tr>
-                                                ))}
-                                        </thead>
-                                        <tbody className='bg-white divide-y divide-gray-200'>
-                                            {spendTable
-                                                .getRowModel()
-                                                .rows.map((row) => (
-                                                    <tr
-                                                        key={row.id}
-                                                        className='hover:bg-gray-50'
-                                                    >
-                                                        {row
-                                                            .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <td
-                                                                    key={
-                                                                        cell.id
-                                                                    }
-                                                                    className='px-4 py-2 whitespace-nowrap'
-                                                                >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </td>
-                                                            ))}
-                                                    </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <Paginator table={spendTable} />
-                            </div>
-
-                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-                                <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
-                                    <h3 className='text-lg font-medium text-green-900'>
-                                        💰 Income Categories (
-                                        {incomeCategories.length})
-                                    </h3>
-                                </div>
-                                <div className='px-6 py-4 border-b border-gray-200'>
-                                    <div className='flex gap-4'>
-                                        <div className='flex-1'>
-                                            <input
-                                                type='text'
-                                                placeholder='Search income categories...'
-                                                value={incomeGlobalFilter ?? ''}
-                                                onChange={(event) =>
-                                                    setIncomeGlobalFilter(
-                                                        event.target.value
-                                                    )
-                                                }
-                                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className='overflow-x-auto'>
-                                    <table className='w-full table-auto divide-y divide-gray-200'>
-                                        <thead className='bg-gray-50'>
-                                            {incomeTable
-                                                .getHeaderGroups()
-                                                .map((headerGroup) => (
-                                                    <tr key={headerGroup.id}>
-                                                        {headerGroup.headers.map(
-                                                            (header) => (
-                                                                <th
-                                                                    key={
-                                                                        header.id
-                                                                    }
-                                                                    className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </th>
-                                                            )
-                                                        )}
-                                                    </tr>
-                                                ))}
-                                        </thead>
-                                        <tbody className='bg-white divide-y divide-gray-200'>
-                                            {incomeTable
-                                                .getRowModel()
-                                                .rows.map((row) => (
-                                                    <tr
-                                                        key={row.id}
-                                                        className='hover:bg-gray-50'
-                                                    >
-                                                        {row
-                                                            .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <td
-                                                                    key={
-                                                                        cell.id
-                                                                    }
-                                                                    className='px-4 py-2 whitespace-nowrap'
-                                                                >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </td>
-                                                            ))}
-                                                    </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <Paginator table={incomeTable} />
-                            </div>
+                            <CategoryPanel
+                                title='💸 Spending Categories'
+                                count={spendCategories.length}
+                                colorScheme='red'
+                                table={spendTable}
+                                searchValue={spendGlobalFilter}
+                                onSearchChange={setSpendGlobalFilter}
+                            />
+                            <CategoryPanel
+                                title='💰 Income Categories'
+                                count={incomeCategories.length}
+                                colorScheme='green'
+                                table={incomeTable}
+                                searchValue={incomeGlobalFilter}
+                                onSearchChange={setIncomeGlobalFilter}
+                            />
                         </div>
                     )}
                 </div>
@@ -578,7 +493,7 @@ function Categories() {
             {/* Delete Confirmation Modal */}
             <ConfirmModal
                 isOpen={showDeleteCategoryDialog}
-                onClose={() => setShowDeleteCategoryDialog(false)}
+                onClose={closeModals}
                 onConfirm={confirmDeleteCategory}
                 title='Delete Category'
                 message={
@@ -587,6 +502,11 @@ function Categories() {
                         <strong>{deletingCategory?.name}</strong>"? This action
                         cannot be undone and will affect all associated
                         transactions.
+                        {deleteError && (
+                            <p className='mt-2 text-red-600 font-medium'>
+                                {deleteError}
+                            </p>
+                        )}
                     </>
                 }
                 confirmLabel='Delete'

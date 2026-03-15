@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
     eachMonthOfInterval,
@@ -40,8 +40,8 @@ function Reports() {
         dispatch(fetchTransactions({}));
     }, [dispatch]);
 
-    // Calculate monthly data for charts
-    const getMonthlyData = () => {
+    // Memoized monthly data for charts
+    const monthlyData = useMemo(() => {
         const now = new Date();
         let startDate: Date;
 
@@ -56,11 +56,16 @@ function Reports() {
                 startDate = subMonths(now, 12);
                 break;
             case 'all':
-                startDate = new Date(
-                    Math.min(
-                        ...transactions.map((t) => new Date(t.date).getTime())
-                    )
-                );
+                startDate =
+                    transactions.length > 0
+                        ? new Date(
+                              Math.min(
+                                  ...transactions.map((t) =>
+                                      new Date(t.date).getTime()
+                                  )
+                              )
+                          )
+                        : subMonths(now, 6);
                 break;
         }
 
@@ -96,10 +101,10 @@ function Reports() {
                 net,
             };
         });
-    };
+    }, [transactions, selectedPeriod]);
 
-    // Calculate category spending data
-    const getCategorySpendingData = () => {
+    // Memoized top-10 category spending data
+    const categoryData = useMemo(() => {
         const categoryTotals: Record<
             number,
             { name: string; amount: number; count: number }
@@ -128,25 +133,25 @@ function Reports() {
 
         return Object.values(categoryTotals)
             .sort((a, b) => b.amount - a.amount)
-            .slice(0, 10); // Top 10 categories
-    };
+            .slice(0, 10);
+    }, [transactions, categories]);
 
-    const monthlyData = getMonthlyData();
-    const categoryData = getCategorySpendingData();
-
-    // Calculate summary statistics
-    const totalIncome = transactions
-        .filter((t) => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
-
-    const totalExpenses = Math.abs(
-        transactions
-            .filter((t) => t.amount < 0)
-            .reduce((sum, t) => sum + t.amount, 0)
-    );
-
-    const netBalance = totalIncome - totalExpenses;
-    const transactionCount = transactions.length;
+    // Single-pass summary statistics
+    const { totalIncome, totalExpenses, netBalance, transactionCount } =
+        useMemo(() => {
+            let income = 0;
+            let expenses = 0;
+            for (const t of transactions) {
+                if (t.amount > 0) income += t.amount;
+                else expenses += Math.abs(t.amount);
+            }
+            return {
+                totalIncome: income,
+                totalExpenses: expenses,
+                netBalance: income - expenses,
+                transactionCount: transactions.length,
+            };
+        }, [transactions]);
 
     return (
         <div className='min-h-screen bg-gray-100'>
@@ -191,7 +196,10 @@ function Reports() {
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0'>
                                             <div className='w-8 h-8 bg-green-500 rounded-md flex items-center justify-center'>
-                                                <span className='text-white text-sm font-bold'>
+                                                <span
+                                                    aria-hidden='true'
+                                                    className='text-white text-sm font-bold'
+                                                >
                                                     💰
                                                 </span>
                                             </div>
@@ -217,7 +225,10 @@ function Reports() {
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0'>
                                             <div className='w-8 h-8 bg-red-500 rounded-md flex items-center justify-center'>
-                                                <span className='text-white text-sm font-bold'>
+                                                <span
+                                                    aria-hidden='true'
+                                                    className='text-white text-sm font-bold'
+                                                >
                                                     💸
                                                 </span>
                                             </div>
@@ -249,7 +260,10 @@ function Reports() {
                                                         : 'bg-red-500'
                                                 }`}
                                             >
-                                                <span className='text-white text-sm font-bold'>
+                                                <span
+                                                    aria-hidden='true'
+                                                    className='text-white text-sm font-bold'
+                                                >
                                                     {netBalance >= 0
                                                         ? '📈'
                                                         : '📉'}
@@ -281,7 +295,10 @@ function Reports() {
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0'>
                                             <div className='w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center'>
-                                                <span className='text-white text-sm font-bold'>
+                                                <span
+                                                    aria-hidden='true'
+                                                    className='text-white text-sm font-bold'
+                                                >
                                                     📊
                                                 </span>
                                             </div>

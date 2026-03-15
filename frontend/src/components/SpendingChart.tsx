@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     Cell,
     Legend,
@@ -28,76 +29,71 @@ interface SpendingChartProps {
     categories: Category[];
 }
 
+function renderCustomizedLabel(props: PieLabelRenderProps): JSX.Element | null {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+    if (
+        percent === undefined ||
+        cx === undefined ||
+        cy === undefined ||
+        midAngle === undefined ||
+        innerRadius === undefined ||
+        outerRadius === undefined
+    ) {
+        return null;
+    }
+    if (percent < 0.05) return null;
+
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text
+            x={x}
+            y={y}
+            fill='white'
+            textAnchor={x > cx ? 'start' : 'end'}
+            dominantBaseline='central'
+            fontSize={12}
+            fontWeight='bold'
+        >
+            {`${(percent * 100).toFixed(0)}%`}
+        </text>
+    );
+}
+
 function SpendingChart({ transactions, categories }: SpendingChartProps) {
-    // Calculate spending by category (only expenses)
-    const spendingByCategory = transactions
-        .filter((t) => typeof t.amount === 'number' && t.amount < 0)
-        .reduce(
-            (acc, transaction) => {
-                const categoryId = transaction.category;
-                const amount = Math.abs(transaction.amount);
+    const categoryMap = useMemo(
+        () => new Map(categories.map((c) => [c.id, c.name])),
+        [categories]
+    );
 
-                if (!acc[categoryId]) {
-                    acc[categoryId] = 0;
-                }
-                acc[categoryId] += amount;
-                return acc;
-            },
-            {} as Record<number, number>
-        );
-
-    // Convert to chart data
-    const chartData: { name: string; value: number; categoryId: number }[] =
-        Object.entries(spendingByCategory)
-            .map(([categoryId, amount]) => {
-                const cid = parseInt(categoryId, 10);
-                const category = categories.find((c) => c.id === cid);
-                return {
-                    name: category?.name || `Category ${categoryId}`,
-                    value: amount,
-                    categoryId: cid,
-                };
-            })
-            .sort((a, b) => b.value - a.value); // Sort by amount descending
-
-    // Colors are defined at module scope (COLORS)
-
-    const renderCustomizedLabel = (
-        props: PieLabelRenderProps
-    ): JSX.Element | null => {
-        const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
-        // Defensive: if any are undefined, don't render label
-        if (
-            percent === undefined ||
-            cx === undefined ||
-            cy === undefined ||
-            midAngle === undefined ||
-            innerRadius === undefined ||
-            outerRadius === undefined
-        ) {
-            return null;
-        }
-        if (percent < 0.05) return null; // Don't show labels for slices smaller than 5%
-
-        const RADIAN = Math.PI / 180;
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-        return (
-            <text
-                x={x}
-                y={y}
-                fill='white'
-                textAnchor={x > cx ? 'start' : 'end'}
-                dominantBaseline='central'
-                fontSize={12}
-                fontWeight='bold'
-            >
-                {`${(percent * 100).toFixed(0)}%`}
-            </text>
-        );
-    };
+    const chartData = useMemo(
+        () =>
+            Object.entries(
+                transactions
+                    .filter((t) => typeof t.amount === 'number' && t.amount < 0)
+                    .reduce(
+                        (acc, t) => {
+                            acc[t.category] =
+                                (acc[t.category] ?? 0) + Math.abs(t.amount);
+                            return acc;
+                        },
+                        {} as Record<number, number>
+                    )
+            )
+                .map(([categoryId, amount]) => {
+                    const cid = parseInt(categoryId, 10);
+                    return {
+                        name: categoryMap.get(cid) ?? `Category ${categoryId}`,
+                        value: amount,
+                        categoryId: cid,
+                    };
+                })
+                .sort((a, b) => b.value - a.value),
+        [transactions, categoryMap]
+    );
 
     if (chartData.length === 0) {
         return (

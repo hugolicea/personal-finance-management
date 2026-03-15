@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    BankAccount,
     Category,
     CategoryDeletionRule,
     Heritage,
@@ -9,6 +10,25 @@ from .models import (
     RetirementAccount,
     Transaction,
 )
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(admin.ModelAdmin):
+    list_display = [
+        "name",
+        "user",
+        "account_type",
+        "institution",
+        "currency",
+        "is_active",
+    ]
+    list_filter = ["account_type", "is_active", "user"]
+    search_fields = ["name", "institution", "user__email"]
+    readonly_fields = ["user", "created_at", "updated_at"]
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("user")
 
 
 @admin.register(Category)
@@ -32,9 +52,9 @@ class TransactionAdmin(admin.ModelAdmin):
         "amount",
         "date",
         "category",
-        "transaction_type",
+        "account",
     ]
-    list_filter = ["transaction_type", "date", "category", "user"]
+    list_filter = ["account", "date", "category", "user"]
     search_fields = ["description", "user__email", "reference_id"]
     date_hierarchy = "date"
     readonly_fields = [
@@ -48,7 +68,7 @@ class TransactionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """Optimize query with select_related to prevent N+1 queries."""
         qs = super().get_queryset(request)
-        return qs.select_related("user", "category")
+        return qs.select_related("user", "category", "account")
 
 
 @admin.register(Investment)

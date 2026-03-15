@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from budget.models import Category, Transaction
+from budget.models import BankAccount, Category, Transaction
 
 
 class CategoryAPITest(APITestCase):
@@ -57,6 +57,11 @@ class TransactionAPITest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name="Food", user=self.user)
+        self.account = BankAccount.objects.create(
+            user=self.user,
+            name="My Checking Account",
+            account_type="checking",
+        )
 
     def test_get_transactions(self):
         """Test GET /api/v1/transactions/"""
@@ -77,7 +82,7 @@ class TransactionAPITest(APITestCase):
             "description": "Coffee",
             "date": "2026-01-24",
             "category": self.category.id,
-            "transaction_type": "account",
+            "account": self.account.id,
             "user": self.user.id,
         }
         response = self.client.post(url, data, format="json")
@@ -95,6 +100,7 @@ class TransactionAPITest(APITestCase):
             description="Snack",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
         url = reverse("transaction-detail", kwargs={"pk": transaction.id})
@@ -111,11 +117,17 @@ class BalanceAPITest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.category = Category.objects.create(name="Food", user=self.user)
+        self.account = BankAccount.objects.create(
+            user=self.user,
+            name="My Checking Account",
+            account_type="checking",
+        )
         Transaction.objects.create(
             amount=-50.00,
             description="Lunch",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
         Transaction.objects.create(
@@ -123,6 +135,7 @@ class BalanceAPITest(APITestCase):
             description="Dinner",
             date=date.today(),
             category=self.category,
+            account=self.account,
             user=self.user,
         )
 

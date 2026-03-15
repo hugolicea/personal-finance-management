@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteButtons from '../components/EditDeleteButtons';
@@ -29,6 +29,25 @@ interface RetirementAccount {
     total_annual_contribution: number;
 }
 
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+    traditional_401k: 'Traditional 401(k)',
+    roth_401k: 'Roth 401(k)',
+    traditional_ira: 'Traditional IRA',
+    roth_ira: 'Roth IRA',
+    sep_ira: 'SEP IRA',
+    simple_ira: 'SIMPLE IRA',
+    pension: 'Pension',
+    annuity: 'Annuity',
+    other: 'Other',
+};
+
+const RISK_LEVEL_LABELS: Record<string, string> = {
+    conservative: 'Conservative',
+    moderate: 'Moderate',
+    aggressive: 'Aggressive',
+    very_aggressive: 'Very Aggressive',
+};
+
 function Retirement() {
     const dispatch = useAppDispatch();
     const { retirementAccounts, loading, deleting } = useAppSelector(
@@ -50,21 +69,23 @@ function Retirement() {
         dispatch(fetchRetirementAccounts());
     }, [dispatch]);
 
-    const handleEditRetirementAccount = (
-        retirementAccount: RetirementAccount
-    ) => {
-        setEditingRetirementAccount(retirementAccount);
-        setShowRetirementAccountModal(true);
-    };
+    const handleEditRetirementAccount = useCallback(
+        (retirementAccount: RetirementAccount) => {
+            setEditingRetirementAccount(retirementAccount);
+            setShowRetirementAccountModal(true);
+        },
+        []
+    );
 
-    const handleDeleteRetirementAccount = (
-        retirementAccount: RetirementAccount
-    ) => {
-        setDeletingRetirementAccount(retirementAccount);
-        setShowDeleteRetirementAccountDialog(true);
-    };
+    const handleDeleteRetirementAccount = useCallback(
+        (retirementAccount: RetirementAccount) => {
+            setDeletingRetirementAccount(retirementAccount);
+            setShowDeleteRetirementAccountDialog(true);
+        },
+        []
+    );
 
-    const confirmDeleteRetirementAccount = async () => {
+    const confirmDeleteRetirementAccount = useCallback(async () => {
         if (deletingRetirementAccount) {
             await dispatch(
                 deleteRetirementAccount(deletingRetirementAccount.id)
@@ -72,55 +93,40 @@ function Retirement() {
             setShowDeleteRetirementAccountDialog(false);
             setDeletingRetirementAccount(null);
         }
-    };
+    }, [deletingRetirementAccount, dispatch]);
 
-    const closeModal = () => {
+    const closeModal = useCallback(() => {
         setShowRetirementAccountModal(false);
         setEditingRetirementAccount(null);
-    };
+    }, []);
 
-    const totalBalance = retirementAccounts.reduce(
-        (sum, account) =>
-            sum + (parseFloat(String(account.current_balance)) || 0),
-        0
-    );
+    const handleOpenModal = useCallback(() => {
+        setShowRetirementAccountModal(true);
+    }, []);
 
-    const totalMonthlyContribution = retirementAccounts.reduce(
-        (sum, account) =>
-            sum + (parseFloat(String(account.monthly_contribution)) || 0),
-        0
-    );
+    const handleCloseDeleteModal = useCallback(() => {
+        if (!deleting) setShowDeleteRetirementAccountDialog(false);
+    }, [deleting]);
 
-    const totalAnnualContribution = retirementAccounts.reduce(
-        (sum, account) =>
-            sum + (parseFloat(String(account.total_annual_contribution)) || 0),
-        0
-    );
-
-    const getAccountTypeDisplay = (accountType: string) => {
-        const types: { [key: string]: string } = {
-            traditional_401k: 'Traditional 401(k)',
-            roth_401k: 'Roth 401(k)',
-            traditional_ira: 'Traditional IRA',
-            roth_ira: 'Roth IRA',
-            sep_ira: 'SEP IRA',
-            simple_ira: 'SIMPLE IRA',
-            pension: 'Pension',
-            annuity: 'Annuity',
-            other: 'Other',
-        };
-        return types[accountType] || accountType;
-    };
-
-    const getRiskLevelDisplay = (riskLevel: string) => {
-        const levels: { [key: string]: string } = {
-            conservative: 'Conservative',
-            moderate: 'Moderate',
-            aggressive: 'Aggressive',
-            very_aggressive: 'Very Aggressive',
-        };
-        return levels[riskLevel] || riskLevel;
-    };
+    // Single-pass totals
+    const { totalBalance, totalMonthlyContribution, totalAnnualContribution } =
+        useMemo(() => {
+            let balance = 0;
+            let monthly = 0;
+            let annual = 0;
+            for (const account of retirementAccounts) {
+                balance += parseFloat(String(account.current_balance)) || 0;
+                monthly +=
+                    parseFloat(String(account.monthly_contribution)) || 0;
+                annual +=
+                    parseFloat(String(account.total_annual_contribution)) || 0;
+            }
+            return {
+                totalBalance: balance,
+                totalMonthlyContribution: monthly,
+                totalAnnualContribution: annual,
+            };
+        }, [retirementAccounts]);
 
     if (loading) {
         return (
@@ -147,7 +153,7 @@ function Retirement() {
             <div className='mt-6 flex justify-center sm:justify-start'>
                 <button
                     type='button'
-                    onClick={() => setShowRetirementAccountModal(true)}
+                    onClick={handleOpenModal}
                     className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
                 >
                     <svg
@@ -364,9 +370,9 @@ function Retirement() {
                                                 </div>
                                             </td>
                                             <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
-                                                {getAccountTypeDisplay(
+                                                {ACCOUNT_TYPE_LABELS[
                                                     account.account_type
-                                                )}
+                                                ] ?? account.account_type}
                                             </td>
                                             <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
                                                 {account.provider}
@@ -382,9 +388,9 @@ function Retirement() {
                                                 )}
                                             </td>
                                             <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
-                                                {getRiskLevelDisplay(
+                                                {RISK_LEVEL_LABELS[
                                                     account.risk_level
-                                                )}
+                                                ] ?? account.risk_level}
                                             </td>
                                             <td className='relative whitespace-nowrap px-4 py-2 text-right text-sm font-medium'>
                                                 <EditDeleteButtons
@@ -428,9 +434,7 @@ function Retirement() {
             {/* Delete Confirmation Modal */}
             <ConfirmModal
                 isOpen={showDeleteRetirementAccountDialog}
-                onClose={() =>
-                    !deleting && setShowDeleteRetirementAccountDialog(false)
-                }
+                onClose={handleCloseDeleteModal}
                 onConfirm={confirmDeleteRetirementAccount}
                 title='Delete Retirement Account'
                 message={
@@ -463,7 +467,7 @@ function Retirement() {
                                             </span>{' '}
                                             <span className='text-gray-900 capitalize'>
                                                 {deletingRetirementAccount.account_type.replace(
-                                                    '_',
+                                                    /_/g,
                                                     ' '
                                                 )}
                                             </span>
@@ -494,8 +498,9 @@ function Retirement() {
                         )}
                         <div className='mt-3'>
                             <p className='text-sm text-red-600 font-medium'>
-                                ⚠️ This will permanently remove all data
-                                associated with this retirement account.
+                                <span aria-hidden='true'>⚠️ </span>This will
+                                permanently remove all data associated with this
+                                retirement account.
                             </p>
                         </div>
                     </>

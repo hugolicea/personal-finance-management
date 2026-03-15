@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -13,7 +11,49 @@ interface HeritageFormProps {
     onClose: () => void;
 }
 
-const HeritageForm: React.FC<HeritageFormProps> = ({ heritage, onClose }) => {
+const validationSchema = Yup.object({
+    name: Yup.string()
+        .required('Property name is required')
+        .min(2, 'Name must be at least 2 characters')
+        .max(200, 'Name must be less than 200 characters'),
+    heritage_type: Yup.string()
+        .oneOf(
+            [
+                'land',
+                'house',
+                'apartment',
+                'commercial',
+                'office',
+                'warehouse',
+                'other',
+            ],
+            'Invalid property type'
+        )
+        .required('Property type is required'),
+    address: Yup.string()
+        .required('Address is required')
+        .min(5, 'Address must be at least 5 characters'),
+    area: Yup.number().positive('Area must be positive').nullable(),
+    area_unit: Yup.string().max(
+        20,
+        'Area unit must be less than 20 characters'
+    ),
+    purchase_price: Yup.number()
+        .positive('Purchase price must be positive')
+        .required('Purchase price is required'),
+    current_value: Yup.number()
+        .positive('Current value must be positive')
+        .nullable(),
+    purchase_date: Yup.date()
+        .required('Purchase date is required')
+        .max(new Date(), 'Purchase date cannot be in the future'),
+    monthly_rental_income: Yup.number()
+        .min(0, 'Rental income cannot be negative')
+        .required('Monthly rental income is required'),
+    notes: Yup.string().max(500, 'Notes must be less than 500 characters'),
+});
+
+function HeritageForm({ heritage, onClose }: HeritageFormProps) {
     const dispatch = useAppDispatch();
 
     const initialValues = {
@@ -30,48 +70,6 @@ const HeritageForm: React.FC<HeritageFormProps> = ({ heritage, onClose }) => {
         monthly_rental_income: heritage?.monthly_rental_income || 0,
         notes: heritage?.notes || '',
     };
-
-    const validationSchema = Yup.object({
-        name: Yup.string()
-            .required('Property name is required')
-            .min(2, 'Name must be at least 2 characters')
-            .max(200, 'Name must be less than 200 characters'),
-        heritage_type: Yup.string()
-            .oneOf(
-                [
-                    'land',
-                    'house',
-                    'apartment',
-                    'commercial',
-                    'office',
-                    'warehouse',
-                    'other',
-                ],
-                'Invalid property type'
-            )
-            .required('Property type is required'),
-        address: Yup.string()
-            .required('Address is required')
-            .min(5, 'Address must be at least 5 characters'),
-        area: Yup.number().positive('Area must be positive').nullable(),
-        area_unit: Yup.string().max(
-            20,
-            'Area unit must be less than 20 characters'
-        ),
-        purchase_price: Yup.number()
-            .positive('Purchase price must be positive')
-            .required('Purchase price is required'),
-        current_value: Yup.number()
-            .positive('Current value must be positive')
-            .nullable(),
-        purchase_date: Yup.date()
-            .required('Purchase date is required')
-            .max(new Date(), 'Purchase date cannot be in the future'),
-        monthly_rental_income: Yup.number()
-            .min(0, 'Rental income cannot be negative')
-            .required('Monthly rental income is required'),
-        notes: Yup.string().max(500, 'Notes must be less than 500 characters'),
-    });
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
@@ -556,6 +554,6 @@ const HeritageForm: React.FC<HeritageFormProps> = ({ heritage, onClose }) => {
             )}
         </Formik>
     );
-};
+}
 
 export default HeritageForm;

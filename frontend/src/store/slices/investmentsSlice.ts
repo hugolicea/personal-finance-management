@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
 
 import { Investment } from '../../types/investments';
 import apiClient from '../../utils/apiClient';
@@ -39,97 +40,124 @@ const initialState: InvestmentsState = {
     error: null,
 };
 
+function parseInvestment(raw: InvestmentApiResponse): Investment {
+    return {
+        ...raw,
+        quantity: parseFloat(raw.quantity) || 0,
+        purchase_price: parseFloat(raw.purchase_price) || 0,
+        current_price:
+            raw.current_price && !isNaN(parseFloat(raw.current_price))
+                ? parseFloat(raw.current_price)
+                : null,
+        total_invested: parseFloat(raw.total_invested) || 0,
+        current_value: parseFloat(raw.current_value) || 0,
+        gain_loss: parseFloat(raw.gain_loss) || 0,
+        gain_loss_percentage: parseFloat(raw.gain_loss_percentage) || 0,
+        principal_amount:
+            raw.principal_amount && !isNaN(parseFloat(raw.principal_amount))
+                ? parseFloat(raw.principal_amount)
+                : null,
+        interest_rate:
+            raw.interest_rate && !isNaN(parseFloat(raw.interest_rate))
+                ? parseFloat(raw.interest_rate)
+                : null,
+        term_years:
+            raw.term_years && !isNaN(parseFloat(raw.term_years))
+                ? parseFloat(raw.term_years)
+                : null,
+    } as Investment;
+}
+
 export const fetchInvestments = createAsyncThunk(
     'investments/fetchInvestments',
-    async () => {
-        const response = await apiClient.get(
-            '/api/v1/investments/?page_size=10000'
-        );
-        const data = response.data.results || response.data;
-        // Transform string fields to numbers with error handling
-        return data.map((investment: InvestmentApiResponse) => ({
-            ...investment,
-            quantity: isNaN(parseFloat(investment.quantity))
-                ? 0
-                : parseFloat(investment.quantity),
-            purchase_price: isNaN(parseFloat(investment.purchase_price))
-                ? 0
-                : parseFloat(investment.purchase_price),
-            current_price:
-                investment.current_price &&
-                !isNaN(parseFloat(investment.current_price))
-                    ? parseFloat(investment.current_price)
-                    : null,
-            total_invested: isNaN(parseFloat(investment.total_invested))
-                ? 0
-                : parseFloat(investment.total_invested),
-            current_value: isNaN(parseFloat(investment.current_value))
-                ? 0
-                : parseFloat(investment.current_value),
-            gain_loss: isNaN(parseFloat(investment.gain_loss))
-                ? 0
-                : parseFloat(investment.gain_loss),
-            gain_loss_percentage: isNaN(
-                parseFloat(investment.gain_loss_percentage)
-            )
-                ? 0
-                : parseFloat(investment.gain_loss_percentage),
-            principal_amount:
-                investment.principal_amount &&
-                !isNaN(parseFloat(investment.principal_amount))
-                    ? parseFloat(investment.principal_amount)
-                    : null,
-            interest_rate:
-                investment.interest_rate &&
-                !isNaN(parseFloat(investment.interest_rate))
-                    ? parseFloat(investment.interest_rate)
-                    : null,
-            term_years:
-                investment.term_years &&
-                !isNaN(parseFloat(investment.term_years))
-                    ? parseFloat(investment.term_years)
-                    : null,
-        }));
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.get(
+                '/api/v1/investments/?page_size=10000'
+            );
+            const data = response.data.results || response.data;
+            return (data as InvestmentApiResponse[]).map(parseInvestment);
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to fetch investments'
+                );
+            }
+            return rejectWithValue('Failed to fetch investments');
+        }
     }
 );
 
 export const createInvestment = createAsyncThunk(
     'investments/createInvestment',
-    async (data: {
-        symbol: string;
-        name: string;
-        investment_type: string;
-        quantity: number;
-        purchase_price: number;
-        current_price?: number;
-        purchase_date: string;
-        notes?: string;
-        principal_amount?: number;
-        interest_rate?: number;
-        compounding_frequency?: string;
-        term_years?: number;
-    }) => {
-        const response = await apiClient.post('/api/v1/investments/', data);
-        return response.data;
+    async (
+        data: {
+            symbol: string;
+            name: string;
+            investment_type: string;
+            quantity: number;
+            purchase_price: number;
+            current_price?: number;
+            purchase_date: string;
+            notes?: string;
+            principal_amount?: number;
+            interest_rate?: number;
+            compounding_frequency?: string;
+            term_years?: number;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await apiClient.post('/api/v1/investments/', data);
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to create investment'
+                );
+            }
+            return rejectWithValue('Failed to create investment');
+        }
     }
 );
 
 export const updateInvestment = createAsyncThunk(
     'investments/updateInvestment',
-    async ({ id, data }: { id: number; data: Partial<Investment> }) => {
-        const response = await apiClient.patch(
-            `/api/v1/investments/${id}/`,
-            data
-        );
-        return response.data;
+    async (
+        { id, data }: { id: number; data: Partial<Investment> },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await apiClient.patch(
+                `/api/v1/investments/${id}/`,
+                data
+            );
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to update investment'
+                );
+            }
+            return rejectWithValue('Failed to update investment');
+        }
     }
 );
 
 export const deleteInvestment = createAsyncThunk(
     'investments/deleteInvestment',
-    async (id: number) => {
-        await apiClient.delete(`/api/v1/investments/${id}/`);
-        return id;
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiClient.delete(`/api/v1/investments/${id}/`);
+            return id;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to delete investment'
+                );
+            }
+            return rejectWithValue('Failed to delete investment');
+        }
     }
 );
 
@@ -150,17 +178,21 @@ const investmentsSlice = createSlice({
             .addCase(fetchInvestments.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to fetch investments';
+                    (action.payload as string) || 'Failed to fetch investments';
             })
             .addCase(createInvestment.fulfilled, (state, action) => {
-                state.investments.push(action.payload);
+                state.investments.push(
+                    parseInvestment(action.payload as InvestmentApiResponse)
+                );
             })
             .addCase(updateInvestment.fulfilled, (state, action) => {
                 const index = state.investments.findIndex(
                     (investment) => investment.id === action.payload.id
                 );
                 if (index !== -1) {
-                    state.investments[index] = action.payload;
+                    state.investments[index] = parseInvestment(
+                        action.payload as InvestmentApiResponse
+                    );
                 }
             })
             .addCase(deleteInvestment.pending, (state) => {
@@ -175,7 +207,7 @@ const investmentsSlice = createSlice({
             .addCase(deleteInvestment.rejected, (state, action) => {
                 state.deleting = false;
                 state.error =
-                    action.error.message || 'Failed to delete investment';
+                    (action.payload as string) || 'Failed to delete investment';
             });
     },
 });

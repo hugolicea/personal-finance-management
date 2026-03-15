@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -20,6 +21,55 @@ interface HeritageChartProps {
 const COLORS = ['#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 function HeritageChart({ heritages }: HeritageChartProps) {
+    const { pieData, topProperties, totalValue, totalRentalIncome, avgYield } =
+        useMemo(() => {
+            const byType: Record<string, number> = {};
+            let totalValue = 0;
+            let totalRentalIncome = 0;
+            let totalYield = 0;
+            for (const h of heritages) {
+                const type = h.heritage_type.replace('_', ' ').toUpperCase();
+                const value = h.current_value || h.purchase_price || 0;
+                byType[type] = (byType[type] ?? 0) + value;
+                totalValue += value;
+                totalRentalIncome += h.monthly_rental_income || 0;
+                totalYield += h.rental_yield_percentage || 0;
+            }
+
+            const pieData = Object.entries(byType).map(([type, value]) => ({
+                name: type,
+                value: Math.round(value),
+            }));
+
+            const topProperties = [...heritages]
+                .sort(
+                    (a, b) =>
+                        (b.current_value || b.purchase_price || 0) -
+                        (a.current_value || a.purchase_price || 0)
+                )
+                .slice(0, 5)
+                .map((h) => ({
+                    name:
+                        h.name.length > 15
+                            ? h.name.substring(0, 15) + '...'
+                            : h.name,
+                    value: Math.round(h.current_value || h.purchase_price || 0),
+                    rental: h.monthly_rental_income || 0,
+                    yield: h.rental_yield_percentage || 0,
+                }));
+
+            const avgYield =
+                heritages.length > 0 ? totalYield / heritages.length : 0;
+
+            return {
+                pieData,
+                topProperties,
+                totalValue,
+                totalRentalIncome,
+                avgYield,
+            };
+        }, [heritages]);
+
     // Handle empty or invalid data
     if (!heritages || heritages.length === 0) {
         return (
@@ -28,62 +78,6 @@ function HeritageChart({ heritages }: HeritageChartProps) {
             </div>
         );
     }
-
-    // Calculate heritage by type
-    const heritageByType = heritages.reduce(
-        (acc, heritage) => {
-            const type = heritage.heritage_type.replace('_', ' ').toUpperCase();
-            const value =
-                heritage.current_value || heritage.purchase_price || 0;
-            if (!acc[type]) {
-                acc[type] = 0;
-            }
-            acc[type] += value;
-            return acc;
-        },
-        {} as Record<string, number>
-    );
-
-    const pieData = Object.entries(heritageByType).map(([type, value]) => ({
-        name: type,
-        value: Math.round(value),
-    }));
-
-    // Calculate top 5 properties by current value
-    const topProperties = [...heritages]
-        .sort(
-            (a, b) =>
-                (b.current_value || b.purchase_price || 0) -
-                (a.current_value || a.purchase_price || 0)
-        )
-        .slice(0, 5)
-        .map((heritage) => ({
-            name:
-                heritage.name.length > 15
-                    ? heritage.name.substring(0, 15) + '...'
-                    : heritage.name,
-            value: Math.round(
-                heritage.current_value || heritage.purchase_price || 0
-            ),
-            rental: heritage.monthly_rental_income || 0,
-            yield: heritage.rental_yield_percentage || 0,
-        }));
-
-    const totalValue = heritages.reduce(
-        (sum, h) => sum + (h.current_value || h.purchase_price || 0),
-        0
-    );
-    const totalRentalIncome = heritages.reduce(
-        (sum, h) => sum + (h.monthly_rental_income || 0),
-        0
-    );
-    const avgYield =
-        heritages.length > 0
-            ? heritages.reduce(
-                  (sum, h) => sum + (h.rental_yield_percentage || 0),
-                  0
-              ) / heritages.length
-            : 0;
 
     return (
         <div className='space-y-6'>

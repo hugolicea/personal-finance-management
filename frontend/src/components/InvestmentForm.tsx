@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -16,10 +14,86 @@ interface InvestmentFormProps {
     onClose: () => void;
 }
 
-const InvestmentForm: React.FC<InvestmentFormProps> = ({
-    investment,
-    onClose,
-}) => {
+const validationSchema = Yup.object({
+    symbol: Yup.string()
+        .required('Symbol is required')
+        .max(20, 'Symbol must be less than 20 characters'),
+    name: Yup.string()
+        .required('Investment name is required')
+        .min(2, 'Name must be at least 2 characters')
+        .max(200, 'Name must be less than 200 characters'),
+    investment_type: Yup.string()
+        .oneOf(
+            ['stock', 'bond', 'etf', 'crypto', 'mutual_fund', 'fixed_income'],
+            'Invalid investment type'
+        )
+        .required('Investment type is required'),
+    // Traditional investment fields
+    quantity: Yup.number().when('investment_type', {
+        is: (type: string) => type !== 'fixed_income',
+        then: (schema) =>
+            schema
+                .positive('Quantity must be positive')
+                .required('Quantity is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    purchase_price: Yup.number().when('investment_type', {
+        is: (type: string) => type !== 'fixed_income',
+        then: (schema) =>
+            schema
+                .positive('Purchase price must be positive')
+                .required('Purchase price is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    current_price: Yup.number().when('investment_type', {
+        is: (type: string) => type !== 'fixed_income',
+        then: (schema) => schema.positive('Current price must be positive'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    // Fixed income fields
+    principal_amount: Yup.number().when('investment_type', {
+        is: 'fixed_income',
+        then: (schema) =>
+            schema
+                .positive('Principal amount must be positive')
+                .required('Principal amount is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    interest_rate: Yup.number().when('investment_type', {
+        is: 'fixed_income',
+        then: (schema) =>
+            schema
+                .min(0, 'Interest rate must be non-negative')
+                .max(100, 'Interest rate cannot exceed 100%')
+                .required('Interest rate is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    compounding_frequency: Yup.string().when('investment_type', {
+        is: 'fixed_income',
+        then: (schema) =>
+            schema
+                .oneOf(
+                    ['annual', 'semi_annual', 'quarterly', 'monthly'],
+                    'Invalid compounding frequency'
+                )
+                .required('Compounding frequency is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    term_years: Yup.number().when('investment_type', {
+        is: 'fixed_income',
+        then: (schema) =>
+            schema
+                .positive('Term must be positive')
+                .required('Term in years is required'),
+        otherwise: (schema) => schema.notRequired(),
+    }),
+    purchase_date: Yup.date()
+        .required('Purchase date is required')
+        .max(new Date(), 'Purchase date cannot be in the future'),
+    notes: Yup.string().max(500, 'Notes must be less than 500 characters'),
+});
+
+function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
     const dispatch = useAppDispatch();
 
     const initialValues = {
@@ -38,92 +112,6 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
         term_years: investment?.term_years || '',
         notes: investment?.notes || '',
     };
-
-    const validationSchema = Yup.object({
-        symbol: Yup.string()
-            .required('Symbol is required')
-            .max(20, 'Symbol must be less than 20 characters'),
-        name: Yup.string()
-            .required('Investment name is required')
-            .min(2, 'Name must be at least 2 characters')
-            .max(200, 'Name must be less than 200 characters'),
-        investment_type: Yup.string()
-            .oneOf(
-                [
-                    'stock',
-                    'bond',
-                    'etf',
-                    'crypto',
-                    'mutual_fund',
-                    'fixed_income',
-                ],
-                'Invalid investment type'
-            )
-            .required('Investment type is required'),
-        // Traditional investment fields
-        quantity: Yup.number().when('investment_type', {
-            is: (type: string) => type !== 'fixed_income',
-            then: (schema) =>
-                schema
-                    .positive('Quantity must be positive')
-                    .required('Quantity is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        purchase_price: Yup.number().when('investment_type', {
-            is: (type: string) => type !== 'fixed_income',
-            then: (schema) =>
-                schema
-                    .positive('Purchase price must be positive')
-                    .required('Purchase price is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        current_price: Yup.number().when('investment_type', {
-            is: (type: string) => type !== 'fixed_income',
-            then: (schema) => schema.positive('Current price must be positive'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        // Fixed income fields
-        principal_amount: Yup.number().when('investment_type', {
-            is: 'fixed_income',
-            then: (schema) =>
-                schema
-                    .positive('Principal amount must be positive')
-                    .required('Principal amount is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        interest_rate: Yup.number().when('investment_type', {
-            is: 'fixed_income',
-            then: (schema) =>
-                schema
-                    .min(0, 'Interest rate must be non-negative')
-                    .max(100, 'Interest rate cannot exceed 100%')
-                    .required('Interest rate is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        compounding_frequency: Yup.string().when('investment_type', {
-            is: 'fixed_income',
-            then: (schema) =>
-                schema
-                    .oneOf(
-                        ['annual', 'semi_annual', 'quarterly', 'monthly'],
-                        'Invalid compounding frequency'
-                    )
-                    .required('Compounding frequency is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        term_years: Yup.number().when('investment_type', {
-            is: 'fixed_income',
-            then: (schema) =>
-                schema
-                    .positive('Term must be positive')
-                    .required('Term in years is required'),
-            otherwise: (schema) => schema.notRequired(),
-        }),
-        purchase_date: Yup.date()
-            .required('Purchase date is required')
-            .max(new Date(), 'Purchase date cannot be in the future'),
-        notes: Yup.string().max(500, 'Notes must be less than 500 characters'),
-    });
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
@@ -694,6 +682,6 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             )}
         </Formik>
     );
-};
+}
 
 export default InvestmentForm;

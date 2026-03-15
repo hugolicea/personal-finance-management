@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
 
 import { Category, CategorySpending } from '../../types/categories';
 import apiClient from '../../utils/apiClient';
@@ -19,63 +20,115 @@ const initialState: CategoriesState = {
 
 export const fetchCategories = createAsyncThunk(
     'categories/fetchCategories',
-    async () => {
-        const response = await apiClient.get(
-            '/api/v1/categories/?page_size=10000'
-        );
-        return response.data.results || response.data;
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.get(
+                '/api/v1/categories/?page_size=10000'
+            );
+            return response.data.results || response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to fetch categories'
+                );
+            }
+            return rejectWithValue('Failed to fetch categories');
+        }
     }
 );
 
 export const createCategory = createAsyncThunk(
     'categories/createCategory',
-    async (data: {
-        name: string;
-        classification: string;
-        monthly_budget: number;
-    }) => {
-        const response = await apiClient.post('/api/v1/categories/', data);
-        return response.data;
+    async (
+        data: {
+            name: string;
+            classification: string;
+            monthly_budget: number;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await apiClient.post('/api/v1/categories/', data);
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to create category'
+                );
+            }
+            return rejectWithValue('Failed to create category');
+        }
     }
 );
 
 export const updateCategory = createAsyncThunk(
     'categories/updateCategory',
-    async ({
-        id,
-        name,
-        classification,
-        monthly_budget,
-    }: {
-        id: number;
-        name: string;
-        classification: string;
-        monthly_budget: number;
-    }) => {
-        const response = await apiClient.put(`/api/v1/categories/${id}/`, {
+    async (
+        {
+            id,
             name,
             classification,
             monthly_budget,
-        });
-        return response.data;
+        }: {
+            id: number;
+            name: string;
+            classification: string;
+            monthly_budget: number;
+        },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await apiClient.put(`/api/v1/categories/${id}/`, {
+                name,
+                classification,
+                monthly_budget,
+            });
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to update category'
+                );
+            }
+            return rejectWithValue('Failed to update category');
+        }
     }
 );
 
 export const deleteCategory = createAsyncThunk(
     'categories/deleteCategory',
-    async (id: number) => {
-        await apiClient.delete(`/api/v1/categories/${id}/`);
-        return id;
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiClient.delete(`/api/v1/categories/${id}/`);
+            return id;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to delete category'
+                );
+            }
+            return rejectWithValue('Failed to delete category');
+        }
     }
 );
 
 export const fetchCategorySpending = createAsyncThunk(
     'categories/fetchCategorySpending',
-    async (period: string) => {
-        const response = await apiClient.get(
-            `/api/v1/category-spending/${period}/`
-        );
-        return response.data;
+    async (period: string, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.get(
+                `/api/v1/category-spending/${period}/`
+            );
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ??
+                        'Failed to fetch category spending'
+                );
+            }
+            return rejectWithValue('Failed to fetch category spending');
+        }
     }
 );
 
@@ -96,7 +149,7 @@ const categoriesSlice = createSlice({
             .addCase(fetchCategories.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to fetch categories';
+                    (action.payload as string) || 'Failed to fetch categories';
             })
             .addCase(createCategory.fulfilled, (state, action) => {
                 state.categories.push(action.payload);
@@ -125,7 +178,8 @@ const categoriesSlice = createSlice({
             .addCase(fetchCategorySpending.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to fetch category spending';
+                    (action.payload as string) ||
+                    'Failed to fetch category spending';
             });
     },
 });

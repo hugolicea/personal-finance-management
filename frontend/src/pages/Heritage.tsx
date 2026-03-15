@@ -65,10 +65,16 @@ function Heritage() {
         }
     }, [deletingHeritage, dispatch]);
 
+    const handleOpenModal = useCallback(() => setShowHeritageModal(true), []);
+
     const handleCloseModal = useCallback(() => {
         setShowHeritageModal(false);
         setEditingHeritage(null);
     }, []);
+
+    const handleCloseDeleteModal = useCallback(() => {
+        if (!deleting) setShowDeleteHeritageDialog(false);
+    }, [deleting]);
 
     const columns = useMemo<ColumnDef<Heritage>[]>(
         () => [
@@ -87,7 +93,7 @@ function Heritage() {
                 cell: ({ row }) => (
                     <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                         {row.original.heritage_type
-                            .replace('_', ' ')
+                            .replace(/_/g, ' ')
                             .toUpperCase()}
                     </span>
                 ),
@@ -237,36 +243,31 @@ function Heritage() {
         },
     });
 
-    const totalPortfolioValue = useMemo(() => {
-        return heritages.reduce((sum, heritage) => {
-            const value =
-                parseFloat(String(heritage.current_value)) ||
-                parseFloat(String(heritage.purchase_price)) ||
-                0;
-            return sum + (value || 0);
-        }, 0);
+    const {
+        totalPortfolioValue,
+        totalGainLoss,
+        totalAnnualRentalIncome,
+        averageRentalYield,
+    } = useMemo(() => {
+        let totalPortfolioValue = 0;
+        let totalGainLoss = 0;
+        let totalAnnualRentalIncome = 0;
+        for (const h of heritages) {
+            totalPortfolioValue += h.current_value ?? h.purchase_price;
+            totalGainLoss += h.gain_loss;
+            totalAnnualRentalIncome += h.annual_rental_income;
+        }
+        const averageRentalYield =
+            totalPortfolioValue > 0
+                ? (totalAnnualRentalIncome / totalPortfolioValue) * 100
+                : 0;
+        return {
+            totalPortfolioValue,
+            totalGainLoss,
+            totalAnnualRentalIncome,
+            averageRentalYield,
+        };
     }, [heritages]);
-
-    const totalGainLoss = useMemo(() => {
-        return heritages.reduce(
-            (sum, heritage) =>
-                sum + (parseFloat(String(heritage.gain_loss)) || 0),
-            0
-        );
-    }, [heritages]);
-
-    const totalAnnualRentalIncome = useMemo(() => {
-        return heritages.reduce(
-            (sum, heritage) =>
-                sum + (parseFloat(String(heritage.annual_rental_income)) || 0),
-            0
-        );
-    }, [heritages]);
-
-    const averageRentalYield = useMemo(() => {
-        if (totalPortfolioValue === 0) return 0;
-        return (totalAnnualRentalIncome / totalPortfolioValue) * 100;
-    }, [totalAnnualRentalIncome, totalPortfolioValue]);
 
     if (loading) {
         return (
@@ -294,7 +295,7 @@ function Heritage() {
             <div className='mt-6 flex justify-center sm:justify-start'>
                 <button
                     type='button'
-                    onClick={() => setShowHeritageModal(true)}
+                    onClick={handleOpenModal}
                     className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
                 >
                     <svg
@@ -321,7 +322,10 @@ function Heritage() {
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <div className='w-8 h-8 bg-green-500 rounded-md flex items-center justify-center'>
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        className='text-white text-sm font-bold'
+                                        aria-hidden='true'
+                                    >
                                         🏠
                                     </span>
                                 </div>
@@ -351,7 +355,10 @@ function Heritage() {
                                             : 'bg-red-500'
                                     }`}
                                 >
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        className='text-white text-sm font-bold'
+                                        aria-hidden='true'
+                                    >
                                         {totalGainLoss >= 0 ? '+' : '-'}
                                     </span>
                                 </div>
@@ -382,7 +389,10 @@ function Heritage() {
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <div className='w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center'>
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        className='text-white text-sm font-bold'
+                                        aria-hidden='true'
+                                    >
                                         💰
                                     </span>
                                 </div>
@@ -408,7 +418,10 @@ function Heritage() {
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <div className='w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center'>
-                                    <span className='text-white text-sm font-bold'>
+                                    <span
+                                        className='text-white text-sm font-bold'
+                                        aria-hidden='true'
+                                    >
                                         📈
                                     </span>
                                 </div>
@@ -480,7 +493,7 @@ function Heritage() {
                                                     </span>
                                                     <span className='ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
                                                         {heritage.heritage_type
-                                                            .replace('_', ' ')
+                                                            .replace(/_/g, ' ')
                                                             .toUpperCase()}
                                                     </span>
                                                 </div>
@@ -616,8 +629,18 @@ function Heritage() {
                                                     (header) => (
                                                         <th
                                                             key={header.id}
+                                                            scope='col'
                                                             className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
+                                                            aria-sort={
+                                                                header.column.getIsSorted() ===
+                                                                'asc'
+                                                                    ? 'ascending'
+                                                                    : header.column.getIsSorted() ===
+                                                                        'desc'
+                                                                      ? 'descending'
+                                                                      : 'none'
+                                                            }
                                                         >
                                                             {header.isPlaceholder
                                                                 ? null
@@ -628,12 +651,14 @@ function Heritage() {
                                                                           .header,
                                                                       header.getContext()
                                                                   )}
-                                                            {{
-                                                                asc: ' 🔼',
-                                                                desc: ' 🔽',
-                                                            }[
-                                                                header.column.getIsSorted() as string
-                                                            ] ?? null}
+                                                            {header.column.getIsSorted() ? (
+                                                                <span aria-hidden='true'>
+                                                                    {header.column.getIsSorted() ===
+                                                                    'asc'
+                                                                        ? ' \ud83d\udd3c'
+                                                                        : ' \ud83d\udd3d'}
+                                                                </span>
+                                                            ) : null}
                                                         </th>
                                                     )
                                                 )}
@@ -686,7 +711,7 @@ function Heritage() {
             {/* Delete Confirmation Modal */}
             <ConfirmModal
                 isOpen={showDeleteHeritageDialog}
-                onClose={() => !deleting && setShowDeleteHeritageDialog(false)}
+                onClose={handleCloseDeleteModal}
                 onConfirm={confirmDeleteHeritage}
                 title='Delete Property'
                 message={
@@ -731,7 +756,7 @@ function Heritage() {
                                                     </span>{' '}
                                                     <span className='text-gray-900 capitalize'>
                                                         {deletingHeritage.heritage_type.replace(
-                                                            '_',
+                                                            /_/g,
                                                             ' '
                                                         )}
                                                     </span>
@@ -806,7 +831,8 @@ function Heritage() {
                                 )}
                                 <div className='mt-3'>
                                     <p className='text-sm text-red-600 font-medium'>
-                                        ⚠️ This will permanently remove all data
+                                        <span aria-hidden='true'>⚠️</span> This
+                                        will permanently remove all data
                                         associated with this property.
                                     </p>
                                 </div>

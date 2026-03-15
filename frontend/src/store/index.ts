@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import loadingReducer from './loadingSlice';
+import accountsReducer from './slices/accountsSlice';
 import authReducer from './slices/authSlice';
 import backupReducer from './slices/backupSlice';
 import categoriesReducer from './slices/categoriesSlice';
@@ -12,6 +13,7 @@ import transactionsReducer from './slices/transactionsSlice';
 
 export const store = configureStore({
     reducer: {
+        accounts: accountsReducer,
         auth: authReducer,
         backup: backupReducer,
         categories: categoriesReducer,

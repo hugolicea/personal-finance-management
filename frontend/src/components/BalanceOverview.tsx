@@ -1,3 +1,5 @@
+import { memo, useMemo } from 'react';
+
 import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
 
@@ -5,27 +7,25 @@ interface BalanceOverviewProps {
     transactions: Transaction[];
 }
 
-function BalanceOverview({ transactions }: BalanceOverviewProps) {
-    const totalBalance = transactions.reduce((sum, t) => {
-        const amount = typeof t.amount === 'number' ? t.amount : 0;
-        return sum + amount;
-    }, 0);
-
-    const totalIncome = transactions
-        .filter((t) => typeof t.amount === 'number' && t.amount > 0)
-        .reduce(
-            (sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0),
-            0
-        );
-
-    const totalExpenses = Math.abs(
-        transactions
-            .filter((t) => typeof t.amount === 'number' && t.amount < 0)
-            .reduce(
-                (sum, t) => sum + (typeof t.amount === 'number' ? t.amount : 0),
-                0
-            )
-    );
+const BalanceOverview = memo(function BalanceOverview({
+    transactions,
+}: BalanceOverviewProps) {
+    const { totalBalance, totalIncome, totalExpenses } = useMemo(() => {
+        let balance = 0;
+        let income = 0;
+        let expenses = 0;
+        for (const t of transactions) {
+            const amount = typeof t.amount === 'number' ? t.amount : 0;
+            balance += amount;
+            if (amount > 0) income += amount;
+            else if (amount < 0) expenses -= amount;
+        }
+        return {
+            totalBalance: balance,
+            totalIncome: income,
+            totalExpenses: expenses,
+        };
+    }, [transactions]);
 
     return (
         <div className='bg-white overflow-hidden shadow rounded-lg'>
@@ -100,6 +100,6 @@ function BalanceOverview({ transactions }: BalanceOverviewProps) {
             </div>
         </div>
     );
-}
+});
 
 export default BalanceOverview;

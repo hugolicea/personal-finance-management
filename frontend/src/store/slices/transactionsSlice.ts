@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
 
 import type {
     BulkDeleteRequest,
@@ -24,7 +25,7 @@ const initialState: TransactionsState = {
 };
 
 interface FetchTransactionsParams {
-    transaction_type?: 'credit_card' | 'account';
+    account?: number;
     category?: string;
     search?: string;
     date_after?: string;
@@ -34,14 +35,17 @@ interface FetchTransactionsParams {
 
 export const fetchTransactions = createAsyncThunk(
     'transactions/fetchTransactions',
-    async (params?: FetchTransactionsParams) => {
+    async (
+        params: FetchTransactionsParams | undefined,
+        { rejectWithValue }
+    ) => {
         const queryParams = new URLSearchParams();
 
         // Add pagination - fetch more records to handle larger datasets
         queryParams.append('page_size', '1000');
 
-        if (params?.transaction_type) {
-            queryParams.append('transaction_type', params.transaction_type);
+        if (params?.account) {
+            queryParams.append('account', String(params.account));
         }
         if (params?.category) {
             queryParams.append('category', params.category);
@@ -59,81 +63,157 @@ export const fetchTransactions = createAsyncThunk(
             queryParams.append('ordering', params.ordering);
         }
 
-        const response = await apiClient.get(
-            `/api/v1/transactions/?${queryParams.toString()}`
-        );
-        return response.data.results || response.data;
+        try {
+            const response = await apiClient.get(
+                `/api/v1/transactions/?${queryParams.toString()}`
+            );
+            return response.data.results || response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to fetch transactions'
+                );
+            }
+            return rejectWithValue('Failed to fetch transactions');
+        }
     }
 );
 
 export const createTransaction = createAsyncThunk(
     'transactions/createTransaction',
-    async (transaction: Omit<Transaction, 'id'>) => {
-        const response = await apiClient.post(
-            '/api/v1/transactions/',
-            transaction
-        );
-        return response.data;
+    async (transaction: Omit<Transaction, 'id'>, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.post(
+                '/api/v1/transactions/',
+                transaction
+            );
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to create transaction'
+                );
+            }
+            return rejectWithValue('Failed to create transaction');
+        }
     }
 );
 
 export const updateTransaction = createAsyncThunk(
     'transactions/updateTransaction',
-    async ({ id, ...transaction }: Partial<Transaction> & { id: number }) => {
-        const response = await apiClient.put(
-            `/api/v1/transactions/${id}/`,
-            transaction
-        );
-        return response.data;
+    async (
+        { id, ...transaction }: Partial<Transaction> & { id: number },
+        { rejectWithValue }
+    ) => {
+        try {
+            const response = await apiClient.put(
+                `/api/v1/transactions/${id}/`,
+                transaction
+            );
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to update transaction'
+                );
+            }
+            return rejectWithValue('Failed to update transaction');
+        }
     }
 );
 
 export const deleteTransaction = createAsyncThunk(
     'transactions/deleteTransaction',
-    async (id: number) => {
-        await apiClient.delete(`/api/v1/transactions/${id}/`);
-        return id;
+    async (id: number, { rejectWithValue }) => {
+        try {
+            await apiClient.delete(`/api/v1/transactions/${id}/`);
+            return id;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ?? 'Failed to delete transaction'
+                );
+            }
+            return rejectWithValue('Failed to delete transaction');
+        }
     }
 );
 
 export const uploadBankStatement = createAsyncThunk(
     'transactions/uploadBankStatement',
-    async (file: File) => {
+    async (
+        { file, accountId }: { file: File; accountId?: number },
+        { rejectWithValue }
+    ) => {
         const formData = new FormData();
         formData.append('file', file);
+        if (accountId !== undefined) {
+            formData.append('account_id', String(accountId));
+        }
 
-        const response = await apiClient.post(
-            '/api/v1/upload-bank-statement/',
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+        try {
+            const response = await apiClient.post(
+                '/api/v1/upload-bank-statement/',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+            return response.data;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ??
+                        err.response?.data?.error ??
+                        'Failed to upload bank statement'
+                );
             }
-        );
-        return response.data;
+            return rejectWithValue('Failed to upload bank statement');
+        }
     }
 );
 
 export const bulkReclassifyTransactions = createAsyncThunk(
     'transactions/bulkReclassify',
-    async (request: BulkReclassifyRequest): Promise<BulkReclassifyResponse> => {
-        const response = await apiClient.post(
-            '/api/v1/bulk-reclassify-transactions/',
-            request
-        );
-        return response.data;
+    async (request: BulkReclassifyRequest, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.post(
+                '/api/v1/bulk-reclassify-transactions/',
+                request
+            );
+            return response.data as BulkReclassifyResponse;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ??
+                        'Failed to reclassify transactions'
+                );
+            }
+            return rejectWithValue('Failed to reclassify transactions');
+        }
     }
 );
 
 export const bulkDeleteTransactions = createAsyncThunk(
     'transactions/bulkDelete',
-    async (request: BulkDeleteRequest): Promise<BulkDeleteResponse> => {
-        const response = await apiClient.post(
-            '/api/v1/bulk-delete-transactions/',
-            request
-        );
-        return response.data;
+    async (request: BulkDeleteRequest, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.post(
+                '/api/v1/bulk-delete-transactions/',
+                request
+            );
+            return response.data as BulkDeleteResponse;
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                return rejectWithValue(
+                    err.response?.data?.detail ??
+                        'Failed to delete transactions'
+                );
+            }
+            return rejectWithValue('Failed to delete transactions');
+        }
     }
 );
 
@@ -173,7 +253,8 @@ const transactionsSlice = createSlice({
             .addCase(fetchTransactions.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to fetch transactions';
+                    (action.payload as string) ||
+                    'Failed to fetch transactions';
             })
             .addCase(createTransaction.fulfilled, (state, action) => {
                 const transaction = {
@@ -231,7 +312,8 @@ const transactionsSlice = createSlice({
             .addCase(uploadBankStatement.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to upload bank statement';
+                    (action.payload as string) ||
+                    'Failed to upload bank statement';
             })
             .addCase(bulkReclassifyTransactions.pending, (state) => {
                 state.loading = true;
@@ -244,7 +326,8 @@ const transactionsSlice = createSlice({
             .addCase(bulkReclassifyTransactions.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to reclassify transactions';
+                    (action.payload as string) ||
+                    'Failed to reclassify transactions';
             })
             .addCase(bulkDeleteTransactions.pending, (state) => {
                 state.loading = true;
@@ -257,7 +340,8 @@ const transactionsSlice = createSlice({
             .addCase(bulkDeleteTransactions.rejected, (state, action) => {
                 state.loading = false;
                 state.error =
-                    action.error.message || 'Failed to delete transactions';
+                    (action.payload as string) ||
+                    'Failed to delete transactions';
             });
     },
 });
