@@ -133,6 +133,14 @@ function AccountsList() {
                                                 {ACCOUNT_TYPE_LABELS[
                                                     account.account_type
                                                 ] ?? account.account_type}
+                                                {account.account_number && (
+                                                    <span className='ml-1'>
+                                                        ••••{' '}
+                                                        {account.account_number.slice(
+                                                            -4
+                                                        )}
+                                                    </span>
+                                                )}
                                             </p>
                                         </div>
                                     </div>
