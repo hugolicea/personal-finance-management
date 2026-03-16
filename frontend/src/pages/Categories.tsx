@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -29,18 +29,15 @@ type CategoryPanelProps = {
     count: number;
     colorScheme: 'red' | 'green';
     table: Table<Category>;
-    searchValue: string;
-    onSearchChange: (value: string) => void;
 };
 
-const CategoryPanel = memo(function CategoryPanel({
+function CategoryPanel({
     title,
     count,
     colorScheme,
     table,
-    searchValue,
-    onSearchChange,
 }: CategoryPanelProps) {
+    const [searchValue, setSearchValue] = useState('');
     const isRed = colorScheme === 'red';
     const headerCls = isRed
         ? 'bg-red-50 border-b border-red-200 text-red-900'
@@ -62,7 +59,10 @@ const CategoryPanel = memo(function CategoryPanel({
                     type='text'
                     placeholder={searchPlaceholder}
                     value={searchValue}
-                    onChange={(e) => onSearchChange(e.target.value)}
+                    onChange={(e) => {
+                        setSearchValue(e.target.value);
+                        table.setGlobalFilter(e.target.value);
+                    }}
                     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 ${ringCls}`}
                 />
             </div>
@@ -109,11 +109,11 @@ const CategoryPanel = memo(function CategoryPanel({
             <Paginator table={table} />
         </div>
     );
-});
+}
 
 function Categories() {
     const dispatch = useAppDispatch();
-    const { categories, loading } = useAppSelector((state) => state.categories);
+    const { categories } = useAppSelector((state) => state.categories);
 
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(
@@ -124,11 +124,7 @@ function Categories() {
     const [deletingCategory, setDeletingCategory] = useState<Category | null>(
         null
     );
-    const [viewMode, setViewMode] = useState<'card' | 'table'>('table');
     const [deleteError, setDeleteError] = useState<string | null>(null);
-
-    const [spendGlobalFilter, setSpendGlobalFilter] = useState('');
-    const [incomeGlobalFilter, setIncomeGlobalFilter] = useState('');
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -240,19 +236,6 @@ function Categories() {
 
     const incomeColumns = spendColumns; // identical columns for income table
 
-    // Combined table instance removed — using per-table instances below
-
-    // Per-table pagination state
-    const [spendPagination, setSpendPagination] = useState({
-        pageIndex: 0,
-        pageSize: 5,
-    });
-
-    const [incomePagination, setIncomePagination] = useState({
-        pageIndex: 0,
-        pageSize: 5,
-    });
-
     const spendTable = useReactTable({
         data: spendCategories,
         columns: spendColumns,
@@ -260,9 +243,7 @@ function Categories() {
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        onPaginationChange: setSpendPagination,
-        onGlobalFilterChange: setSpendGlobalFilter,
-        state: { pagination: spendPagination, globalFilter: spendGlobalFilter },
+        initialState: { pagination: { pageIndex: 0, pageSize: 5 } },
     });
 
     const incomeTable = useReactTable({
@@ -272,12 +253,7 @@ function Categories() {
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        onPaginationChange: setIncomePagination,
-        onGlobalFilterChange: setIncomeGlobalFilter,
-        state: {
-            pagination: incomePagination,
-            globalFilter: incomeGlobalFilter,
-        },
+        initialState: { pagination: { pageIndex: 0, pageSize: 5 } },
     });
 
     return (
@@ -288,32 +264,7 @@ function Categories() {
                         Categories
                     </h1>
 
-                    {/* Add Category Button */}
-                    <div className='flex justify-between items-center mb-4'>
-                        <div className='flex items-center space-x-2'>
-                            <span className='text-sm text-gray-700'>View:</span>
-                            <button
-                                onClick={() => setViewMode('card')}
-                                className={`px-3 py-1 text-sm rounded-md ${
-                                    viewMode === 'card'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                }`}
-                            >
-                                Cards
-                            </button>
-                            <button
-                                onClick={() => setViewMode('table')}
-                                className={`px-3 py-1 text-sm rounded-md ${
-                                    viewMode === 'table'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                }`}
-                            >
-                                Table
-                            </button>
-                        </div>
-
+                    <div className='flex justify-end mb-4'>
                         <button
                             onClick={handleAddCategory}
                             className='bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 border-2 border-green-800'
@@ -322,163 +273,20 @@ function Categories() {
                         </button>
                     </div>
 
-                    {/* Global Search and Filters - Only show in table view */}
-
-                    {/* Categories Display */}
-                    {viewMode === 'card' ? (
-                        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                            {/* Spends Panel */}
-                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-                                <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
-                                    <h3 className='text-lg font-medium text-red-900'>
-                                        💸 Spending Categories
-                                    </h3>
-                                </div>
-                                {loading ? (
-                                    <div className='p-6 text-center text-gray-500'>
-                                        Loading categories...
-                                    </div>
-                                ) : spendCategories.length === 0 ? (
-                                    <div className='p-6 text-center text-gray-500'>
-                                        No spending categories found
-                                    </div>
-                                ) : (
-                                    <div className='divide-y divide-gray-200'>
-                                        {spendCategories.map((category) => (
-                                            <div
-                                                key={`spend-${category.id}`}
-                                                className='p-6'
-                                            >
-                                                <div className='flex items-center justify-between'>
-                                                    <div className='flex items-center space-x-4'>
-                                                        <h3 className='text-lg font-medium text-gray-900'>
-                                                            {category.name}
-                                                        </h3>
-                                                        <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800'>
-                                                            💸 Spend
-                                                        </span>
-                                                    </div>
-                                                    <div className='flex space-x-2'>
-                                                        <EditDeleteIconButtons
-                                                            onEdit={() =>
-                                                                handleEditCategory(
-                                                                    category
-                                                                )
-                                                            }
-                                                            onDelete={() =>
-                                                                handleDeleteCategory(
-                                                                    category
-                                                                )
-                                                            }
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Category Details */}
-                                                <div className='mt-4 pt-4 border-t border-gray-200'>
-                                                    <div className='flex justify-between items-center'>
-                                                        <span className='text-sm text-gray-500'>
-                                                            Monthly Budget
-                                                        </span>
-                                                        <span className='text-lg font-semibold text-blue-600'>
-                                                            {formatCurrency(
-                                                                category.monthly_budget ??
-                                                                    0
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Incomes Panel */}
-                            <div className='bg-white shadow overflow-hidden sm:rounded-md'>
-                                <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
-                                    <h3 className='text-lg font-medium text-green-900'>
-                                        💰 Income Categories
-                                    </h3>
-                                </div>
-                                {loading ? (
-                                    <div className='p-6 text-center text-gray-500'>
-                                        Loading categories...
-                                    </div>
-                                ) : incomeCategories.length === 0 ? (
-                                    <div className='p-6 text-center text-gray-500'>
-                                        No income categories found
-                                    </div>
-                                ) : (
-                                    <div className='divide-y divide-gray-200'>
-                                        {incomeCategories.map((category) => (
-                                            <div
-                                                key={`income-${category.id}`}
-                                                className='p-6'
-                                            >
-                                                <div className='flex items-center justify-between'>
-                                                    <div className='flex items-center space-x-4'>
-                                                        <h3 className='text-lg font-medium text-gray-900'>
-                                                            {category.name}
-                                                        </h3>
-                                                        <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                                                            💰 Income
-                                                        </span>
-                                                    </div>
-                                                    <EditDeleteIconButtons
-                                                        onEdit={() =>
-                                                            handleEditCategory(
-                                                                category
-                                                            )
-                                                        }
-                                                        onDelete={() =>
-                                                            handleDeleteCategory(
-                                                                category
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-
-                                                {/* Category Details */}
-                                                <div className='mt-4 pt-4 border-t border-gray-200'>
-                                                    <div className='flex justify-between items-center'>
-                                                        <span className='text-sm text-gray-500'>
-                                                            Monthly Budget
-                                                        </span>
-                                                        <span className='text-lg font-semibold text-blue-600'>
-                                                            {formatCurrency(
-                                                                category.monthly_budget ??
-                                                                    0
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-                            <CategoryPanel
-                                title='💸 Spending Categories'
-                                count={spendCategories.length}
-                                colorScheme='red'
-                                table={spendTable}
-                                searchValue={spendGlobalFilter}
-                                onSearchChange={setSpendGlobalFilter}
-                            />
-                            <CategoryPanel
-                                title='💰 Income Categories'
-                                count={incomeCategories.length}
-                                colorScheme='green'
-                                table={incomeTable}
-                                searchValue={incomeGlobalFilter}
-                                onSearchChange={setIncomeGlobalFilter}
-                            />
-                        </div>
-                    )}
+                    <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                        <CategoryPanel
+                            title='💸 Spending Categories'
+                            count={spendCategories.length}
+                            colorScheme='red'
+                            table={spendTable}
+                        />
+                        <CategoryPanel
+                            title='💰 Income Categories'
+                            count={incomeCategories.length}
+                            colorScheme='green'
+                            table={incomeTable}
+                        />
+                    </div>
                 </div>
             </div>
 
