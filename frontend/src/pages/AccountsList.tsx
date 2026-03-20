@@ -153,30 +153,36 @@ function AccountsList() {
                                     </p>
                                 )}
 
-                                <div className='border-t pt-2 mt-2 flex justify-between items-center'>
-                                    <div>
-                                        <p className='text-xs text-gray-500'>
-                                            Balance
-                                        </p>
-                                        <p
-                                            className={`font-bold text-sm ${
-                                                account.total_balance >= 0
-                                                    ? 'text-green-600'
-                                                    : 'text-red-600'
-                                            }`}
-                                        >
-                                            {formatCurrency(
-                                                account.total_balance
-                                            )}
-                                        </p>
-                                    </div>
-                                    <div className='text-right'>
-                                        <p className='text-xs text-gray-500'>
-                                            Transactions
-                                        </p>
-                                        <p className='font-semibold text-gray-700 text-sm'>
-                                            {account.transaction_count}
-                                        </p>
+                                <div className='border-t pt-2 mt-2'>
+                                    <p className='text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide'>
+                                        This month
+                                    </p>
+                                    <div className='flex justify-between items-center'>
+                                        <div>
+                                            <p className='text-xs text-gray-500'>
+                                                Balance
+                                            </p>
+                                            <p
+                                                className={`font-bold text-sm ${
+                                                    account.current_month_balance >=
+                                                    0
+                                                        ? 'text-green-600'
+                                                        : 'text-red-600'
+                                                }`}
+                                            >
+                                                {formatCurrency(
+                                                    account.current_month_balance
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div className='text-right'>
+                                            <p className='text-xs text-gray-500'>
+                                                Transactions
+                                            </p>
+                                            <p className='font-semibold text-gray-700 text-sm'>
+                                                {account.current_month_count}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </button>

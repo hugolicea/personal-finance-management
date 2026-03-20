@@ -20,6 +20,8 @@ export interface BankAccount {
     updated_at: string;
     transaction_count: number;
     total_balance: number;
+    current_month_count: number;
+    current_month_balance: number;
 }
 
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {

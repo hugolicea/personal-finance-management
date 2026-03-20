@@ -1,4 +1,5 @@
 from django.db.models import Sum
+from django.utils import timezone
 
 from rest_framework import serializers
 
@@ -137,6 +138,8 @@ class RetirementAccountSerializer(serializers.ModelSerializer):
 class BankAccountSerializer(serializers.ModelSerializer):
     transaction_count = serializers.SerializerMethodField()
     total_balance = serializers.SerializerMethodField()
+    current_month_count = serializers.SerializerMethodField()
+    current_month_balance = serializers.SerializerMethodField()
 
     def get_transaction_count(self, instance: BankAccount) -> int:
         # Use queryset annotation when available to avoid N+1 on list endpoints
@@ -150,6 +153,24 @@ class BankAccountSerializer(serializers.ModelSerializer):
             val = instance.total_balance  # type: ignore[attr-defined]
             return float(val) if val is not None else 0.0
         total = instance.transactions.aggregate(total=Sum("amount"))["total"]
+        return float(total) if total is not None else 0.0
+
+    def get_current_month_count(self, instance: BankAccount) -> int:
+        if hasattr(instance, "current_month_count"):
+            return instance.current_month_count  # type: ignore[return-value]
+        now = timezone.now()
+        return instance.transactions.filter(
+            date__year=now.year, date__month=now.month
+        ).count()
+
+    def get_current_month_balance(self, instance: BankAccount) -> float:
+        if hasattr(instance, "current_month_balance"):
+            val = instance.current_month_balance  # type: ignore[attr-defined]
+            return float(val) if val is not None else 0.0
+        now = timezone.now()
+        total = instance.transactions.filter(
+            date__year=now.year, date__month=now.month
+        ).aggregate(total=Sum("amount"))["total"]
         return float(total) if total is not None else 0.0
 
     class Meta:
@@ -167,6 +188,8 @@ class BankAccountSerializer(serializers.ModelSerializer):
             "updated_at",
             "transaction_count",
             "total_balance",
+            "current_month_count",
+            "current_month_balance",
         ]
         read_only_fields = ["created_at", "updated_at"]
 

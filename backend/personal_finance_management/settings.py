@@ -43,9 +43,8 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 100,  # Reduced from 5000 for better performance
-    "MAX_PAGE_SIZE": 1000,  # Reduced from 10000 to prevent abuse
+    "DEFAULT_PAGINATION_CLASS": "budget.pagination.StandardResultsPagination",
+    "PAGE_SIZE": 100,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",

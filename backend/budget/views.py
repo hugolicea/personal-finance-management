@@ -3,10 +3,12 @@ import hashlib
 import io
 import json
 from datetime import datetime, timedelta
+from decimal import Decimal
 
-from django.db.models import Count, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
+from django.utils import timezone
 
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
@@ -120,14 +122,21 @@ class BankAccountViewSet(viewsets.ModelViewSet):
     ordering = ["name"]
 
     def get_queryset(self):
-        from decimal import Decimal
-
+        now = timezone.now()
+        month_filter = Q(
+            transactions__date__year=now.year,
+            transactions__date__month=now.month,
+        )
         return (
             BankAccount.objects.filter(user=self.request.user)
             .select_related("user")
             .annotate(
                 transaction_count=Count("transactions"),
                 total_balance=Coalesce(Sum("transactions__amount"), Decimal("0.00")),
+                current_month_count=Count("transactions", filter=month_filter),
+                current_month_balance=Coalesce(
+                    Sum("transactions__amount", filter=month_filter), Decimal("0.00")
+                ),
             )
             .order_by("name")
         )

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
     ColumnFiltersState,
     SortingState,
+    createColumnHelper,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -12,6 +13,7 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 
+import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
@@ -20,6 +22,7 @@ import {
 } from '../store/slices/categoriesSlice';
 import { fetchTransactions } from '../store/slices/transactionsSlice';
 import { Category } from '../types/categories';
+import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
 
 interface CategoryStats {
@@ -46,39 +49,101 @@ const EMPTY_STATS: CategoryStats = {
     average: 0,
 };
 
+// Hoisted to module level — not recomputed on every render (vercel rendering-hoist-jsx)
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => CURRENT_YEAR - 2 + i);
+
+// Column helper and column defs for the per-category transaction modal
+const txColumnHelper = createColumnHelper<Transaction>();
+
+const MODAL_COLUMNS = [
+    txColumnHelper.accessor('date', {
+        header: 'Date',
+        cell: (info) =>
+            new Date(info.getValue()).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            }),
+        sortingFn: 'datetime',
+    }),
+    txColumnHelper.accessor('description', {
+        header: 'Description',
+        cell: (info) => (
+            <span className='max-w-xs truncate block' title={info.getValue()}>
+                {info.getValue()}
+            </span>
+        ),
+    }),
+    txColumnHelper.accessor('account_name', {
+        header: 'Account',
+        cell: (info) => info.getValue() ?? '—',
+    }),
+    txColumnHelper.accessor('amount', {
+        header: 'Amount',
+        cell: (info) => {
+            const val = info.getValue();
+            return (
+                <span
+                    className={
+                        val >= 0
+                            ? 'text-green-600 font-medium'
+                            : 'text-red-600 font-medium'
+                    }
+                >
+                    {formatCurrency(val)}
+                </span>
+            );
+        },
+    }),
+];
+
 function Balance() {
     const dispatch = useAppDispatch();
     const { categories } = useAppSelector((state) => state.categories);
     const { transactions } = useAppSelector((state) => state.transactions);
 
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    // Lazy init — new Date() called only once on mount (vercel rerender-lazy-state-init)
+    const [selectedYear, setSelectedYear] = useState(() =>
+        new Date().getFullYear()
+    );
     const [selectedMonth, setSelectedMonth] = useState(
-        new Date().getMonth() + 1
-    ); // JS months are 0-based
+        () => new Date().getMonth() + 1
+    );
 
     useEffect(() => {
+        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+        const dateAfter = `${selectedYear}-${String(selectedMonth).padStart(
+            2,
+            '0'
+        )}-01`;
+        const dateBefore = `${selectedYear}-${String(selectedMonth).padStart(
+            2,
+            '0'
+        )}-${String(lastDay).padStart(2, '0')}`;
+
         dispatch(fetchCategories());
-        dispatch(fetchTransactions({}));
+        dispatch(
+            fetchTransactions({
+                date_after: dateAfter,
+                date_before: dateBefore,
+            })
+        );
         dispatch(
             fetchCategorySpending(
-                `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`
+                `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`
             )
         );
     }, [dispatch, selectedYear, selectedMonth]);
 
-    // Build a per-category stats map in a single pass over transactions
+    // Build a per-category stats map in a single pass over transactions.
+    // The backend already filters to the selected month via date_after/date_before.
     const categoryStatsMap = useMemo(() => {
         const map = new Map<number, CategoryStats>();
         for (const cat of categories) {
             map.set(cat.id, { ...EMPTY_STATS });
         }
         for (const t of transactions) {
-            const tDate = new Date(t.date);
-            if (
-                tDate.getFullYear() !== selectedYear ||
-                tDate.getMonth() + 1 !== selectedMonth
-            )
-                continue;
             const stats = map.get(t.category);
             if (!stats) continue;
             stats.count++;
@@ -93,7 +158,7 @@ function Balance() {
             stats.average = stats.count > 0 ? stats.total / stats.count : 0;
         }
         return map;
-    }, [transactions, categories, selectedYear, selectedMonth]);
+    }, [transactions, categories]);
 
     // Separate categories into spends and incomes
     const spendCategories = useMemo(
@@ -131,6 +196,19 @@ function Balance() {
         [spendTableData]
     );
 
+    const spendTotalBudget = useMemo(
+        () =>
+            spendTableData.reduce(
+                (sum, c) =>
+                    sum +
+                    (c.monthly_budget
+                        ? parseFloat(String(c.monthly_budget))
+                        : 0),
+                0
+            ),
+        [spendTableData]
+    );
+
     const incomeTableData = useMemo(
         () =>
             incomeCategories.map((c) => ({
@@ -144,6 +222,37 @@ function Balance() {
         () => incomeTableData.reduce((sum, c) => sum + c.stats.totalIncomes, 0),
         [incomeTableData]
     );
+
+    // Modal state — which category's transactions to show
+    const [modalCategory, setModalCategory] = useState<{
+        id: number;
+        name: string;
+    } | null>(null);
+
+    const handleOpenModal = useCallback((id: number, name: string) => {
+        setModalCategory({ id, name });
+    }, []);
+
+    // Filter already-loaded transactions for the modal category
+    const modalTransactions = useMemo(
+        () =>
+            modalCategory
+                ? transactions.filter((t) => t.category === modalCategory.id)
+                : [],
+        [transactions, modalCategory]
+    );
+
+    const modalTable = useReactTable({
+        data: modalTransactions,
+        columns: MODAL_COLUMNS,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        initialState: {
+            pagination: { pageSize: 20 },
+            sorting: [{ id: 'date', desc: true }],
+        },
+    });
 
     // Define columns for spends table
     const spendColumns = useMemo<ColumnDef<TableCategory>[]>(
@@ -162,34 +271,93 @@ function Balance() {
                 header: 'Transactions',
                 accessorFn: (row) => row.stats.spendCount,
                 cell: ({ row }) => (
-                    <div className='text-sm text-gray-900'>
+                    <button
+                        onClick={() =>
+                            handleOpenModal(row.original.id, row.original.name)
+                        }
+                        className='text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline'
+                        aria-label={`View ${row.original.stats.spendCount} transactions for ${row.original.name}`}
+                    >
                         {row.original.stats.spendCount}
-                    </div>
+                    </button>
                 ),
             },
             {
-                id: 'totalAmount',
-                header: 'Total Amount',
+                id: 'budgetUsage',
+                header: 'Budget Usage',
                 accessorFn: (row) => Math.abs(row.stats.totalSpends),
                 cell: ({ row }) => {
-                    const amount = Math.abs(row.original.stats.totalSpends);
-                    return (
-                        <div className='text-sm font-semibold text-red-600'>
-                            {formatCurrency(amount)}
-                        </div>
-                    );
-                },
-            },
-            {
-                accessorKey: 'monthly_budget',
-                header: 'Budget',
-                cell: ({ row }) => {
+                    const spent = Math.abs(row.original.stats.totalSpends);
                     const budget = row.original.monthly_budget
                         ? parseFloat(String(row.original.monthly_budget))
                         : 0;
+
+                    if (budget === 0) {
+                        return (
+                            <div>
+                                <div className='text-sm font-semibold text-red-600'>
+                                    {formatCurrency(spent)}
+                                </div>
+                                <div className='text-xs text-gray-400 mt-0.5'>
+                                    No budget set
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    const pct = Math.min((spent / budget) * 100, 100);
+                    const isOver = spent > budget;
+                    const isWarn = !isOver && pct >= 75;
+                    const barColor = isOver
+                        ? 'bg-red-500'
+                        : isWarn
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500';
+                    const trackColor = isOver
+                        ? 'bg-red-100'
+                        : isWarn
+                          ? 'bg-yellow-100'
+                          : 'bg-green-100';
+
                     return (
-                        <div className='text-sm font-semibold text-blue-600'>
-                            {formatCurrency(budget)}
+                        <div className='min-w-[160px]'>
+                            <div className='flex justify-between text-xs mb-1'>
+                                <span className='font-semibold text-red-600'>
+                                    {formatCurrency(spent)}
+                                </span>
+                                <span className='text-gray-400'>
+                                    of {formatCurrency(budget)}
+                                </span>
+                            </div>
+                            {/* Accessible progress bar — WCAG 1.4.1: color + text label */}
+                            <div
+                                className={`w-full h-2 rounded-full ${trackColor}`}
+                                role='progressbar'
+                                aria-valuenow={Math.round(pct)}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={`${Math.round(
+                                    pct
+                                )}% of budget used`}
+                            >
+                                <div
+                                    className={`h-2 rounded-full ${barColor} transition-[width] duration-300`}
+                                    style={{ width: `${pct}%` }}
+                                />
+                            </div>
+                            <div
+                                className={`text-xs mt-1 ${
+                                    isOver
+                                        ? 'text-red-600 font-semibold'
+                                        : 'text-gray-400'
+                                }`}
+                            >
+                                {isOver
+                                    ? `${formatCurrency(
+                                          spent - budget
+                                      )} over budget`
+                                    : `${Math.round(pct)}% used`}
+                            </div>
                         </div>
                     );
                 },
@@ -222,7 +390,7 @@ function Balance() {
                 },
             },
         ],
-        []
+        [handleOpenModal]
     );
 
     // Define columns for incomes table
@@ -242,9 +410,15 @@ function Balance() {
                 header: 'Transactions',
                 accessorFn: (row) => row.stats.incomeCount,
                 cell: ({ row }) => (
-                    <div className='text-sm text-gray-900'>
+                    <button
+                        onClick={() =>
+                            handleOpenModal(row.original.id, row.original.name)
+                        }
+                        className='text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline'
+                        aria-label={`View ${row.original.stats.incomeCount} transactions for ${row.original.name}`}
+                    >
                         {row.original.stats.incomeCount}
-                    </div>
+                    </button>
                 ),
             },
             {
@@ -261,12 +435,12 @@ function Balance() {
                 },
             },
         ],
-        []
+        [handleOpenModal]
     );
 
     // Create table instances for spends and incomes
     const [spendSorting, setSpendSorting] = useState<SortingState>([
-        { id: 'totalAmount', desc: true },
+        { id: 'budgetUsage', desc: true },
     ]);
     const [spendColumnFilters, setSpendColumnFilters] =
         useState<ColumnFiltersState>([]);
@@ -342,15 +516,11 @@ function Balance() {
                                 }
                                 className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
                             >
-                                {Array.from({ length: 5 }, (_, i) => {
-                                    const year =
-                                        new Date().getFullYear() - 2 + i;
-                                    return (
-                                        <option key={year} value={year}>
-                                            {year}
-                                        </option>
-                                    );
-                                })}
+                                {YEAR_OPTIONS.map((year) => (
+                                    <option key={year} value={year}>
+                                        {year}
+                                    </option>
+                                ))}
                             </select>
 
                             <label
@@ -401,10 +571,15 @@ function Balance() {
                                     </div>
                                     <div className='text-right'>
                                         <div className='text-sm text-gray-600'>
-                                            Total
+                                            Spent
                                         </div>
                                         <div className='text-lg font-semibold text-red-600'>
                                             {formatCurrency(spendTotalAmount)}
+                                        </div>
+                                        <div className='text-xs text-gray-400 mt-0.5'>
+                                            of{' '}
+                                            {formatCurrency(spendTotalBudget)}{' '}
+                                            budget
                                         </div>
                                     </div>
                                 </div>
@@ -640,6 +815,85 @@ function Balance() {
                     </div>
                 </div>
             </div>
+
+            {/* Per-category transaction modal */}
+            <Modal
+                isOpen={modalCategory !== null}
+                onClose={() => setModalCategory(null)}
+                title={`${modalCategory?.name ?? ''} — Transactions`}
+                maxWidth='max-w-5xl'
+            >
+                <div className='overflow-x-auto'>
+                    <table className='min-w-full divide-y divide-gray-200'>
+                        <thead className='bg-gray-50'>
+                            {modalTable.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <th
+                                            key={header.id}
+                                            scope='col'
+                                            onClick={header.column.getToggleSortingHandler()}
+                                            aria-sort={
+                                                header.column.getIsSorted() ===
+                                                'asc'
+                                                    ? 'ascending'
+                                                    : header.column.getIsSorted() ===
+                                                        'desc'
+                                                      ? 'descending'
+                                                      : 'none'
+                                            }
+                                            className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100'
+                                        >
+                                            <div className='flex items-center gap-1'>
+                                                {
+                                                    header.column.columnDef
+                                                        .header as string
+                                                }
+                                                {header.column.getIsSorted() ===
+                                                    'asc' && ' ↑'}
+                                                {header.column.getIsSorted() ===
+                                                    'desc' && ' ↓'}
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                        </thead>
+                        <tbody className='bg-white divide-y divide-gray-200'>
+                            {modalTable.getRowModel().rows.length === 0 ? (
+                                <tr>
+                                    <td
+                                        colSpan={4}
+                                        className='px-4 py-12 text-center text-gray-400'
+                                    >
+                                        No transactions found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                modalTable.getRowModel().rows.map((row) => (
+                                    <tr
+                                        key={row.id}
+                                        className='hover:bg-gray-50'
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <td
+                                                key={cell.id}
+                                                className='px-4 py-3 text-sm text-gray-700'
+                                            >
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                <Paginator table={modalTable} />
+            </Modal>
         </div>
     );
 }
