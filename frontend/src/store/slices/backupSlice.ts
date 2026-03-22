@@ -14,12 +14,14 @@ export interface RestoreResult {
     message: string;
     summary: {
         categories: number;
+        bank_accounts: number;
         transactions: number;
         investments: number;
         heritages: number;
         retirement_accounts: number;
         reclassification_rules: number;
         category_deletion_rules: number;
+        users?: number;
     };
 }
 
@@ -32,10 +34,14 @@ const initialState: BackupState = {
 
 export const downloadBackup = createAsyncThunk(
     'backup/download',
-    async (_, { rejectWithValue }) => {
+    async (models: string[] | undefined, { rejectWithValue }) => {
         try {
             const response = await apiClient.get('/api/v1/backup/', {
                 responseType: 'blob',
+                params:
+                    models && models.length > 0
+                        ? { models: models.join(',') }
+                        : undefined,
             });
             const contentDisposition =
                 response.headers['content-disposition'] ?? '';

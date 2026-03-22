@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.utils import timezone
 
@@ -13,6 +14,15 @@ from .models import (
     RetirementAccount,
     Transaction,
 )
+
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    """Extends the default dj_rest_auth user serializer to expose is_staff."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ["id", "username", "email", "first_name", "last_name", "is_staff"]
+        read_only_fields = ["is_staff"]
 
 
 class CategorySerializer(serializers.ModelSerializer):

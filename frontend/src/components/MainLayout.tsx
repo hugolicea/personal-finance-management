@@ -81,6 +81,7 @@ function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
             icon: '🧹',
         },
         { path: '/backup', label: 'Backup & Restore', icon: '💾' },
+        { path: '/tools', label: 'Financial Tools', icon: '🧮' },
     ];
 
     const isAccountsActive =

@@ -246,6 +246,7 @@ REST_AUTH = {
     # Default is False so local HTTP development works without extra config.
     "JWT_AUTH_SECURE": config("JWT_COOKIE_SECURE", default=False, cast=bool),
     "JWT_AUTH_COOKIE_USE_CSRF": False,
+    "USER_DETAILS_SERIALIZER": "budget.serializers.UserDetailsSerializer",
 }
 
 # Ensure logs directory exists
