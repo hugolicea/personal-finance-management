@@ -6,10 +6,13 @@ import AccountTransactionsPage from '../pages/AccountTransactionsPage';
 import Balance from '../pages/Balance';
 import Categories from '../pages/Categories';
 import CleanAndReclassify from '../pages/CleanAndReclassify';
+import CompoundInterestCalculator from '../pages/CompoundInterestCalculator';
 import Dashboard from '../pages/Dashboard';
 import DatabaseBackup from '../pages/DatabaseBackup';
+import FinancialTools from '../pages/FinancialTools';
 import Heritage from '../pages/Heritage';
 import Investments from '../pages/Investments';
+import LoanCalculator from '../pages/LoanCalculator';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Reports from '../pages/Reports';
@@ -105,6 +108,30 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <DatabaseBackup />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/tools'
+                element={
+                    <PrivateRoute>
+                        <FinancialTools />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/tools/compound-interest'
+                element={
+                    <PrivateRoute>
+                        <CompoundInterestCalculator />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/tools/loan-calculator'
+                element={
+                    <PrivateRoute>
+                        <LoanCalculator />
                     </PrivateRoute>
                 }
             />

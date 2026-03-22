@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
@@ -7,19 +7,102 @@ import {
     restoreBackup,
 } from '../store/slices/backupSlice';
 
+// Hoisted to module level — never recreated on render (rendering-hoist-jsx)
+// Regular models: governed by the "All" toggle, available to every user.
+const REGULAR_MODEL_KEYS = [
+    'categories',
+    'bank_accounts',
+    'transactions',
+    'investments',
+    'heritages',
+    'retirement_accounts',
+    'reclassification_rules',
+    'category_deletion_rules',
+] as const;
+
+// Staff-only models: opt-in only, never included by the "All" toggle.
+const STAFF_MODEL_KEYS = ['users'] as const;
+
+const ALL_MODEL_KEYS = [...REGULAR_MODEL_KEYS, ...STAFF_MODEL_KEYS] as const;
+
+type BackupModel = (typeof ALL_MODEL_KEYS)[number];
+
+const MODEL_LABELS: Record<BackupModel, string> = {
+    users: 'Users',
+    categories: 'Categories',
+    bank_accounts: 'Bank Accounts',
+    transactions: 'Transactions',
+    investments: 'Investments',
+    heritages: 'Heritage / Property',
+    retirement_accounts: 'Retirement Accounts',
+    reclassification_rules: 'Reclassification Rules',
+    category_deletion_rules: 'Category Deletion Rules',
+};
+
 function DatabaseBackup() {
     const dispatch = useAppDispatch();
     const { downloadLoading, restoreLoading, error, restoreResult } =
         useAppSelector((state) => state.backup);
+    const isStaff = useAppSelector(
+        (state) => state.auth.user?.is_staff ?? false
+    );
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [replaceExisting, setReplaceExisting] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [confirmReplace, setConfirmReplace] = useState(false);
     const [confirmError, setConfirmError] = useState<string | null>(null);
+    // Lazy init — Set is non-primitive (rerender-lazy-state-init)
+    // Staff-only models ('users') are excluded from the default selection.
+    const [selectedModels, setSelectedModels] = useState<Set<BackupModel>>(
+        () => new Set(REGULAR_MODEL_KEYS)
+    );
+    // ref for the "All" checkbox indeterminate state (cannot be set via React prop)
+    const allCheckboxRef = useRef<HTMLInputElement>(null);
+
+    const allRegularSelected = REGULAR_MODEL_KEYS.every((k) =>
+        selectedModels.has(k)
+    );
+    const someRegularSelected =
+        REGULAR_MODEL_KEYS.some((k) => selectedModels.has(k)) &&
+        !allRegularSelected;
+
+    // Drive the indeterminate attribute imperatively whenever selection changes
+    useEffect(() => {
+        if (allCheckboxRef.current) {
+            allCheckboxRef.current.indeterminate = someRegularSelected;
+        }
+    }, [someRegularSelected]);
+
+    const handleToggleAll = useCallback(() => {
+        // Only toggles regular (non-staff) models — never auto-selects 'users'.
+        setSelectedModels((prev) => {
+            const next = new Set(prev);
+            if (allRegularSelected) {
+                REGULAR_MODEL_KEYS.forEach((k) => next.delete(k));
+            } else {
+                REGULAR_MODEL_KEYS.forEach((k) => next.add(k));
+            }
+            return next;
+        });
+    }, [allRegularSelected]);
+
+    const handleToggleModel = useCallback((model: BackupModel) => {
+        setSelectedModels((prev) => {
+            const next = new Set(prev);
+            if (next.has(model)) {
+                next.delete(model);
+            } else {
+                next.add(model);
+            }
+            return next;
+        });
+    }, []);
 
     const handleDownload = useCallback(() => {
-        dispatch(downloadBackup());
-    }, [dispatch]);
+        // Always send explicit list — never rely on backend "all" default
+        // which would include users and cause 403 for non-staff.
+        dispatch(downloadBackup(Array.from(selectedModels)));
+    }, [dispatch, selectedModels]);
 
     const handleFileSelect = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
@@ -75,18 +158,91 @@ function DatabaseBackup() {
             </div>
 
             {/* Backup section */}
-            <div className='bg-white shadow rounded-lg p-6'>
+            <div className='bg-white shadow rounded-lg p-6 space-y-4'>
                 <h2 className='text-lg font-medium text-gray-900 mb-1'>
                     Export Backup
                 </h2>
-                <p className='text-sm text-gray-500 mb-4'>
-                    Downloads a JSON file containing all your categories,
-                    transactions, investments, heritage, retirement accounts,
-                    and rules.
+                <p className='text-sm text-gray-500'>
+                    Downloads a JSON file containing your selected data. Choose
+                    which models to include below.
                 </p>
+
+                {/* Model selector */}
+                <fieldset>
+                    <legend className='text-sm font-medium text-gray-700 mb-2'>
+                        Include in backup
+                    </legend>
+                    <div className='rounded-md border border-gray-200 divide-y divide-gray-100'>
+                        {/* "All" master toggle — controls regular models only */}
+                        <label className='flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 rounded-t-md'>
+                            <input
+                                ref={allCheckboxRef}
+                                type='checkbox'
+                                checked={allRegularSelected}
+                                onChange={handleToggleAll}
+                                className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                aria-label='Select all data types'
+                            />
+                            <span className='text-sm font-semibold text-gray-800'>
+                                All
+                            </span>
+                            <span className='ml-auto text-xs text-gray-400'>
+                                {
+                                    REGULAR_MODEL_KEYS.filter((k) =>
+                                        selectedModels.has(k)
+                                    ).length
+                                }{' '}
+                                / {REGULAR_MODEL_KEYS.length} selected
+                            </span>
+                        </label>
+
+                        {/* Regular model checkboxes */}
+                        {REGULAR_MODEL_KEYS.map((model) => (
+                            <label
+                                key={model}
+                                className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer hover:bg-gray-50'
+                            >
+                                <input
+                                    type='checkbox'
+                                    checked={selectedModels.has(model)}
+                                    onChange={() => handleToggleModel(model)}
+                                    className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                />
+                                <span className='text-sm text-gray-700'>
+                                    {MODEL_LABELS[model]}
+                                </span>
+                            </label>
+                        ))}
+
+                        {/* Staff-only model checkboxes — only rendered for staff users */}
+                        {isStaff &&
+                            STAFF_MODEL_KEYS.map((model) => (
+                                <label
+                                    key={model}
+                                    className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer hover:bg-gray-50 last:rounded-b-md'
+                                >
+                                    <input
+                                        type='checkbox'
+                                        checked={selectedModels.has(model)}
+                                        onChange={() =>
+                                            handleToggleModel(model)
+                                        }
+                                        className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                    />
+                                    <span className='text-sm text-gray-700'>
+                                        {MODEL_LABELS[model]}
+                                    </span>
+                                    <span className='ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700'>
+                                        staff only
+                                    </span>
+                                </label>
+                            ))}
+                    </div>
+                </fieldset>
+
                 <button
                     onClick={handleDownload}
-                    disabled={downloadLoading}
+                    disabled={downloadLoading || selectedModels.size === 0}
                     className='inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                     {downloadLoading ? (
@@ -115,6 +271,11 @@ function DatabaseBackup() {
                     )}
                     Download Backup
                 </button>
+                {selectedModels.size === 0 && (
+                    <p className='text-xs text-amber-600'>
+                        Select at least one data type to export.
+                    </p>
+                )}
             </div>
 
             {/* Restore section */}
