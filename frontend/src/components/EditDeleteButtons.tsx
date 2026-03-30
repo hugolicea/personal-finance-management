@@ -12,14 +12,14 @@ export default function EditDeleteButtons({
     className = '',
 }: Props): ReactElement {
     return (
-        <div className={className + ' flex items-center space-x-2'}>
+        <div className={className + ' flex items-center gap-2'}>
             <button
                 onClick={onEdit}
-                className='inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
+                className='btn btn-outline btn-info btn-sm'
                 aria-label='Edit'
             >
                 <svg
-                    className='w-4 h-4 mr-1.5'
+                    className='w-4 h-4'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'
@@ -35,11 +35,11 @@ export default function EditDeleteButtons({
             </button>
             <button
                 onClick={onDelete}
-                className='inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200'
+                className='btn btn-outline btn-error btn-sm'
                 aria-label='Delete'
             >
                 <svg
-                    className='w-4 h-4 mr-1.5'
+                    className='w-4 h-4'
                     fill='none'
                     stroke='currentColor'
                     viewBox='0 0 24 24'

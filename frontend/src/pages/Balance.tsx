@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -87,8 +87,8 @@ const MODAL_COLUMNS = [
                 <span
                     className={
                         val >= 0
-                            ? 'text-green-600 font-medium'
-                            : 'text-red-600 font-medium'
+                            ? 'text-success font-medium'
+                            : 'text-error font-medium'
                     }
                 >
                     {formatCurrency(val)}
@@ -261,7 +261,7 @@ function Balance() {
                 accessorKey: 'name',
                 header: 'Category',
                 cell: ({ getValue }) => (
-                    <div className='text-sm font-medium text-gray-900'>
+                    <div className='text-sm font-medium'>
                         {getValue<string>()}
                     </div>
                 ),
@@ -275,7 +275,7 @@ function Balance() {
                         onClick={() =>
                             handleOpenModal(row.original.id, row.original.name)
                         }
-                        className='text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline'
+                        className='text-sm font-medium text-primary hover:underline'
                         aria-label={`View ${row.original.stats.spendCount} transactions for ${row.original.name}`}
                     >
                         {row.original.stats.spendCount}
@@ -295,7 +295,7 @@ function Balance() {
                     if (budget === 0) {
                         return (
                             <div>
-                                <div className='text-sm font-semibold text-red-600'>
+                                <div className='text-sm font-semibold text-error'>
                                     {formatCurrency(spent)}
                                 </div>
                                 <div className='text-xs text-gray-400 mt-0.5'>
@@ -322,7 +322,7 @@ function Balance() {
                     return (
                         <div className='min-w-[160px]'>
                             <div className='flex justify-between text-xs mb-1'>
-                                <span className='font-semibold text-red-600'>
+                                <span className='font-semibold text-error'>
                                     {formatCurrency(spent)}
                                 </span>
                                 <span className='text-gray-400'>
@@ -348,7 +348,7 @@ function Balance() {
                             <div
                                 className={`text-xs mt-1 ${
                                     isOver
-                                        ? 'text-red-600 font-semibold'
+                                        ? 'text-error font-semibold'
                                         : 'text-gray-400'
                                 }`}
                             >
@@ -379,9 +379,7 @@ function Balance() {
                     return (
                         <span
                             className={`text-sm font-semibold ${
-                                remaining >= 0
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
+                                remaining >= 0 ? 'text-success' : 'text-error'
                             }`}
                         >
                             {formatCurrency(remaining)}
@@ -400,7 +398,7 @@ function Balance() {
                 accessorKey: 'name',
                 header: 'Category',
                 cell: ({ getValue }) => (
-                    <div className='text-sm font-medium text-gray-900'>
+                    <div className='text-sm font-medium'>
                         {getValue<string>()}
                     </div>
                 ),
@@ -414,7 +412,7 @@ function Balance() {
                         onClick={() =>
                             handleOpenModal(row.original.id, row.original.name)
                         }
-                        className='text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline'
+                        className='text-sm font-medium text-primary hover:underline'
                         aria-label={`View ${row.original.stats.incomeCount} transactions for ${row.original.name}`}
                     >
                         {row.original.stats.incomeCount}
@@ -428,7 +426,7 @@ function Balance() {
                 cell: ({ row }) => {
                     const amount = row.original.stats.totalIncomes;
                     return (
-                        <div className='text-sm font-semibold text-green-600'>
+                        <div className='text-sm font-semibold text-success'>
                             {formatCurrency(amount)}
                         </div>
                     );
@@ -495,16 +493,16 @@ function Balance() {
         <div className='pb-6'>
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='mb-6'>
-                    <h1 className='text-2xl font-bold text-gray-900 mb-8'>
+                    <h1 className='text-2xl font-bold mb-8'>
                         Balance Analysis
                     </h1>
 
                     {/* Period Selection */}
                     <div className='flex justify-between items-center mb-4'>
-                        <div className='flex items-center space-x-4'>
+                        <div className='flex items-center gap-4'>
                             <label
                                 htmlFor='year-select'
-                                className='text-sm font-medium text-gray-700'
+                                className='text-sm font-medium'
                             >
                                 Year:
                             </label>
@@ -514,7 +512,7 @@ function Balance() {
                                 onChange={(e) =>
                                     setSelectedYear(parseInt(e.target.value))
                                 }
-                                className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered select-sm'
                             >
                                 {YEAR_OPTIONS.map((year) => (
                                     <option key={year} value={year}>
@@ -525,7 +523,7 @@ function Balance() {
 
                             <label
                                 htmlFor='month-select'
-                                className='text-sm font-medium text-gray-700'
+                                className='text-sm font-medium'
                             >
                                 Month:
                             </label>
@@ -535,7 +533,7 @@ function Balance() {
                                 onChange={(e) =>
                                     setSelectedMonth(parseInt(e.target.value))
                                 }
-                                className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered select-sm'
                             >
                                 <option value={1}>January</option>
                                 <option value={2}>February</option>
@@ -555,7 +553,7 @@ function Balance() {
 
                     <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
                         {/* Spends Table */}
-                        <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+                        <div className='card bg-base-100 shadow-sm overflow-hidden'>
                             <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
                                 <div className='flex items-center justify-between'>
                                     <div className='flex items-center'>
@@ -565,7 +563,7 @@ function Balance() {
                                         >
                                             💸
                                         </span>
-                                        <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                                        <h3 className='ml-3 text-lg font-medium'>
                                             Spending Categories
                                         </h3>
                                     </div>
@@ -573,7 +571,7 @@ function Balance() {
                                         <div className='text-sm text-gray-600'>
                                             Spent
                                         </div>
-                                        <div className='text-lg font-semibold text-red-600'>
+                                        <div className='text-lg font-semibold text-error'>
                                             {formatCurrency(spendTotalAmount)}
                                         </div>
                                         <div className='text-xs text-gray-400 mt-0.5'>
@@ -586,7 +584,7 @@ function Balance() {
                             </div>
 
                             {/* Global Search for Spends */}
-                            <div className='px-6 py-4 border-b border-gray-200'>
+                            <div className='px-6 py-4 border-b border-base-300'>
                                 <div className='flex gap-4'>
                                     <div className='flex-1'>
                                         <input
@@ -601,15 +599,15 @@ function Balance() {
                                                     event.target.value
                                                 )
                                             }
-                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                                            className='input input-bordered w-full'
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             <div className='overflow-x-auto'>
-                                <table className='w-full table-auto divide-y divide-gray-200'>
-                                    <thead className='bg-gray-50'>
+                                <table className='table table-zebra w-full'>
+                                    <thead>
                                         {spendTable
                                             .getHeaderGroups()
                                             .map((headerGroup) => (
@@ -628,7 +626,7 @@ function Balance() {
                                                                           ? 'descending'
                                                                           : 'none'
                                                                 }
-                                                                className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                                className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
                                                                 onClick={header.column.getToggleSortingHandler()}
                                                             >
                                                                 {header.isPlaceholder
@@ -654,14 +652,11 @@ function Balance() {
                                                 </tr>
                                             ))}
                                     </thead>
-                                    <tbody className='bg-white divide-y divide-gray-200'>
+                                    <tbody>
                                         {spendTable
                                             .getRowModel()
                                             .rows.map((row) => (
-                                                <tr
-                                                    key={row.id}
-                                                    className='hover:bg-gray-50'
-                                                >
+                                                <tr key={row.id} className=''>
                                                     {row
                                                         .getVisibleCells()
                                                         .map((cell) => (
@@ -687,7 +682,7 @@ function Balance() {
                         </div>
 
                         {/* Incomes Table */}
-                        <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+                        <div className='card bg-base-100 shadow-sm overflow-hidden'>
                             <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
                                 <div className='flex items-center justify-between'>
                                     <div className='flex items-center'>
@@ -697,7 +692,7 @@ function Balance() {
                                         >
                                             💰
                                         </span>
-                                        <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                                        <h3 className='ml-3 text-lg font-medium'>
                                             Income Categories
                                         </h3>
                                     </div>
@@ -705,7 +700,7 @@ function Balance() {
                                         <div className='text-sm text-gray-600'>
                                             Total
                                         </div>
-                                        <div className='text-lg font-semibold text-green-600'>
+                                        <div className='text-lg font-semibold text-success'>
                                             {formatCurrency(incomeTotalAmount)}
                                         </div>
                                     </div>
@@ -713,7 +708,7 @@ function Balance() {
                             </div>
 
                             {/* Global Search for Incomes */}
-                            <div className='px-6 py-4 border-b border-gray-200'>
+                            <div className='px-6 py-4 border-b border-base-300'>
                                 <div className='flex gap-4'>
                                     <div className='flex-1'>
                                         <input
@@ -728,15 +723,15 @@ function Balance() {
                                                     event.target.value
                                                 )
                                             }
-                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500'
+                                            className='input input-bordered w-full'
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             <div className='overflow-x-auto'>
-                                <table className='w-full table-auto divide-y divide-gray-200'>
-                                    <thead className='bg-gray-50'>
+                                <table className='table table-zebra w-full'>
+                                    <thead>
                                         {incomeTable
                                             .getHeaderGroups()
                                             .map((headerGroup) => (
@@ -755,7 +750,7 @@ function Balance() {
                                                                           ? 'descending'
                                                                           : 'none'
                                                                 }
-                                                                className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                                className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
                                                                 onClick={header.column.getToggleSortingHandler()}
                                                             >
                                                                 {header.isPlaceholder
@@ -781,14 +776,11 @@ function Balance() {
                                                 </tr>
                                             ))}
                                     </thead>
-                                    <tbody className='bg-white divide-y divide-gray-200'>
+                                    <tbody>
                                         {incomeTable
                                             .getRowModel()
                                             .rows.map((row) => (
-                                                <tr
-                                                    key={row.id}
-                                                    className='hover:bg-gray-50'
-                                                >
+                                                <tr key={row.id} className=''>
                                                     {row
                                                         .getVisibleCells()
                                                         .map((cell) => (
@@ -824,8 +816,8 @@ function Balance() {
                 maxWidth='max-w-5xl'
             >
                 <div className='overflow-x-auto'>
-                    <table className='min-w-full divide-y divide-gray-200'>
-                        <thead className='bg-gray-50'>
+                    <table className='table table-zebra w-full'>
+                        <thead>
                             {modalTable.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
@@ -842,7 +834,7 @@ function Balance() {
                                                       ? 'descending'
                                                       : 'none'
                                             }
-                                            className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100'
+                                            className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-gray-100'
                                         >
                                             <div className='flex items-center gap-1'>
                                                 {
@@ -859,7 +851,7 @@ function Balance() {
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className='bg-white divide-y divide-gray-200'>
+                        <tbody>
                             {modalTable.getRowModel().rows.length === 0 ? (
                                 <tr>
                                     <td
@@ -871,14 +863,11 @@ function Balance() {
                                 </tr>
                             ) : (
                                 modalTable.getRowModel().rows.map((row) => (
-                                    <tr
-                                        key={row.id}
-                                        className='hover:bg-gray-50'
-                                    >
+                                    <tr key={row.id} className=''>
                                         {row.getVisibleCells().map((cell) => (
                                             <td
                                                 key={cell.id}
-                                                className='px-4 py-3 text-sm text-gray-700'
+                                                className='px-4 py-3 text-sm opacity-70'
                                             >
                                                 {flexRender(
                                                     cell.column.columnDef.cell,

@@ -16,15 +16,13 @@ export default function Panel({
     headerClassName = '',
 }: PanelProps) {
     return (
-        <div
-            className={`bg-white overflow-hidden shadow rounded-lg ${className}`}
-        >
-            <div className={`p-6 ${headerClassName}`}>
+        <div className={`card bg-base-100 shadow-sm ${className}`}>
+            <div className={`card-body ${headerClassName}`}>
                 {(title || actions) && (
                     <div className='flex items-start justify-between mb-4'>
                         <div>
                             {title && (
-                                <h3 className='text-lg leading-6 font-medium text-gray-900'>
+                                <h3 className='card-title text-base'>
                                     {title}
                                 </h3>
                             )}

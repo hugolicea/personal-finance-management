@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -121,7 +121,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
             {/* Charts */}
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Account Types Pie Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Retirement Accounts by Type
                     </h4>
@@ -163,7 +163,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                 </div>
 
                 {/* Top Accounts Bar Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Top 5 Retirement Accounts
                     </h4>
@@ -204,7 +204,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
             </div>
 
             {/* Additional Info */}
-            <div className='bg-white p-4 rounded-lg shadow'>
+            <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                 <h4 className='text-lg font-medium text-gray-900 mb-4'>
                     Retirement Planning Summary
                 </h4>

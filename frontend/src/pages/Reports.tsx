@@ -176,8 +176,8 @@ function Reports() {
                         <span
                             className={
                                 val >= 0
-                                    ? 'text-green-600 font-medium'
-                                    : 'text-red-600 font-medium'
+                                    ? 'text-success font-medium'
+                                    : 'text-error font-medium'
                             }
                         >
                             {formatCurrency(val)}
@@ -204,12 +204,10 @@ function Reports() {
     return (
         <div className='space-y-6'>
             <div className='mb-6'>
-                <h1 className='text-2xl font-bold text-gray-900 mb-4'>
-                    Transaction Report
-                </h1>
+                <h1 className='text-2xl font-bold mb-4'>Transaction Report</h1>
 
                 {/* Filters */}
-                <div className='bg-white shadow rounded-lg p-4 mb-6'>
+                <div className='card bg-base-100 shadow-sm p-4 mb-6'>
                     <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
                         <div>
                             <label className='block text-xs font-medium text-gray-500 mb-1'>
@@ -221,7 +219,7 @@ function Reports() {
                                     setSelectedYear(e.target.value);
                                     table.setPageIndex(0);
                                 }}
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered w-full'
                             >
                                 <option value='all'>All Years</option>
                                 {availableYears.map((y) => (
@@ -242,7 +240,7 @@ function Reports() {
                                     setSelectedMonth(e.target.value);
                                     table.setPageIndex(0);
                                 }}
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered w-full'
                             >
                                 <option value='all'>All Months</option>
                                 {MONTHS.map((m) => (
@@ -263,7 +261,7 @@ function Reports() {
                                     setSelectedCategory(e.target.value);
                                     table.setPageIndex(0);
                                 }}
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered w-full'
                             >
                                 <option value=''>All Categories</option>
                                 {categories.map((c) => (
@@ -289,7 +287,7 @@ function Reports() {
                                     );
                                     table.setPageIndex(0);
                                 }}
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='select select-bordered w-full'
                             >
                                 <option value='all'>
                                     Income &amp; Expenses
@@ -303,7 +301,7 @@ function Reports() {
 
                 {/* Summary totals */}
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-                    <div className='bg-white shadow rounded-lg p-4 flex items-center gap-4'>
+                    <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
                                 budgetRemaining >= 0
@@ -322,7 +320,7 @@ function Reports() {
                                 className={`text-lg font-bold ${
                                     budgetRemaining >= 0
                                         ? 'text-purple-600'
-                                        : 'text-red-600'
+                                        : 'text-error'
                                 }`}
                             >
                                 {formatCurrency(budgetRemaining)}
@@ -332,29 +330,29 @@ function Reports() {
                             </p>
                         </div>
                     </div>
-                    <div className='bg-white shadow rounded-lg p-4 flex items-center gap-4'>
+                    <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-xl'>
                             💰
                         </div>
                         <div>
                             <p className='text-xs text-gray-500'>Income</p>
-                            <p className='text-lg font-bold text-green-600'>
+                            <p className='text-lg font-bold text-success'>
                                 {formatCurrency(totalIncome)}
                             </p>
                         </div>
                     </div>
-                    <div className='bg-white shadow rounded-lg p-4 flex items-center gap-4'>
+                    <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xl'>
                             💸
                         </div>
                         <div>
                             <p className='text-xs text-gray-500'>Expenses</p>
-                            <p className='text-lg font-bold text-red-600'>
+                            <p className='text-lg font-bold text-error'>
                                 {formatCurrency(totalExpenses)}
                             </p>
                         </div>
                     </div>
-                    <div className='bg-white shadow rounded-lg p-4 flex items-center gap-4'>
+                    <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
                                 netBalance >= 0
@@ -371,7 +369,7 @@ function Reports() {
                             <p
                                 className={`text-lg font-bold ${
                                     netBalance >= 0
-                                        ? 'text-blue-600'
+                                        ? 'text-primary'
                                         : 'text-orange-600'
                                 }`}
                             >
@@ -382,10 +380,10 @@ function Reports() {
                 </div>
 
                 {/* Transactions table */}
-                <div className='bg-white shadow rounded-lg overflow-hidden'>
+                <div className='card bg-base-100 shadow-sm overflow-hidden'>
                     <div className='overflow-x-auto'>
-                        <table className='min-w-full divide-y divide-gray-200'>
-                            <thead className='bg-gray-50'>
+                        <table className='table table-zebra w-full'>
+                            <thead>
                                 {table.getHeaderGroups().map((headerGroup) => (
                                     <tr key={headerGroup.id}>
                                         {headerGroup.headers.map((header) => (
@@ -402,7 +400,7 @@ function Reports() {
                                                           ? 'descending'
                                                           : 'none'
                                                 }
-                                                className='px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:bg-gray-100'
+                                                className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-gray-100'
                                             >
                                                 <div className='flex items-center gap-1'>
                                                     {
@@ -419,7 +417,7 @@ function Reports() {
                                     </tr>
                                 ))}
                             </thead>
-                            <tbody className='bg-white divide-y divide-gray-200'>
+                            <tbody>
                                 {table.getRowModel().rows.length === 0 ? (
                                     <tr>
                                         <td
@@ -432,16 +430,13 @@ function Reports() {
                                     </tr>
                                 ) : (
                                     table.getRowModel().rows.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className='hover:bg-gray-50'
-                                        >
+                                        <tr key={row.id} className=''>
                                             {row
                                                 .getVisibleCells()
                                                 .map((cell) => (
                                                     <td
                                                         key={cell.id}
-                                                        className='px-4 py-3 text-sm text-gray-700'
+                                                        className='px-4 py-3 text-sm opacity-70'
                                                     >
                                                         {flexRender(
                                                             cell.column

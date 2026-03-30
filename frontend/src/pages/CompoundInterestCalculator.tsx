@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+﻿import { ChangeEvent, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     CartesianGrid,
@@ -182,8 +182,7 @@ function FieldRow({
     );
 }
 
-const INPUT_CLS =
-    'w-36 rounded border border-slate-500 bg-white px-3 py-1.5 text-sm text-slate-900 text-right shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
+const INPUT_CLS = 'input input-sm input-bordered w-36 text-right';
 
 function CompoundInterestCalculator() {
     const navigate = useNavigate();
@@ -221,7 +220,7 @@ function CompoundInterestCalculator() {
             <div className='flex items-center gap-3'>
                 <button
                     onClick={() => navigate('/tools')}
-                    className='text-gray-400 hover:text-gray-600 transition-colors'
+                    className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
                     ← Back
@@ -238,7 +237,7 @@ function CompoundInterestCalculator() {
 
             <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
                 {/* ── Form ── */}
-                <div className='overflow-hidden rounded-xl shadow-sm border border-gray-200'>
+                <div className='overflow-hidden rounded-xl shadow-sm border border-base-300'>
                     {/* Step 1 */}
                     <StepHeader step={1} title='Initial Investment' />
                     <FieldRow
@@ -369,7 +368,7 @@ function CompoundInterestCalculator() {
                 {/* ── Results ── */}
                 <div>
                     {results ? (
-                        <div className='rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-teal-700'>
+                        <div className='rounded-xl overflow-hidden shadow-sm border border-base-300 bg-teal-700'>
                             {/* Headline */}
                             <div className='px-6 py-5 text-center text-white'>
                                 <h2 className='text-xl font-bold'>
@@ -388,7 +387,7 @@ function CompoundInterestCalculator() {
                             </div>
 
                             {/* Chart */}
-                            <div className='bg-white mx-4 mb-4 rounded-lg p-4'>
+                            <div className='bg-base-100 mx-4 mb-4 rounded-lg p-4'>
                                 <h3 className='text-sm font-semibold text-gray-700 text-center mb-3'>
                                     Total Savings
                                 </h3>
@@ -496,10 +495,10 @@ function CompoundInterestCalculator() {
 
                             {/* Year-by-year table */}
                             {showTable && (
-                                <div className='bg-white mx-4 mb-4 rounded-lg overflow-hidden'>
+                                <div className='bg-base-100 mx-4 mb-4 rounded-lg overflow-hidden'>
                                     <div className='overflow-auto max-h-72'>
-                                        <table className='min-w-full text-sm'>
-                                            <thead className='bg-gray-50 sticky top-0'>
+                                        <table className='min-table table-zebra w-full'>
+                                            <thead className='sticky top-0 bg-base-100'>
                                                 <tr>
                                                     <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide'>
                                                         Year
@@ -519,7 +518,7 @@ function CompoundInterestCalculator() {
                                                 {results.schedule.map((row) => (
                                                     <tr
                                                         key={row.year}
-                                                        className='hover:bg-gray-50'
+                                                        className=''
                                                     >
                                                         <td className='px-4 py-2 text-gray-700'>
                                                             {row.year}
@@ -544,7 +543,7 @@ function CompoundInterestCalculator() {
                             )}
                         </div>
                     ) : (
-                        <div className='flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white text-sm text-gray-400'>
+                        <div className='flex h-48 items-center justify-center rounded-xl border border-dashed border-base-300 bg-base-100 text-sm opacity-60'>
                             Fill in the form and click{' '}
                             <strong className='mx-1'>Calculate</strong> to see
                             results.

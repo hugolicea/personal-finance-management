@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteButtons from '../components/EditDeleteButtons';
@@ -131,7 +131,7 @@ function Retirement() {
     if (loading) {
         return (
             <div className='flex justify-center items-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+                <div className='loading loading-spinner loading-lg text-primary'></div>
             </div>
         );
     }
@@ -140,10 +140,10 @@ function Retirement() {
         <div className='px-4 sm:px-6 lg:px-8'>
             <div className='sm:flex sm:items-center'>
                 <div className='sm:flex-auto'>
-                    <h1 className='text-2xl font-semibold text-gray-900'>
+                    <h1 className='text-2xl font-semibold'>
                         Retirement Accounts
                     </h1>
-                    <p className='mt-2 text-sm text-gray-700'>
+                    <p className='mt-2 text-sm opacity-70'>
                         Track and manage your retirement savings accounts
                     </p>
                 </div>
@@ -154,7 +154,7 @@ function Retirement() {
                 <button
                     type='button'
                     onClick={handleOpenModal}
-                    className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
+                    className='btn btn-primary'
                 >
                     <svg
                         className='-ml-1 mr-3 h-5 w-5'
@@ -175,12 +175,12 @@ function Retirement() {
 
             {/* Summary Cards */}
             <div className='mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <svg
-                                    className='h-6 w-6 text-gray-400'
+                                    className='h-6 w-6 opacity-40'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -195,10 +195,10 @@ function Retirement() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Balance
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(totalBalance)}
                                     </dd>
                                 </dl>
@@ -207,12 +207,12 @@ function Retirement() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <svg
-                                    className='h-6 w-6 text-gray-400'
+                                    className='h-6 w-6 opacity-40'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -227,10 +227,10 @@ function Retirement() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Monthly Contributions
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(
                                             totalMonthlyContribution
                                         )}
@@ -241,12 +241,12 @@ function Retirement() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
                                 <svg
-                                    className='h-6 w-6 text-gray-400'
+                                    className='h-6 w-6 opacity-40'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -261,10 +261,10 @@ function Retirement() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Annual Contributions
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(
                                             totalAnnualContribution
                                         )}
@@ -280,9 +280,9 @@ function Retirement() {
             <div className='mt-8 flex flex-col'>
                 <div className='-my-2 -mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8'>
                     <div className='inline-block w-full py-2 align-middle md:px-6 lg:px-8'>
-                        <div className='overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg'>
-                            <table className='w-full table-auto divide-y divide-gray-300'>
-                                <thead className='bg-gray-50'>
+                        <div className='overflow-hidden rounded-lg shadow-sm'>
+                            <table className='table table-zebra w-full'>
+                                <thead>
                                     <tr>
                                         <th
                                             scope='col'
@@ -330,7 +330,7 @@ function Retirement() {
                                         </th>
                                     </tr>
                                 </thead>
-                                <tbody className='divide-y divide-gray-200 bg-white'>
+                                <tbody>
                                     {retirementAccounts.map((account) => (
                                         <tr key={account.id}>
                                             <td className='whitespace-nowrap px-4 py-2 text-sm'>
@@ -338,7 +338,7 @@ function Retirement() {
                                                     <div className='flex-shrink-0 h-10 w-10'>
                                                         <div className='h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center'>
                                                             <svg
-                                                                className='h-5 w-5 text-blue-600'
+                                                                className='h-5 w-5 text-primary'
                                                                 fill='none'
                                                                 stroke='currentColor'
                                                                 viewBox='0 0 24 24'
@@ -448,11 +448,11 @@ function Retirement() {
                             . This action cannot be undone.
                         </p>
                         {deletingRetirementAccount && (
-                            <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                            <div className='mt-3 p-3 bg-base-200 rounded-md'>
                                 <div className='text-sm'>
                                     <div className='grid grid-cols-2 gap-4'>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Provider:
                                             </span>{' '}
                                             <span className='text-gray-900'>
@@ -462,7 +462,7 @@ function Retirement() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Type:
                                             </span>{' '}
                                             <span className='text-gray-900 capitalize'>
@@ -473,7 +473,7 @@ function Retirement() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Current Balance:
                                             </span>{' '}
                                             <span className='text-gray-900 font-semibold'>
@@ -483,7 +483,7 @@ function Retirement() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Monthly Contribution:
                                             </span>{' '}
                                             <span className='text-gray-900'>
@@ -497,7 +497,7 @@ function Retirement() {
                             </div>
                         )}
                         <div className='mt-3'>
-                            <p className='text-sm text-red-600 font-medium'>
+                            <p className='text-sm text-error font-medium'>
                                 <span aria-hidden='true'>⚠️ </span>This will
                                 permanently remove all data associated with this
                                 retirement account.

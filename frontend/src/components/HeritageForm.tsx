@@ -1,4 +1,4 @@
-import { ErrorMessage, Field, Form, Formik } from 'formik';
+﻿import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
 import { useAppDispatch } from '../hooks/redux';
@@ -125,7 +125,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
             {({ isSubmitting }) => (
                 <Form className='space-y-8'>
                     {/* Property Information Section */}
-                    <div className='bg-gray-50 rounded-lg p-6 border border-gray-200'>
+                    <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
                             <div className='flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center'>
                                 <svg
@@ -142,7 +142,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Property Information
                             </h3>
                         </div>
@@ -160,7 +160,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     type='text'
                                     name='name'
                                     id='name'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                     placeholder='e.g., Downtown Apartment, Family House'
                                 />
                                 <ErrorMessage
@@ -182,7 +182,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     as='select'
                                     name='heritage_type'
                                     id='heritage_type'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                 >
                                     <option value='land'>🌄 Land</option>
                                     <option value='house'>🏠 House</option>
@@ -217,7 +217,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     type='date'
                                     name='purchase_date'
                                     id='purchase_date'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                 />
                                 <ErrorMessage
                                     name='purchase_date'
@@ -239,7 +239,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     name='address'
                                     id='address'
                                     rows={3}
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white resize-none'
+                                    className='input input-bordered w-full resize-none'
                                     placeholder='Full address including street, city, state, and postal code'
                                 />
                                 <ErrorMessage
@@ -269,7 +269,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Property Details
                             </h3>
                         </div>
@@ -288,13 +288,13 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         name='area'
                                         id='area'
                                         step='any'
-                                        className='block w-full px-4 py-3 border-2 border-gray-200 rounded-l-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full rounded-r-none'
                                         placeholder='200'
                                     />
                                     <Field
                                         as='select'
                                         name='area_unit'
-                                        className='px-3 py-3 border-2 border-l-0 border-gray-200 rounded-r-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white min-w-[100px]'
+                                        className='select select-bordered rounded-l-none min-w-[100px]'
                                     >
                                         <option value='sq_m'>sq m</option>
                                         <option value='sq_ft'>sq ft</option>
@@ -333,7 +333,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         name='monthly_rental_income'
                                         id='monthly_rental_income'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='0'
                                     />
                                 </div>
@@ -367,7 +367,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Financial Information
                             </h3>
                         </div>
@@ -392,7 +392,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         name='purchase_price'
                                         id='purchase_price'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='250000'
                                     />
                                 </div>
@@ -421,7 +421,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         name='current_value'
                                         id='current_value'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='275000'
                                     />
                                 </div>
@@ -439,7 +439,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     </div>
 
                     {/* Additional Notes Section */}
-                    <div className='bg-gray-50 rounded-lg p-6 border border-gray-200'>
+                    <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
                             <div className='flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
                                 <svg
@@ -456,7 +456,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Additional Notes
                             </h3>
                         </div>
@@ -467,7 +467,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                 name='notes'
                                 id='notes'
                                 rows={4}
-                                className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 sm:text-sm bg-white resize-none'
+                                className='textarea textarea-bordered w-full resize-none'
                                 placeholder='Any additional information about this property (renovations, special features, etc.)'
                             />
                             <ErrorMessage
@@ -479,11 +479,11 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0 pt-6 border-t border-gray-200'>
+                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0 pt-6 border-t border-base-300'>
                         <button
                             type='button'
                             onClick={onClose}
-                            className='w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200'
+                            className='btn btn-outline'
                         >
                             <svg
                                 className='-ml-1 mr-2 h-4 w-4'

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import BankStatementUpload from '../components/BankStatementUpload';
@@ -180,7 +180,7 @@ function AccountTransactionsPage() {
         categoryMap.get(categoryId) ?? 'Unknown';
 
     const renderTransactionList = (list: Transaction[], label: string) => (
-        <div className='bg-white rounded-lg shadow'>
+        <div className='card bg-base-100 shadow-sm'>
             <div className='p-4 border-b flex justify-between items-center'>
                 <h2 className='font-semibold text-gray-800'>
                     {label} ({list.length})
@@ -188,7 +188,7 @@ function AccountTransactionsPage() {
                 {selectedTransactions.length > 0 && (
                     <button
                         onClick={() => setShowBulkDeleteDialog(true)}
-                        className='text-sm text-red-600 hover:text-red-800'
+                        className='text-sm text-error hover:text-red-800'
                     >
                         Delete selected ({selectedTransactions.length})
                     </button>
@@ -197,9 +197,9 @@ function AccountTransactionsPage() {
 
             {viewMode === 'table' ? (
                 <div className='overflow-x-auto'>
-                    <table className='w-full text-sm'>
+                    <table className='table table-zebra w-full'>
                         <thead>
-                            <tr className='bg-gray-50 text-gray-600'>
+                            <tr>
                                 <th className='p-3 text-left'>
                                     <input
                                         type='checkbox'
@@ -226,10 +226,7 @@ function AccountTransactionsPage() {
                         </thead>
                         <tbody>
                             {list.map((t) => (
-                                <tr
-                                    key={t.id}
-                                    className='border-t hover:bg-gray-50'
-                                >
+                                <tr key={t.id} className='border-t'>
                                     <td className='p-3'>
                                         <input
                                             type='checkbox'
@@ -257,8 +254,8 @@ function AccountTransactionsPage() {
                                     <td
                                         className={`p-3 text-right font-medium ${
                                             t.amount < 0
-                                                ? 'text-red-600'
-                                                : 'text-green-600'
+                                                ? 'text-error'
+                                                : 'text-success'
                                         }`}
                                     >
                                         {formatCurrency(t.amount)}
@@ -281,10 +278,7 @@ function AccountTransactionsPage() {
             ) : (
                 <div className='divide-y'>
                     {list.map((t) => (
-                        <div
-                            key={t.id}
-                            className='p-4 flex items-center gap-3 hover:bg-gray-50'
-                        >
+                        <div key={t.id} className='p-4 flex items-center gap-3'>
                             <input
                                 type='checkbox'
                                 aria-label={`Select transaction: ${t.description}`}
@@ -297,7 +291,7 @@ function AccountTransactionsPage() {
                                 }
                             />
                             <div className='flex-1 min-w-0'>
-                                <p className='font-medium text-gray-900 truncate'>
+                                <p className='font-medium truncate'>
                                     {t.description}
                                 </p>
                                 <p className='text-sm text-gray-500'>
@@ -307,9 +301,7 @@ function AccountTransactionsPage() {
                             </div>
                             <span
                                 className={`font-bold ${
-                                    t.amount < 0
-                                        ? 'text-red-600'
-                                        : 'text-green-600'
+                                    t.amount < 0 ? 'text-error' : 'text-success'
                                 }`}
                             >
                                 {formatCurrency(t.amount)}
@@ -337,7 +329,7 @@ function AccountTransactionsPage() {
                 <div className='flex items-center gap-3'>
                     <button
                         onClick={() => navigate('/accounts')}
-                        className='text-gray-400 hover:text-gray-600 transition-colors'
+                        className='btn btn-ghost btn-sm'
                         title='Back to Accounts'
                     >
                         ← Back
@@ -368,7 +360,7 @@ function AccountTransactionsPage() {
                             setEditingTransaction(null);
                             setShowTransactionModal(true);
                         }}
-                        className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors'
+                        className='btn btn-primary'
                     >
                         + Add Transaction
                     </button>
@@ -377,23 +369,23 @@ function AccountTransactionsPage() {
 
             {/* Summary cards */}
             <div className='grid grid-cols-3 gap-4'>
-                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Expenses</p>
-                    <p className='text-xl font-bold text-red-600'>
+                    <p className='text-xl font-bold text-error'>
                         {formatCurrency(-totalSpends)}
                     </p>
                 </div>
-                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Income</p>
-                    <p className='text-xl font-bold text-green-600'>
+                    <p className='text-xl font-bold text-success'>
                         +{formatCurrency(totalIncomes)}
                     </p>
                 </div>
-                <div className='bg-white rounded-lg shadow p-4 text-center'>
+                <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Net</p>
                     <p
                         className={`text-xl font-bold ${
-                            totalAmount >= 0 ? 'text-green-600' : 'text-red-600'
+                            totalAmount >= 0 ? 'text-success' : 'text-error'
                         }`}
                     >
                         {formatCurrency(totalAmount)}
@@ -402,12 +394,12 @@ function AccountTransactionsPage() {
             </div>
 
             {/* Filters */}
-            <div className='bg-white p-4 rounded-lg shadow'>
+            <div className='card bg-base-100 shadow-sm p-4'>
                 <div className='grid grid-cols-1 md:grid-cols-6 gap-4'>
                     <div>
                         <label
                             htmlFor='filter-search'
-                            className='block text-sm font-medium text-gray-700 mb-1'
+                            className='block text-sm font-medium mb-1'
                         >
                             Search
                         </label>
@@ -417,13 +409,13 @@ function AccountTransactionsPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder='Search transactions…'
-                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className='input input-bordered w-full'
                         />
                     </div>
                     <div>
                         <label
                             htmlFor='filter-category'
-                            className='block text-sm font-medium text-gray-700 mb-1'
+                            className='block text-sm font-medium mb-1'
                         >
                             Category
                         </label>
@@ -435,13 +427,13 @@ function AccountTransactionsPage() {
                             onChange={(e) =>
                                 setSelectedCategory(e.target.value)
                             }
-                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className='input input-bordered w-full'
                         />
                     </div>
                     <div>
                         <label
                             htmlFor='filter-year'
-                            className='block text-sm font-medium text-gray-700 mb-1'
+                            className='block text-sm font-medium mb-1'
                         >
                             Year
                         </label>
@@ -451,7 +443,7 @@ function AccountTransactionsPage() {
                             onChange={(e) =>
                                 setSelectedYear(parseInt(e.target.value))
                             }
-                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                            className='input input-bordered w-full'
                         >
                             {Array.from({ length: 5 }, (_, i) => {
                                 const y = new Date().getFullYear() - 2 + i;
@@ -466,7 +458,7 @@ function AccountTransactionsPage() {
                     <div>
                         <label
                             htmlFor='filter-month'
-                            className='block text-sm font-medium text-gray-700 mb-1'
+                            className='block text-sm font-medium mb-1'
                         >
                             Month
                         </label>
@@ -477,7 +469,7 @@ function AccountTransactionsPage() {
                                 setSelectedMonth(parseInt(e.target.value))
                             }
                             disabled={filterByYear}
-                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                            className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
                         >
                             {[
                                 'January',
@@ -500,26 +492,24 @@ function AccountTransactionsPage() {
                         </select>
                     </div>
                     <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        <label className='block text-sm font-medium mb-1'>
                             Period
                         </label>
-                        <div className='flex gap-2'>
+                        <div className='join'>
                             <button
                                 onClick={() => setFilterByYear(false)}
-                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                className={`join-item btn btn-sm ${
                                     !filterByYear
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        ? 'btn-primary'
+                                        : 'btn-outline'
                                 }`}
                             >
                                 Month
                             </button>
                             <button
                                 onClick={() => setFilterByYear(true)}
-                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
-                                    filterByYear
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                className={`join-item btn btn-sm ${
+                                    filterByYear ? 'btn-primary' : 'btn-outline'
                                 }`}
                             >
                                 Year
@@ -527,18 +517,18 @@ function AccountTransactionsPage() {
                         </div>
                     </div>
                     <div>
-                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                        <label className='block text-sm font-medium mb-1'>
                             View
                         </label>
-                        <div className='flex gap-2'>
+                        <div className='join'>
                             <button
                                 onClick={() => setViewMode('cards')}
                                 aria-label='Cards view'
                                 aria-pressed={viewMode === 'cards'}
-                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                className={`join-item btn btn-sm ${
                                     viewMode === 'cards'
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        ? 'btn-primary'
+                                        : 'btn-outline'
                                 }`}
                             >
                                 <span aria-hidden='true'>📋</span>
@@ -547,10 +537,10 @@ function AccountTransactionsPage() {
                                 onClick={() => setViewMode('table')}
                                 aria-label='Table view'
                                 aria-pressed={viewMode === 'table'}
-                                className={`flex-1 px-3 py-2 text-sm rounded-md border ${
+                                className={`join-item btn btn-sm ${
                                     viewMode === 'table'
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                        ? 'btn-primary'
+                                        : 'btn-outline'
                                 }`}
                             >
                                 <span aria-hidden='true'>📊</span>

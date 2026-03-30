@@ -1475,7 +1475,7 @@ def restore_database(request):
             {"error": "Invalid JSON file"}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    if "categories" not in data or "transactions" not in data:
+    if "version" not in data or not any(k in data for k in BACKUP_ENTITIES):
         return Response(
             {"error": "Invalid backup format: missing required fields"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -1746,6 +1746,18 @@ def restore_database(request):
                 )
                 retirement_created += 1
 
+            def resolve_category(target, old_cat_id):
+                """Look up a category by old backup ID, falling back to the live DB."""
+                if old_cat_id is None:
+                    return None
+                cat = old_id_to_category.get((target.id, old_cat_id))
+                if cat is None:
+                    try:
+                        cat = Category.objects.get(id=old_cat_id, user=target)
+                    except Category.DoesNotExist:
+                        pass
+                return cat
+
             # --- Reclassification Rules ---
             rules_created = 0
             for rule in data.get("reclassification_rules", []):
@@ -1753,14 +1765,10 @@ def restore_database(request):
                 if target is None:
                     continue
                 old_from_id = rule.get("from_category_id")
-                from_cat = (
-                    old_id_to_category.get((target.id, old_from_id))
-                    if old_from_id
-                    else None
-                )
+                from_cat = resolve_category(target, old_from_id)
                 if old_from_id and not from_cat:
                     continue
-                to_cat = old_id_to_category.get((target.id, rule.get("to_category_id")))
+                to_cat = resolve_category(target, rule.get("to_category_id"))
                 if not to_cat:
                     continue
                 ReclassificationRule.objects.create(
@@ -1779,7 +1787,7 @@ def restore_database(request):
                 target = resolve_user(rule)
                 if target is None:
                     continue
-                cat = old_id_to_category.get((target.id, rule.get("category_id")))
+                cat = resolve_category(target, rule.get("category_id"))
                 if not cat:
                     continue
                 CategoryDeletionRule.objects.get_or_create(

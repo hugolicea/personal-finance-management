@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
@@ -309,7 +309,7 @@ function CleanAndReclassify() {
 
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                     {/* Reclassification Section */}
-                    <div className='bg-white shadow-md rounded-lg p-6'>
+                    <div className='card bg-base-100 shadow-sm p-6'>
                         <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
                             <span className='text-2xl mr-2' aria-hidden='true'>
                                 🔄
@@ -323,7 +323,7 @@ function CleanAndReclassify() {
 
                         <div className='space-y-4'>
                             <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                <label className='block text-sm font-medium mb-1'>
                                     Rule Name (Optional)
                                 </label>
                                 <input
@@ -333,12 +333,12 @@ function CleanAndReclassify() {
                                         setRuleName(e.target.value)
                                     }
                                     placeholder='e.g., Groceries from Walmart'
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                 />
                             </div>
 
                             <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                <label className='block text-sm font-medium mb-1'>
                                     From Category (Optional)
                                     <span className='ml-2 text-xs text-gray-500'>
                                         Leave empty to match all categories
@@ -353,7 +353,7 @@ function CleanAndReclassify() {
                                                 : ''
                                         )
                                     }
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                 >
                                     <option value=''>All Categories</option>
                                     {availableCategories.map((category) => (
@@ -368,7 +368,7 @@ function CleanAndReclassify() {
                             </div>
 
                             <div>
-                                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                <label className='block text-sm font-medium mb-1'>
                                     To Category (Required)
                                 </label>
                                 <select
@@ -380,7 +380,7 @@ function CleanAndReclassify() {
                                                 : ''
                                         )
                                     }
-                                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
                                 >
                                     <option value=''>
                                         Select target category...
@@ -417,7 +417,7 @@ function CleanAndReclassify() {
                             {ruleFormError && (
                                 <p
                                     role='alert'
-                                    className='text-sm text-red-600 mt-2'
+                                    className='text-sm text-error mt-2'
                                 >
                                     {ruleFormError}
                                 </p>
@@ -450,14 +450,14 @@ function CleanAndReclassify() {
                                                             </div>
                                                         )}
                                                         <div className='flex items-center space-x-2 text-sm'>
-                                                            <span className='font-medium text-gray-700'>
+                                                            <span className='font-medium'>
                                                                 {rule.from_category_name ??
                                                                     'All Categories'}
                                                             </span>
-                                                            <span className='text-blue-600'>
+                                                            <span className='text-primary'>
                                                                 →
                                                             </span>
-                                                            <span className='font-medium text-gray-700'>
+                                                            <span className='font-medium'>
                                                                 {
                                                                     rule.to_category_name
                                                                 }
@@ -578,7 +578,7 @@ function CleanAndReclassify() {
                                                                 rule.rule_name ??
                                                                 rule.to_category_name
                                                             }`}
-                                                            className='text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium'
+                                                            className='text-primary hover:text-blue-800 transition-colors text-sm font-medium'
                                                             title='Preview matching transactions'
                                                         >
                                                             <span aria-hidden='true'>
@@ -596,7 +596,7 @@ function CleanAndReclassify() {
                                                                 rule.rule_name ??
                                                                 rule.to_category_name
                                                             }`}
-                                                            className='text-red-600 hover:text-red-800 transition-colors'
+                                                            className='text-error hover:text-red-800 transition-colors'
                                                             title='Delete rule'
                                                         >
                                                             <span aria-hidden='true'>
@@ -614,7 +614,7 @@ function CleanAndReclassify() {
                     </div>
 
                     {/* Deletion Section */}
-                    <div className='bg-white shadow-md rounded-lg p-6'>
+                    <div className='card bg-base-100 shadow-sm p-6'>
                         <h2 className='text-xl font-semibold text-gray-800 mb-4 flex items-center'>
                             <span className='text-2xl mr-2' aria-hidden='true'>
                                 🗑️
@@ -625,7 +625,7 @@ function CleanAndReclassify() {
                             Select categories to delete all their transactions.
                         </p>
 
-                        <div className='max-h-96 overflow-y-auto space-y-2 border border-gray-200 rounded-md p-3'>
+                        <div className='max-h-96 overflow-y-auto space-y-2 border border-base-300 rounded-md p-3'>
                             {availableCategories.length === 0 ? (
                                 <p className='text-gray-400 text-sm text-center py-4'>
                                     No categories available
@@ -634,7 +634,7 @@ function CleanAndReclassify() {
                                 availableCategories.map((category) => (
                                     <label
                                         key={category.id}
-                                        className='flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors'
+                                        className='flex items-center space-x-3 cursor-pointer p-2 rounded transition-colors'
                                     >
                                         <input
                                             type='checkbox'
@@ -646,11 +646,9 @@ function CleanAndReclassify() {
                                                     category.id
                                                 )
                                             }
-                                            className='w-4 h-4 text-red-600 bg-white border-gray-300 rounded focus:ring-red-500 focus:ring-2'
+                                            className='checkbox checkbox-error checkbox-sm'
                                         />
-                                        <span className='text-gray-700'>
-                                            {category.name}
-                                        </span>
+                                        <span>{category.name}</span>
                                     </label>
                                 ))
                             )}
@@ -669,11 +667,11 @@ function CleanAndReclassify() {
 
                 {/* Summary and Execute Button */}
                 {hasOperations && (
-                    <div className='mt-8 bg-gradient-to-r from-blue-50 to-red-50 shadow-lg rounded-lg p-6 border-2 border-gray-200'>
+                    <div className='mt-8 bg-gradient-to-r from-blue-50 to-red-50 shadow-lg rounded-lg p-6 border-2 border-base-300'>
                         <h3 className='text-lg font-semibold text-gray-800 mb-3'>
                             📋 Operations Summary
                         </h3>
-                        <div className='space-y-2 text-sm text-gray-700 mb-4'>
+                        <div className='space-y-2 text-sm opacity-70 mb-4'>
                             {reclassificationRules.length > 0 && (
                                 <p>
                                     •{' '}
@@ -749,7 +747,7 @@ function CleanAndReclassify() {
                 )}
 
                 {!hasOperations && (
-                    <div className='mt-8 bg-gray-50 rounded-lg p-8 text-center'>
+                    <div className='mt-8 bg-base-200 rounded-lg p-8 text-center'>
                         <p className='text-gray-500 text-lg'>
                             👆 Add reclassification rules or select categories
                             to delete to get started
@@ -874,9 +872,9 @@ function CleanAndReclassify() {
 
                             {previewData.matching_count > 0 ? (
                                 <>
-                                    <div className='max-h-96 overflow-y-auto border border-gray-200 rounded-md'>
-                                        <table className='min-w-full divide-y divide-gray-200'>
-                                            <thead className='bg-gray-50 sticky top-0'>
+                                    <div className='max-h-96 overflow-y-auto border border-base-300 rounded-md'>
+                                        <table className='table table-zebra w-full'>
+                                            <thead className='sticky top-0 bg-base-100'>
                                                 <tr>
                                                     <th className='px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase'>
                                                         Date
@@ -892,21 +890,21 @@ function CleanAndReclassify() {
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody className='bg-white divide-y divide-gray-200'>
+                                            <tbody>
                                                 {previewData.transactions.map(
                                                     (
                                                         txn: PreviewTransaction
                                                     ) => (
                                                         <tr
                                                             key={txn.id}
-                                                            className='hover:bg-gray-50'
+                                                            className=''
                                                         >
                                                             <td className='px-3 py-2 text-sm text-gray-900 whitespace-nowrap'>
                                                                 {new Date(
                                                                     txn.date
                                                                 ).toLocaleDateString()}
                                                             </td>
-                                                            <td className='px-3 py-2 text-sm text-gray-700'>
+                                                            <td className='px-3 py-2 text-sm opacity-70'>
                                                                 {
                                                                     txn.description
                                                                 }
@@ -950,7 +948,7 @@ function CleanAndReclassify() {
                             <div className='flex justify-end gap-3 mt-6'>
                                 <button
                                     onClick={handleClosePreviewModal}
-                                    className='px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors'
+                                    className='px-4 py-2 border border-base-300 rounded-md text-gray-700 transition-colors'
                                 >
                                     Close
                                 </button>

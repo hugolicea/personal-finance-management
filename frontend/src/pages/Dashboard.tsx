@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
@@ -37,13 +37,13 @@ const DashboardFilters = memo(
         return (
             <div className='flex flex-wrap items-center gap-4'>
                 <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    <label className='block text-sm font-medium mb-1'>
                         Year
                     </label>
                     <select
                         value={selectedYear}
                         onChange={(e) => onYearChange(parseInt(e.target.value))}
-                        className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                        className='select select-bordered select-sm'
                     >
                         {Array.from({ length: 5 }, (_, i) => {
                             const year = new Date().getFullYear() - 2 + i;
@@ -56,7 +56,7 @@ const DashboardFilters = memo(
                     </select>
                 </div>
                 <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    <label className='block text-sm font-medium mb-1'>
                         Month
                     </label>
                     <select
@@ -65,7 +65,7 @@ const DashboardFilters = memo(
                             onMonthChange(parseInt(e.target.value))
                         }
                         disabled={filterByYear}
-                        className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                        className='select select-bordered select-sm disabled:bg-gray-100 disabled:cursor-not-allowed'
                     >
                         {[
                             'January',
@@ -88,33 +88,33 @@ const DashboardFilters = memo(
                     </select>
                 </div>
                 <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    <label className='block text-sm font-medium mb-1'>
                         Filter
                     </label>
-                    <div className='flex items-center space-x-2'>
+                    <div className='flex items-center gap-2'>
                         <button
                             onClick={() => onFilterToggle(false)}
-                            className={`px-3 py-2 text-sm rounded-md border ${
+                            className={`btn btn-sm ${
                                 !filterByYear
-                                    ? 'bg-red-600 text-white border-red-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    ? 'btn-active btn-accent'
+                                    : 'btn-outline'
                             }`}
                         >
                             Month
                         </button>
                         <button
                             onClick={() => onFilterToggle(true)}
-                            className={`px-3 py-2 text-sm rounded-md border ${
+                            className={`btn btn-sm ${
                                 filterByYear
-                                    ? 'bg-red-600 text-white border-red-600'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                    ? 'btn-active btn-accent'
+                                    : 'btn-outline'
                             }`}
                         >
                             Year
                         </button>
                     </div>
                 </div>
-                <div className='text-sm text-gray-500 self-end'>
+                <div className='text-sm opacity-60 self-end'>
                     {transactionCount} transaction
                     {transactionCount !== 1 ? 's' : ''} for{' '}
                     {filterByYear
@@ -202,24 +202,22 @@ function Dashboard() {
     );
 
     return (
-        <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
+        <div className='min-h-screen'>
             {/* Header */}
-            <header className='bg-white shadow-sm border-b border-gray-200'>
+            <header className='bg-base-100 border-b border-base-300'>
                 <div className='max-w-[1600px] mx-auto py-4 px-4 sm:px-6 lg:px-8'>
                     <div className='flex items-center justify-between'>
                         <div>
-                            <h1 className='text-2xl font-bold text-gray-900 mb-4'>
+                            <h1 className='text-2xl font-bold mb-4'>
                                 Dashboard
                             </h1>
-                            <p className='mt-1 text-sm text-gray-500'>
+                            <p className='mt-1 text-sm opacity-60'>
                                 Overview of your financial portfolio
                             </p>
                         </div>
                         <div className='text-right'>
-                            <p className='text-sm text-gray-500'>
-                                Last Updated
-                            </p>
-                            <p className='text-sm font-medium text-gray-900'>
+                            <p className='text-sm opacity-60'>Last Updated</p>
+                            <p className='text-sm font-medium'>
                                 {new Date().toLocaleDateString('en-US', {
                                     month: 'short',
                                     day: 'numeric',
@@ -232,7 +230,7 @@ function Dashboard() {
             </header>
 
             {/* Filters */}
-            <div className='bg-white border-b border-gray-200'>
+            <div className='bg-base-100 border-b border-base-300'>
                 <div className='max-w-[1600px] mx-auto py-5 px-4 sm:px-6 lg:px-8'>
                     <DashboardFilters
                         selectedYear={selectedYear}
@@ -255,7 +253,7 @@ function Dashboard() {
                     {/* First Row - 2 Spending Charts */}
                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                         {/* Monthly/Yearly Spending Chart */}
-                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                        <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
                             <div className='bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4'>
                                 <div className='flex items-center justify-between'>
                                     <div className='flex items-center'>
@@ -298,7 +296,7 @@ function Dashboard() {
                         </div>
 
                         {/* Spending by Category */}
-                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                        <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
                             <div className='bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4'>
                                 <div className='flex items-center'>
                                     <svg
@@ -337,7 +335,7 @@ function Dashboard() {
                     {/* Second Row - Investments and Heritage (Full Width) */}
                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                         {/* Investments Chart */}
-                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                        <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
                             <div className='bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4'>
                                 <div className='flex items-center'>
                                     <svg
@@ -364,7 +362,7 @@ function Dashboard() {
                         </div>
 
                         {/* Heritage Chart */}
-                        <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                        <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
                             <div className='bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4'>
                                 <div className='flex items-center'>
                                     <svg
@@ -392,7 +390,7 @@ function Dashboard() {
                     </div>
 
                     {/* Third Row - Retirement (Full Width) */}
-                    <div className='bg-white overflow-hidden shadow-lg rounded-xl border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
+                    <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
                         <div className='bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4'>
                             <div className='flex items-center'>
                                 <svg

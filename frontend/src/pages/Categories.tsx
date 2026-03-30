@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -48,13 +48,13 @@ function CategoryPanel({
         : 'Search income categories...';
 
     return (
-        <div className='bg-white shadow overflow-hidden sm:rounded-md'>
+        <div className='card bg-base-100 shadow-sm overflow-hidden'>
             <div className={`px-6 py-4 ${headerCls}`}>
                 <h3 className='text-lg font-medium'>
                     {title} ({count})
                 </h3>
             </div>
-            <div className='px-6 py-4 border-b border-gray-200'>
+            <div className='px-6 py-4 border-b border-base-300'>
                 <input
                     type='text'
                     placeholder={searchPlaceholder}
@@ -63,18 +63,18 @@ function CategoryPanel({
                         setSearchValue(e.target.value);
                         table.setGlobalFilter(e.target.value);
                     }}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 ${ringCls}`}
+                    className={`w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 ${ringCls}`}
                 />
             </div>
             <div className='overflow-x-auto'>
-                <table className='w-full table-auto divide-y divide-gray-200'>
-                    <thead className='bg-gray-50'>
+                <table className='table table-zebra w-full'>
+                    <thead>
                         {table.getHeaderGroups().map((hg) => (
                             <tr key={hg.id}>
                                 {hg.headers.map((h) => (
                                     <th
                                         key={h.id}
-                                        className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'
+                                        className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase'
                                     >
                                         {h.isPlaceholder
                                             ? null
@@ -87,9 +87,9 @@ function CategoryPanel({
                             </tr>
                         ))}
                     </thead>
-                    <tbody className='bg-white divide-y divide-gray-200'>
+                    <tbody>
                         {table.getRowModel().rows.map((row) => (
-                            <tr key={row.id} className='hover:bg-gray-50'>
+                            <tr key={row.id} className=''>
                                 {row.getVisibleCells().map((cell) => (
                                     <td
                                         key={cell.id}
@@ -192,7 +192,7 @@ function Categories() {
                 accessorKey: 'name',
                 header: 'Category Name',
                 cell: ({ getValue }) => (
-                    <div className='text-sm font-medium text-gray-900'>
+                    <div className='text-sm font-medium'>
                         {getValue<string>()}
                     </div>
                 ),
@@ -205,7 +205,7 @@ function Categories() {
                     const numericValue =
                         typeof value === 'string' ? parseFloat(value) : value;
                     return (
-                        <div className='text-sm font-semibold text-blue-600'>
+                        <div className='text-sm font-semibold text-primary'>
                             {formatCurrency(numericValue || 0)}
                         </div>
                     );
@@ -260,14 +260,12 @@ function Categories() {
         <div className='pb-6'>
             <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='mb-6'>
-                    <h1 className='text-2xl font-bold text-gray-900 mb-8'>
-                        Categories
-                    </h1>
+                    <h1 className='text-2xl font-bold mb-8'>Categories</h1>
 
                     <div className='flex justify-end mb-4'>
                         <button
                             onClick={handleAddCategory}
-                            className='bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 border-2 border-green-800'
+                            className='btn btn-primary'
                         >
                             Add Category
                         </button>
@@ -311,7 +309,7 @@ function Categories() {
                         cannot be undone and will affect all associated
                         transactions.
                         {deleteError && (
-                            <p className='mt-2 text-red-600 font-medium'>
+                            <p className='mt-2 text-error font-medium'>
                                 {deleteError}
                             </p>
                         )}

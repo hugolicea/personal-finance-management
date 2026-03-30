@@ -1,8 +1,15 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "path": ".",
+        },
+    ],
+    "settings": {
+        "chat.tools.terminal.autoApprove": {
+            "/^# Direct replacement for RuleConditionBuilder input patterns \\(without bg-white suffix, so regex didn't match\\)\n\\$f = \"frontend\\\\src\\\\components\\\\RuleConditionBuilder\\.tsx\"\n\\$c = Get-Content \\$f -Raw -Encoding UTF8\n\\$c = \\$c\\.Replace\\(\"flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500\", \"input input-sm input-bordered flex-1\"\\)\n\\$c = \\$c\\.Replace\\(\"w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500\", \"input input-sm input-bordered w-full\"\\)\n\\$c = \\$c\\.Replace\\(\"flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500\", \"input input-sm input-bordered flex-1\"\\)\n\\$c = \\$c\\.Replace\\(\"w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500\", \"input input-sm input-bordered w-full\"\\)\n# Also fix the select patterns without bg-white \\(select border-gray-300 rounded\\)\n\\$c = \\$c\\.Replace\\(\"flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white\", \"select select-sm select-bordered flex-1\"\\)\n\\$c = \\$c\\.Replace\\(\"w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white\", \"select select-sm select-bordered w-full\"\\)\nSet-Content \\$f -Value \\$c -Encoding UTF8 -NoNewline\nWrite-Host \"Done RuleConditionBuilder\"\n$/": {
+                "approve": true,
+                "matchCommandLine": true,
+            },
+        },
+    },
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 
 import type { ReclassificationConditions } from '../types/cleanAndReclassify';
 
@@ -105,7 +105,7 @@ function RuleConditionBuilder({
         conditions.transaction_type !== undefined;
 
     return (
-        <div className='space-y-4 border-t border-gray-200 pt-4 mt-4'>
+        <div className='space-y-4 border-t border-base-300 pt-4 mt-4'>
             <div className='flex items-center justify-between'>
                 <h3 className='text-sm font-medium text-gray-700'>
                     🎯 Advanced Conditions
@@ -136,7 +136,7 @@ function RuleConditionBuilder({
                             }
                         }}
                         placeholder='e.g., walmart, target'
-                        className='flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered flex-1'
                     />
                     <button
                         type='button'
@@ -193,7 +193,7 @@ function RuleConditionBuilder({
                             }
                         }}
                         placeholder='e.g., refund, return'
-                        className='flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered flex-1'
                     />
                     <button
                         type='button'
@@ -245,7 +245,7 @@ function RuleConditionBuilder({
                             handleAmountChange('amount_min', e.target.value)
                         }
                         placeholder='0.00'
-                        className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered w-full'
                     />
                 </div>
                 <div>
@@ -260,7 +260,7 @@ function RuleConditionBuilder({
                             handleAmountChange('amount_max', e.target.value)
                         }
                         placeholder='999.99'
-                        className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered w-full'
                     />
                 </div>
             </div>
@@ -277,7 +277,7 @@ function RuleConditionBuilder({
                         onChange={(e) =>
                             handleDateChange('date_from', e.target.value)
                         }
-                        className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered w-full'
                     />
                 </div>
                 <div>
@@ -290,7 +290,7 @@ function RuleConditionBuilder({
                         onChange={(e) =>
                             handleDateChange('date_to', e.target.value)
                         }
-                        className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                        className='input input-sm input-bordered w-full'
                     />
                 </div>
             </div>
@@ -305,7 +305,7 @@ function RuleConditionBuilder({
                     onChange={(e) =>
                         handleTransactionTypeChange(e.target.value)
                     }
-                    className='w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500'
+                    className='input input-sm input-bordered w-full'
                 >
                     <option value=''>All Types</option>
                     <option value='income'>Income</option>

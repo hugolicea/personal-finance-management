@@ -18,64 +18,61 @@ function Navigation({ onMenuClick }: NavigationProps) {
     };
 
     return (
-        <nav className='bg-white shadow-sm border-b border-gray-200 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-10'>
-            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-                <div className='flex justify-between h-16'>
-                    <div className='flex items-center'>
-                        {/* Mobile menu button */}
-                        <button
-                            onClick={onMenuClick}
-                            className='lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-red-500'
-                        >
-                            <span className='sr-only'>Open sidebar</span>
-                            <svg
-                                className='h-6 w-6'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                strokeWidth='1.5'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    d='M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'
-                                />
-                            </svg>
-                        </button>
-
-                        <div className='flex-shrink-0 flex items-center ml-4 lg:ml-0'>
-                            <h1 className='text-xl font-bold text-gray-900'>
-                                💰 Personal Finance 365
-                            </h1>
-                        </div>
-                    </div>
-
-                    {/* Desktop header content can go here if needed */}
-                    <div className='hidden lg:flex lg:items-center lg:justify-end lg:space-x-4'>
-                        {isAuthenticated ? (
-                            <>
-                                <div className='text-sm text-gray-700'>
-                                    Welcome,{' '}
-                                    <span className='font-medium'>
-                                        {user?.username || 'User'}
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className='inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                                >
-                                    Logout
-                                </button>
-                            </>
-                        ) : (
-                            <div className='text-sm text-gray-500'>
-                                Professional Budget Management
-                            </div>
-                        )}
-                    </div>
-                </div>
+        <div className='navbar bg-base-100 shadow-sm border-b border-base-300 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:h-16'>
+            {/* Mobile hamburger */}
+            <div className='flex-none lg:hidden'>
+                <button
+                    onClick={onMenuClick}
+                    className='btn btn-ghost btn-circle'
+                    aria-label='Open sidebar'
+                >
+                    <svg
+                        className='h-6 w-6'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        strokeWidth='1.5'
+                        stroke='currentColor'
+                    >
+                        <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            d='M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5'
+                        />
+                    </svg>
+                </button>
             </div>
-        </nav>
+
+            {/* Logo */}
+            <div className='flex-1'>
+                <h1 className='text-xl font-bold px-2'>
+                    💰 Personal Finance 365
+                </h1>
+            </div>
+
+            {/* Desktop right section */}
+            <div className='flex-none hidden lg:flex items-center gap-3'>
+                {isAuthenticated ? (
+                    <>
+                        <span className='text-sm'>
+                            Welcome,{' '}
+                            <span className='font-medium'>
+                                {user?.username || 'User'}
+                            </span>
+                        </span>
+                        <button
+                            onClick={handleLogout}
+                            className='btn btn-primary btn-sm'
+                        >
+                            Logout
+                        </button>
+                    </>
+                ) : (
+                    <span className='text-sm opacity-60'>
+                        Professional Budget Management
+                    </span>
+                )}
+            </div>
+        </div>
     );
 }
 

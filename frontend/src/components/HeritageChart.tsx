@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -112,7 +112,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
             {/* Charts */}
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Property Types Pie Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Properties by Type
                     </h4>
@@ -154,7 +154,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                 </div>
 
                 {/* Top Properties Bar Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Top 5 Properties by Value
                     </h4>

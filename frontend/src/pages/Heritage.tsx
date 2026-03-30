@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -82,7 +82,7 @@ function Heritage() {
                 accessorKey: 'name',
                 header: 'Property Name',
                 cell: ({ row }) => (
-                    <div className='font-semibold text-blue-600'>
+                    <div className='font-semibold text-primary'>
                         {row.original.name}
                     </div>
                 ),
@@ -91,7 +91,7 @@ function Heritage() {
                 accessorKey: 'heritage_type',
                 header: 'Type',
                 cell: ({ row }) => (
-                    <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                    <span className='badge badge-success badge-sm'>
                         {row.original.heritage_type
                             .replace(/_/g, ' ')
                             .toUpperCase()}
@@ -136,7 +136,7 @@ function Heritage() {
                 accessorKey: 'current_value',
                 header: 'Current Value',
                 cell: ({ row }) => (
-                    <div className='text-sm font-semibold text-green-600'>
+                    <div className='text-sm font-semibold text-success'>
                         {row.original.current_value ? (
                             formatCurrency(row.original.current_value)
                         ) : (
@@ -163,7 +163,7 @@ function Heritage() {
                     return (
                         <div
                             className={`text-sm font-semibold ${
-                                isPositive ? 'text-green-600' : 'text-red-600'
+                                isPositive ? 'text-success' : 'text-error'
                             }`}
                         >
                             {isPositive ? '+' : ''}
@@ -183,7 +183,7 @@ function Heritage() {
                     return (
                         <div
                             className={`text-sm font-semibold ${
-                                isPositive ? 'text-green-600' : 'text-red-600'
+                                isPositive ? 'text-success' : 'text-error'
                             }`}
                         >
                             {isPositive ? '+' : ''}
@@ -199,7 +199,7 @@ function Heritage() {
                 id: 'rental_yield_percentage',
                 header: 'Rental Yield %',
                 cell: ({ row }) => (
-                    <div className='text-sm font-semibold text-blue-600'>
+                    <div className='text-sm font-semibold text-primary'>
                         {row.original.rental_yield_percentage.toFixed(2)}%
                     </div>
                 ),
@@ -272,7 +272,7 @@ function Heritage() {
     if (loading) {
         return (
             <div className='flex items-center justify-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+                <div className='loading loading-spinner loading-lg text-primary'></div>
             </div>
         );
     }
@@ -281,10 +281,8 @@ function Heritage() {
         <div className='px-4 sm:px-6 lg:px-8'>
             <div className='sm:flex sm:items-center'>
                 <div className='sm:flex-auto'>
-                    <h1 className='text-2xl font-semibold text-gray-900'>
-                        Heritage
-                    </h1>
-                    <p className='mt-2 text-sm text-gray-700'>
+                    <h1 className='text-2xl font-semibold'>Heritage</h1>
+                    <p className='mt-2 text-sm opacity-70'>
                         Track your real estate properties and monitor their
                         performance.
                     </p>
@@ -296,7 +294,7 @@ function Heritage() {
                 <button
                     type='button'
                     onClick={handleOpenModal}
-                    className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
+                    className='btn btn-primary'
                 >
                     <svg
                         className='-ml-1 mr-3 h-5 w-5'
@@ -317,7 +315,7 @@ function Heritage() {
 
             {/* Portfolio Summary */}
             <div className='mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4'>
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -332,10 +330,10 @@ function Heritage() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Property Value
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(totalPortfolioValue)}
                                     </dd>
                                 </dl>
@@ -344,7 +342,7 @@ function Heritage() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -365,14 +363,14 @@ function Heritage() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Gain/Loss
                                     </dt>
                                     <dd
                                         className={`text-lg font-medium ${
                                             totalGainLoss >= 0
-                                                ? 'text-green-600'
-                                                : 'text-red-600'
+                                                ? 'text-success'
+                                                : 'text-error'
                                         }`}
                                     >
                                         {totalGainLoss >= 0 ? '+' : ''}
@@ -384,7 +382,7 @@ function Heritage() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -399,10 +397,10 @@ function Heritage() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Annual Rental Income
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(
                                             totalAnnualRentalIncome
                                         )}
@@ -413,7 +411,7 @@ function Heritage() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -428,10 +426,10 @@ function Heritage() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Avg Rental Yield
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {averageRentalYield.toFixed(2)}%
                                     </dd>
                                 </dl>
@@ -450,7 +448,7 @@ function Heritage() {
                             placeholder='Search properties...'
                             value={globalFilter}
                             onChange={(e) => setGlobalFilter(e.target.value)}
-                            className='block w-full max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm'
+                            className='block w-full max-w-md px-3 py-2 border border-base-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm'
                         />
                     </div>
                     <div className='text-sm text-gray-500 lg:hidden'>
@@ -479,26 +477,26 @@ function Heritage() {
                             return (
                                 <div
                                     key={row.id}
-                                    className='bg-white rounded-lg shadow p-4 border border-gray-200'
+                                    className='card bg-base-100 shadow-sm p-4 border border-base-300'
                                 >
                                     <div className='flex items-start justify-between'>
                                         <div className='flex-1'>
-                                            <h3 className='text-lg font-semibold text-blue-600 mb-2'>
+                                            <h3 className='text-lg font-semibold text-primary mb-2'>
                                                 {heritage.name}
                                             </h3>
                                             <div className='grid grid-cols-2 gap-4 text-sm'>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Type:
                                                     </span>
-                                                    <span className='ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+                                                    <span className='ml-2 badge badge-success badge-sm'>
                                                         {heritage.heritage_type
                                                             .replace(/_/g, ' ')
                                                             .toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Address:
                                                     </span>
                                                     <span
@@ -509,7 +507,7 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Purchase Price:
                                                     </span>
                                                     <span className='ml-2 text-gray-900'>
@@ -519,10 +517,10 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Current Value:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold text-green-600'>
+                                                    <span className='ml-2 text-gray-900 font-semibold text-success'>
                                                         {heritage.current_value
                                                             ? formatCurrency(
                                                                   heritage.current_value
@@ -531,7 +529,7 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Monthly Rent:
                                                     </span>
                                                     <span className='ml-2 text-gray-900'>
@@ -541,15 +539,15 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Gain/Loss:
                                                     </span>
                                                     <span
                                                         className={`ml-2 font-semibold ${
                                                             heritage.gain_loss >=
                                                             0
-                                                                ? 'text-green-600'
-                                                                : 'text-red-600'
+                                                                ? 'text-success'
+                                                                : 'text-error'
                                                         }`}
                                                     >
                                                         {heritage.gain_loss >= 0
@@ -616,11 +614,11 @@ function Heritage() {
                 </div>
 
                 {/* Desktop Table Layout */}
-                <div className='hidden lg:block bg-white shadow overflow-hidden sm:rounded-md'>
+                <div className='hidden lg:block card bg-base-100 shadow-sm overflow-hidden'>
                     <div className='overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
                         <div className='inline-block w-full align-middle'>
-                            <table className='w-full table-auto divide-y divide-gray-200'>
-                                <thead className='bg-gray-50'>
+                            <table className='table table-zebra w-full'>
+                                <thead>
                                     {table
                                         .getHeaderGroups()
                                         .map((headerGroup) => (
@@ -630,7 +628,7 @@ function Heritage() {
                                                         <th
                                                             key={header.id}
                                                             scope='col'
-                                                            className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                             aria-sort={
                                                                 header.column.getIsSorted() ===
@@ -665,12 +663,9 @@ function Heritage() {
                                             </tr>
                                         ))}
                                 </thead>
-                                <tbody className='bg-white divide-y divide-gray-200'>
+                                <tbody>
                                     {table.getRowModel().rows.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className='hover:bg-gray-50'
-                                        >
+                                        <tr key={row.id} className=''>
                                             {row
                                                 .getVisibleCells()
                                                 .map((cell) => (
@@ -747,11 +742,11 @@ function Heritage() {
                                     </p>
                                 </div>
                                 {deletingHeritage && (
-                                    <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                                    <div className='mt-3 p-3 bg-base-200 rounded-md'>
                                         <div className='text-sm'>
                                             <div className='grid grid-cols-2 gap-4'>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Type:
                                                     </span>{' '}
                                                     <span className='text-gray-900 capitalize'>
@@ -762,7 +757,7 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Address:
                                                     </span>{' '}
                                                     <span className='text-gray-900'>
@@ -772,7 +767,7 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Current Value:
                                                     </span>{' '}
                                                     <span className='text-gray-900 font-semibold'>
@@ -783,7 +778,7 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Monthly Rental Income:
                                                     </span>{' '}
                                                     <span className='text-gray-900'>
@@ -793,15 +788,15 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Gain/Loss:
                                                     </span>{' '}
                                                     <span
                                                         className={`font-semibold ${
                                                             deletingHeritage.gain_loss >=
                                                             0
-                                                                ? 'text-green-600'
-                                                                : 'text-red-600'
+                                                                ? 'text-success'
+                                                                : 'text-error'
                                                         }`}
                                                     >
                                                         {formatCurrency(
@@ -815,10 +810,10 @@ function Heritage() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Rental Yield:
                                                     </span>{' '}
-                                                    <span className='text-gray-900 font-semibold text-blue-600'>
+                                                    <span className='text-gray-900 font-semibold text-primary'>
                                                         {deletingHeritage.rental_yield_percentage.toFixed(
                                                             2
                                                         )}
@@ -830,7 +825,7 @@ function Heritage() {
                                     </div>
                                 )}
                                 <div className='mt-3'>
-                                    <p className='text-sm text-red-600 font-medium'>
+                                    <p className='text-sm text-error font-medium'>
                                         <span aria-hidden='true'>⚠️</span> This
                                         will permanently remove all data
                                         associated with this property.

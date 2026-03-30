@@ -15,45 +15,40 @@ function MainLayout() {
     };
 
     return (
-        <div className='min-h-screen bg-gray-100'>
-            <Navigation onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+        <div className='drawer lg:drawer-open min-h-screen'>
+            <input
+                id='sidebar-drawer'
+                type='checkbox'
+                className='drawer-toggle'
+                checked={sidebarOpen}
+                onChange={() => setSidebarOpen(!sidebarOpen)}
+            />
 
-            {/* Mobile sidebar overlay */}
-            {sidebarOpen && (
-                <div className='fixed inset-0 z-40 xl:hidden'>
-                    <div
-                        className='fixed inset-0 bg-gray-600 bg-opacity-75'
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                    <div className='relative flex w-full max-w-xs flex-col bg-white'>
-                        <SidebarContent
-                            currentPath={location.pathname}
-                            onViewChange={handleViewChange}
-                        />
-                    </div>
-                </div>
-            )}
-
-            <div className='flex'>
-                {/* Desktop sidebar */}
-                <div className='hidden xl:fixed xl:inset-y-0 xl:flex xl:w-64 xl:flex-col'>
-                    <div className='flex flex-grow flex-col overflow-y-auto bg-white pt-16 shadow'>
-                        <SidebarContent
-                            currentPath={location.pathname}
-                            onViewChange={handleViewChange}
-                        />
-                    </div>
-                </div>
-
-                {/* Main content */}
-                <div className='flex flex-1 flex-col xl:pl-64 lg:pt-16'>
-                    <main className='flex-1'>
-                        <div className='py-6'>
-                            <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 xl:px-8'>
-                                <AppRoutes />
-                            </div>
+            {/* Main content area */}
+            <div className='drawer-content flex flex-col bg-base-200'>
+                <Navigation onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+                <main className='flex-1 lg:pt-16'>
+                    <div className='py-6'>
+                        <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 xl:px-8'>
+                            <AppRoutes />
                         </div>
-                    </main>
+                    </div>
+                </main>
+            </div>
+
+            {/* Sidebar */}
+            <div className='drawer-side z-50'>
+                <label
+                    htmlFor='sidebar-drawer'
+                    aria-label='close sidebar'
+                    className='drawer-overlay'
+                    onClick={() => setSidebarOpen(false)}
+                />
+                <div className='bg-base-100 w-64 min-h-full shadow flex flex-col pt-16'>
+                    <SidebarContent
+                        currentPath={location.pathname}
+                        onViewChange={handleViewChange}
+                    />
                 </div>
             </div>
         </div>
@@ -88,27 +83,30 @@ function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
         currentPath === '/accounts' || currentPath.startsWith('/accounts/');
 
     return (
-        <nav className='mt-5 flex-1 px-2'>
-            <div className='space-y-1'>
-                {menuItems.map((item) => (
-                    <button
-                        key={item.path}
-                        onClick={() => onViewChange(item.path)}
-                        className={`${
-                            item.path === '/accounts'
-                                ? isAccountsActive
-                                    ? 'bg-red-50 border-red-500 text-red-700'
-                                    : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                                : currentPath === item.path
-                                  ? 'bg-red-50 border-red-500 text-red-700'
-                                  : 'border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-800'
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm font-medium border-l-4`}
-                    >
-                        <span className='mr-3 text-lg'>{item.icon}</span>
-                        {item.label}
-                    </button>
-                ))}
-            </div>
+        <nav className='mt-4 flex-1'>
+            <ul className='menu px-3 space-y-0.5'>
+                {menuItems.map((item) => {
+                    const isActive =
+                        item.path === '/accounts'
+                            ? isAccountsActive
+                            : currentPath === item.path;
+                    return (
+                        <li key={item.path}>
+                            <button
+                                onClick={() => onViewChange(item.path)}
+                                className={
+                                    isActive
+                                        ? 'active font-medium'
+                                        : 'font-medium'
+                                }
+                            >
+                                <span className='text-lg'>{item.icon}</span>
+                                {item.label}
+                            </button>
+                        </li>
+                    );
+                })}
+            </ul>
         </nav>
     );
 }
