@@ -52,7 +52,6 @@ from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 # Resolved once at import time — avoids N806 and repeated calls
 User = get_user_model()
-
 logger = logging.getLogger(__name__)
 
 
