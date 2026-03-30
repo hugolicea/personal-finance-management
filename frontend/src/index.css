@@ -21,3 +21,67 @@
     background-color: #f3f4f6;
     border-radius: 3px;
 }
+
+@layer base {
+    *:focus-visible {
+        @apply ring-2 ring-primary ring-offset-2 outline-none;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        @apply ring-2 ring-primary ring-offset-2 outline-none;
+    }
+
+    h1 {
+        @apply text-3xl font-bold text-base-content;
+    }
+
+    h2 {
+        @apply text-2xl font-semibold text-base-content;
+    }
+
+    h3 {
+        @apply text-xl font-semibold text-base-content;
+    }
+
+    h4 {
+        @apply text-lg font-medium text-base-content;
+    }
+
+    .text-primary-data {
+        @apply text-base-content font-semibold;
+    }
+
+    .text-secondary-data {
+        @apply text-base-content/80 font-medium;
+    }
+
+    .text-meta {
+        @apply text-base-content/60 text-sm;
+    }
+}
+
+@layer components {
+    .btn-primary-action {
+        @apply btn btn-primary shadow-md hover:shadow-lg transition-shadow;
+    }
+
+    .btn-secondary-action {
+        @apply btn btn-outline btn-primary;
+    }
+
+    .btn-destructive {
+        @apply btn btn-error;
+    }
+
+    .btn-subtle {
+        @apply btn btn-ghost;
+    }
+
+    .btn-icon {
+        @apply btn btn-ghost btn-sm btn-circle;
+    }
+}

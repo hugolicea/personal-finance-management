@@ -9,95 +9,92 @@ import {
 } from 'recharts';
 
 import type { Transaction } from '../types/transactions';
+import {
+    aggregateData,
+    formatDateLabel,
+    getAggregationLevel,
+} from '../utils/dataAggregation';
 import { formatCurrency } from '../utils/formatters';
-
-const MONTH_NAMES = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-];
+import ChartEmptyState from './ChartEmptyState';
 
 interface MonthlySpendingChartProps {
     transactions: Transaction[];
     year?: number;
+    startDate?: Date;
+    endDate?: Date;
 }
 
 function MonthlySpendingChart({
     transactions,
     year,
+    startDate,
+    endDate,
 }: MonthlySpendingChartProps) {
     const selectedYear = year ?? new Date().getFullYear();
 
-    const { chartData, totalSpending, avgMonthlySpending, maxSpendingMonth } =
-        useMemo(() => {
-            const monthlySpending = transactions
-                .filter((t) => {
-                    const d = new Date(t.date);
-                    return (
-                        !isNaN(d.getTime()) &&
-                        d.getFullYear() === selectedYear &&
-                        typeof t.amount === 'number' &&
-                        t.amount < 0
-                    );
-                })
-                .reduce(
-                    (acc, t) => {
-                        const month = new Date(t.date).toLocaleString(
-                            'default',
-                            { month: 'short' }
-                        );
-                        acc[month] =
-                            (acc[month] ?? 0) + Math.abs(t.amount as number);
-                        return acc;
-                    },
-                    {} as Record<string, number>
-                );
+    const {
+        chartData,
+        level,
+        totalSpending,
+        avgMonthlySpending,
+        maxSpendingPeriod,
+    } = useMemo(() => {
+        const rangeStart = startDate ?? new Date(selectedYear, 0, 1);
+        const rangeEnd = endDate ?? new Date(selectedYear, 11, 31);
+        const level = getAggregationLevel(rangeStart, rangeEnd);
 
-            const chartData = MONTH_NAMES.map((month) => ({
-                month,
-                spending: Math.round(monthlySpending[month] ?? 0),
+        const spendingPoints = transactions
+            .filter((transaction) => {
+                const transactionDate = new Date(transaction.date);
+                return (
+                    !isNaN(transactionDate.getTime()) &&
+                    transactionDate.getFullYear() === selectedYear &&
+                    typeof transaction.amount === 'number' &&
+                    transaction.amount < 0
+                );
+            })
+            .map((transaction) => ({
+                date: transaction.date,
+                value: Math.abs(transaction.amount),
             }));
 
-            const totalSpending = chartData.reduce(
-                (sum, m) => sum + m.spending,
-                0
-            );
-            const avgMonthlySpending = totalSpending / 12;
+        const aggregatedData = aggregateData(spendingPoints, level);
+        const chartData = aggregatedData.map((point) => ({
+            date: point.date,
+            spending: Math.round(point.value),
+            count: point.count,
+        }));
 
-            let maxSpendingMonth: { month: string; spending: number } | null =
-                null;
-            for (const m of chartData) {
-                if (
-                    maxSpendingMonth === null ||
-                    m.spending > maxSpendingMonth.spending
-                ) {
-                    maxSpendingMonth = m;
-                }
+        const totalSpending = chartData.reduce((sum, m) => sum + m.spending, 0);
+        const avgMonthlySpending = totalSpending / 12;
+
+        let maxSpendingPeriod: { date: string; spending: number } | null = null;
+        for (const m of chartData) {
+            if (
+                maxSpendingPeriod === null ||
+                m.spending > maxSpendingPeriod.spending
+            ) {
+                maxSpendingPeriod = m;
             }
+        }
 
-            return {
-                chartData,
-                totalSpending,
-                avgMonthlySpending,
-                maxSpendingMonth,
-            };
-        }, [transactions, selectedYear]);
+        return {
+            chartData,
+            level,
+            totalSpending,
+            avgMonthlySpending,
+            maxSpendingPeriod,
+        };
+    }, [endDate, selectedYear, startDate, transactions]);
 
     // Handle empty or invalid data
     if (!transactions || transactions.length === 0) {
         return (
-            <div className='flex items-center justify-center h-64 text-gray-500'>
-                No transaction data available
-            </div>
+            <ChartEmptyState
+                icon='📊'
+                title='No spending data yet'
+                description='Upload a bank statement or add transactions to see your spending trends.'
+            />
         );
     }
 
@@ -109,7 +106,7 @@ function MonthlySpendingChart({
                     <div className='text-sm font-medium opacity-90'>
                         Total Annual Spending
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalSpending)}
                     </div>
                 </div>
@@ -117,7 +114,7 @@ function MonthlySpendingChart({
                     <div className='text-sm font-medium opacity-90'>
                         Average Monthly
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(avgMonthlySpending)}
                     </div>
                 </div>
@@ -125,11 +122,11 @@ function MonthlySpendingChart({
                     <div className='text-sm font-medium opacity-90'>
                         Highest Month
                     </div>
-                    <div className='text-2xl font-bold'>
-                        {maxSpendingMonth ? (
+                    <div className='text-2xl font-bold tabular-nums'>
+                        {maxSpendingPeriod ? (
                             <>
-                                {maxSpendingMonth.month}:{' '}
-                                {formatCurrency(maxSpendingMonth.spending)}
+                                {formatDateLabel(maxSpendingPeriod.date, level)}
+                                : {formatCurrency(maxSpendingPeriod.spending)}
                             </>
                         ) : (
                             'No data'
@@ -153,20 +150,37 @@ function MonthlySpendingChart({
                         data={chartData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                     >
-                        <XAxis dataKey='month' tick={{ fontSize: 12 }} />
+                        <XAxis
+                            dataKey='date'
+                            tick={{ fontSize: 12 }}
+                            tickFormatter={(date) =>
+                                formatDateLabel(String(date), level)
+                            }
+                        />
                         <YAxis
+                            domain={[0, 'auto']}
                             tick={{ fontSize: 12 }}
                             tickFormatter={(value) =>
                                 `$${(value / 1000).toFixed(0)}k`
                             }
                         />
                         <Tooltip
-                            formatter={(value) => [
-                                formatCurrency(value as number),
-                                'Spending',
-                            ]}
+                            formatter={(value, _name, item) => {
+                                const numericValue = Number(value) || 0;
+                                const count = item?.payload?.count ?? 0;
+                                const countLabel =
+                                    count === 1
+                                        ? 'transaction'
+                                        : 'transactions';
+                                return [
+                                    `${formatCurrency(
+                                        numericValue
+                                    )} (${count} ${countLabel})`,
+                                    'Spending',
+                                ];
+                            }}
                             labelFormatter={(label) =>
-                                `${label} ${selectedYear}`
+                                formatDateLabel(String(label), level)
                             }
                         />
                         <Bar dataKey='spending' fill='#FF8042' />

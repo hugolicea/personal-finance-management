@@ -366,6 +366,40 @@ def category_spending_by_period(request, period):
     )
 
 
+@extend_schema(
+    tags=["Transactions"],
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "imported": {"type": "integer"},
+                "skipped": {"type": "integer"},
+                "message": {"type": "string"},
+            },
+        },
+        400: {
+            "type": "object",
+            "properties": {
+                "error_type": {
+                    "type": "string",
+                    "enum": ["format", "mapping", "validation"],
+                },
+                "message": {"type": "string"},
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "row": {"type": "integer"},
+                            "field": {"type": "string"},
+                            "error": {"type": "string"},
+                        },
+                    },
+                },
+            },
+        },
+    },
+)
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
 @permission_classes([IsAuthenticated])
@@ -378,36 +412,58 @@ def upload_bank_statement(request):
 
     Security: Validates file size (max 10MB) and content type.
     """
+
+    def error_response(error_type, message, details):
+        return Response(
+            {
+                "error_type": error_type,
+                "message": message,
+                "details": details,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     # Validate file presence
     if "file" not in request.FILES:
-        return Response(
-            {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+        return error_response(
+            "format",
+            "Invalid CSV format. Please check your file.",
+            [{"error": "No file provided"}],
         )
 
     file = request.FILES["file"]
 
     # Validate file extension
     if not file.name.endswith(".csv"):
-        return Response(
-            {"error": "File must be a CSV"}, status=status.HTTP_400_BAD_REQUEST
+        return error_response(
+            "format",
+            "Invalid CSV format. Please check your file.",
+            [{"error": "File must be a CSV"}],
         )
 
     # Validate file size (5MB limit)
     max_size = 5 * 1024 * 1024  # 5MB
     if file.size > max_size:
-        return Response(
-            {
-                "error": f"File size exceeds maximum allowed size of {max_size / (1024 * 1024):.0f}MB"
-            },
-            status=status.HTTP_400_BAD_REQUEST,
+        return error_response(
+            "format",
+            "Invalid CSV format. Please check your file.",
+            [
+                {
+                    "error": (
+                        f"File size exceeds maximum allowed size of "
+                        f"{max_size / (1024 * 1024):.0f}MB"
+                    )
+                }
+            ],
         )
 
     # Validate content type
     allowed_content_types = ["text/csv", "application/csv", "application/vnd.ms-excel"]
     if file.content_type and file.content_type not in allowed_content_types:
-        return Response(
-            {"error": "Invalid file content type. Must be CSV."},
-            status=status.HTTP_400_BAD_REQUEST,
+        return error_response(
+            "format",
+            "Invalid CSV format. Please check your file.",
+            [{"error": "Invalid file content type. Must be CSV."}],
         )
 
     try:
@@ -416,194 +472,288 @@ def upload_bank_statement(request):
             file_data = file.read().decode("utf-8")
         except UnicodeDecodeError:
             # Try latin-1 encoding as fallback
-            file.seek(0)
-            file_data = file.read().decode("latin-1")
+            try:
+                file.seek(0)
+                file_data = file.read().decode("latin-1")
+            except UnicodeDecodeError:
+                return error_response(
+                    "format",
+                    "Invalid CSV format. Please check your file.",
+                    [{"error": "File encoding is not supported."}],
+                )
 
         csv_reader = csv.DictReader(io.StringIO(file_data))
 
         # Detect CSV type based on headers
         headers = csv_reader.fieldnames or []
+        if not headers:
+            return error_response(
+                "format",
+                "Invalid CSV format. Please check your file.",
+                [{"error": "CSV headers could not be read."}],
+            )
+
+        header_set = {header.strip().lower() for header in headers if header}
         is_account_csv = "Details" in headers and "Type" in headers
+
+        required_column_candidates = {
+            "date": ["Posting Date", "Post Date", "date", "Date"]
+            if is_account_csv
+            else ["Transaction Date", "Post Date", "date", "Date"],
+            "description": ["Description", "description", "desc"],
+            "amount": ["Amount", "amount", "amt"],
+        }
+
+        mapping_errors = []
+        for field, candidates in required_column_candidates.items():
+            if not any(candidate.lower() in header_set for candidate in candidates):
+                mapping_errors.append(
+                    {
+                        "field": field,
+                        "error": f"Column '{candidates[0]}' not found",
+                    }
+                )
+
+        if mapping_errors:
+            return error_response(
+                "mapping",
+                "Required columns not found in CSV.",
+                mapping_errors,
+            )
 
         transactions_created = []
         transactions_skipped = []
         errors = []
+        validation_errors = []
 
-        for row_num, row in enumerate(
-            csv_reader, start=2
-        ):  # Start at 2 because row 1 is headers
-            try:
-                if is_account_csv:
-                    # Account CSV format:
-                    # Details, Posting Date, Description, Amount, Type
-                    date_str = get_column_value(
-                        row, ["Posting Date", "Post Date", "date", "Date"]
-                    )
-                    description = get_column_value(
-                        row, ["Description", "description", "desc"]
-                    )
-                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
-                    category_name = get_column_value(
-                        row, ["Type", "type"]
-                    )  # Use Type as category
-                else:
-                    # Credit card CSV format: flexible columns
-                    date_str = get_column_value(
-                        row, ["Transaction Date", "Post Date", "date", "Date"]
-                    )
-                    description = get_column_value(
-                        row, ["Description", "description", "desc"]
-                    )
-                    amount_str = get_column_value(row, ["Amount", "amount", "amt"])
-                    category_name = get_column_value(
-                        row, ["Category", "category", "cat"]
-                    )
+        try:
+            for row_num, row in enumerate(
+                csv_reader, start=2
+            ):  # Start at 2 because row 1 is headers
+                try:
+                    if is_account_csv:
+                        # Account CSV format:
+                        # Details, Posting Date, Description, Amount, Type
+                        date_str = get_column_value(
+                            row, ["Posting Date", "Post Date", "date", "Date"]
+                        )
+                        description = get_column_value(
+                            row, ["Description", "description", "desc"]
+                        )
+                        amount_str = get_column_value(row, ["Amount", "amount", "amt"])
+                        category_name = get_column_value(
+                            row, ["Type", "type"]
+                        )  # Use Type as category
+                    else:
+                        # Credit card CSV format: flexible columns
+                        date_str = get_column_value(
+                            row, ["Transaction Date", "Post Date", "date", "Date"]
+                        )
+                        description = get_column_value(
+                            row, ["Description", "description", "desc"]
+                        )
+                        amount_str = get_column_value(row, ["Amount", "amount", "amt"])
+                        category_name = get_column_value(
+                            row, ["Category", "category", "cat"]
+                        )
 
-                # Validate required fields
-                if not date_str or not description or not amount_str:
-                    errors.append(
-                        f"Row {row_num}: Missing required fields "
-                        f"(date, description, amount)"
-                    )
-                    continue
-
-                # Parse date - try multiple formats
-                date = None
-                date_formats = [
-                    "%m/%d/%Y",
-                    "%Y-%m-%d",
-                    "%d/%m/%Y",
-                    "%Y/%m/%d",
-                ]
-                for date_format in date_formats:
-                    try:
-                        date = datetime.strptime(date_str, date_format).date()
-                        break
-                    except ValueError:
+                    # Validate required fields
+                    if not date_str or not description or not amount_str:
+                        errors.append(
+                            f"Row {row_num}: Missing required fields "
+                            f"(date, description, amount)"
+                        )
+                        validation_errors.append(
+                            {
+                                "row": row_num,
+                                "field": "required_fields",
+                                "error": (
+                                    "Missing required fields "
+                                    "(date, description, amount)"
+                                ),
+                            }
+                        )
                         continue
 
-                if not date:
-                    errors.append(
-                        f"Row {row_num}: Invalid date format. "
-                        f"Supported formats: MM/DD/YYYY, YYYY-MM-DD, "
-                        f"DD/MM/YYYY"
+                    # Parse date - try multiple formats
+                    date = None
+                    date_formats = [
+                        "%m/%d/%Y",
+                        "%Y-%m-%d",
+                        "%d/%m/%Y",
+                        "%Y/%m/%d",
+                    ]
+                    for date_format in date_formats:
+                        try:
+                            date = datetime.strptime(date_str, date_format).date()
+                            break
+                        except ValueError:
+                            continue
+
+                    if not date:
+                        errors.append(
+                            f"Row {row_num}: Invalid date format. "
+                            f"Supported formats: MM/DD/YYYY, YYYY-MM-DD, "
+                            f"DD/MM/YYYY"
+                        )
+                        validation_errors.append(
+                            {
+                                "row": row_num,
+                                "field": "date",
+                                "error": "Invalid date format",
+                            }
+                        )
+                        continue
+
+                    # Parse amount - handle various formats
+                    try:
+                        # Remove currency symbols, commas, and extra spaces
+                        clean_amount = (
+                            amount_str.replace("$", "")
+                            .replace(",", "")
+                            .replace(" ", "")
+                        )
+                        amount = float(clean_amount)
+                    except ValueError:
+                        errors.append(f"Row {row_num}: Invalid amount format")
+                        validation_errors.append(
+                            {
+                                "row": row_num,
+                                "field": "amount",
+                                "error": "Invalid amount format",
+                            }
+                        )
+                        continue
+
+                    # Create reference ID for duplicate detection
+                    reference_data = f"{date_str}-{description}-{amount_str}"
+                    reference_id = hashlib.md5(reference_data.encode()).hexdigest()
+
+                    # Check for duplicates
+                    if Transaction.objects.filter(reference_id=reference_id).exists():
+                        transactions_skipped.append(
+                            {
+                                "row": row_num,
+                                "description": description,
+                                "reason": "Duplicate transaction",
+                            }
+                        )
+                        continue
+
+                    # Get or create category
+                    category = None
+                    if category_name:
+                        # Determine classification based on amount
+                        classification = (
+                            Category.INCOME if amount > 0 else Category.SPEND
+                        )
+                        category, created = Category.objects.get_or_create(
+                            name=category_name,
+                            user=request.user,
+                            defaults={"classification": classification},
+                        )
+                        # If category already exists but has wrong
+                        # classification, update it
+                        if not created and category.classification != classification:
+                            category.classification = classification
+                            category.save()
+                    else:
+                        # Try to auto-categorize based on description keywords
+                        category = auto_categorize_transaction(
+                            description, request.user
+                        )
+
+                    if not category:
+                        # Use a default category if auto-categorization fails
+                        category, created = Category.objects.get_or_create(
+                            name="Uncategorized",
+                            user=request.user,
+                            defaults={"classification": Category.SPEND},
+                        )
+
+                    # Resolve the target bank account
+                    account_id = request.data.get("account_id")
+                    account = None
+                    if account_id:
+                        try:
+                            account = BankAccount.objects.get(
+                                id=int(account_id), user=request.user
+                            )
+                        except (BankAccount.DoesNotExist, ValueError):
+                            pass
+
+                    if account is None:
+                        # Fall back to auto-selecting by CSV type
+                        account_type = (
+                            BankAccount.CHECKING
+                            if is_account_csv
+                            else BankAccount.CREDIT_CARD
+                        )
+                        account, _ = BankAccount.objects.get_or_create(
+                            user=request.user,
+                            account_type=account_type,
+                            defaults={
+                                "name": (
+                                    "My Checking Account"
+                                    if is_account_csv
+                                    else "My Credit Card"
+                                ),
+                                "currency": "USD",
+                            },
+                        )
+
+                    # Create transaction
+                    transaction = Transaction.objects.create(
+                        date=date,
+                        amount=amount,
+                        description=description,
+                        category=category,
+                        user=request.user,
+                        account=account,
+                        import_source="bank_statement",
+                        reference_id=reference_id,
                     )
-                    continue
 
-                # Parse amount - handle various formats
-                try:
-                    # Remove currency symbols, commas, and extra spaces
-                    clean_amount = (
-                        amount_str.replace("$", "").replace(",", "").replace(" ", "")
+                    transactions_created.append(
+                        {
+                            "id": transaction.id,
+                            "date": date_str,
+                            "description": description,
+                            "amount": amount,
+                            "category": category.name,
+                        }
                     )
-                    amount = float(clean_amount)
-                except ValueError:
-                    errors.append(f"Row {row_num}: Invalid amount format")
-                    continue
 
-                # Create reference ID for duplicate detection
-                reference_data = f"{date_str}-{description}-{amount_str}"
-                reference_id = hashlib.md5(reference_data.encode()).hexdigest()
-
-                # Check for duplicates
-                if Transaction.objects.filter(reference_id=reference_id).exists():
-                    transactions_skipped.append(
+                except Exception as e:
+                    errors.append(f"Row {row_num}: {str(e)}")
+                    validation_errors.append(
                         {
                             "row": row_num,
-                            "description": description,
-                            "reason": "Duplicate transaction",
+                            "field": "row",
+                            "error": str(e),
                         }
                     )
                     continue
+        except csv.Error as e:
+            return error_response(
+                "format",
+                "Invalid CSV format. Please check your file.",
+                [{"error": str(e)}],
+            )
 
-                # Get or create category
-                category = None
-                if category_name:
-                    # Determine classification based on amount
-                    classification = Category.INCOME if amount > 0 else Category.SPEND
-                    category, created = Category.objects.get_or_create(
-                        name=category_name,
-                        user=request.user,
-                        defaults={"classification": classification},
-                    )
-                    # If category already exists but has wrong
-                    # classification, update it
-                    if not created and category.classification != classification:
-                        category.classification = classification
-                        category.save()
-                else:
-                    # Try to auto-categorize based on description keywords
-                    category = auto_categorize_transaction(description, request.user)
-
-                if not category:
-                    # Use a default category if auto-categorization fails
-                    category, created = Category.objects.get_or_create(
-                        name="Uncategorized",
-                        user=request.user,
-                        defaults={"classification": Category.SPEND},
-                    )
-
-                # Resolve the target bank account
-                account_id = request.data.get("account_id")
-                account = None
-                if account_id:
-                    try:
-                        account = BankAccount.objects.get(
-                            id=int(account_id), user=request.user
-                        )
-                    except (BankAccount.DoesNotExist, ValueError):
-                        pass
-
-                if account is None:
-                    # Fall back to auto-selecting by CSV type
-                    account_type = (
-                        BankAccount.CHECKING
-                        if is_account_csv
-                        else BankAccount.CREDIT_CARD
-                    )
-                    account, _ = BankAccount.objects.get_or_create(
-                        user=request.user,
-                        account_type=account_type,
-                        defaults={
-                            "name": (
-                                "My Checking Account"
-                                if is_account_csv
-                                else "My Credit Card"
-                            ),
-                            "currency": "USD",
-                        },
-                    )
-
-                # Create transaction
-                transaction = Transaction.objects.create(
-                    date=date,
-                    amount=amount,
-                    description=description,
-                    category=category,
-                    user=request.user,
-                    account=account,
-                    import_source="bank_statement",
-                    reference_id=reference_id,
-                )
-
-                transactions_created.append(
-                    {
-                        "id": transaction.id,
-                        "date": date_str,
-                        "description": description,
-                        "amount": amount,
-                        "category": category.name,
-                    }
-                )
-
-            except Exception as e:
-                errors.append(f"Row {row_num}: {str(e)}")
-                continue
+        if validation_errors:
+            return error_response(
+                "validation",
+                "Some rows could not be imported.",
+                validation_errors,
+            )
 
         return Response(
             {
+                "imported": len(transactions_created),
+                "skipped": len(transactions_skipped),
                 "message": (
-                    f"Processed {len(transactions_created)} transactions successfully"
+                    f"Successfully imported {len(transactions_created)} transactions"
                 ),
                 "transactions_created": transactions_created,
                 "transactions_skipped": transactions_skipped,
@@ -623,9 +773,10 @@ def upload_bank_statement(request):
         logger = logging.getLogger(__name__)
         logger.exception("Error processing bank statement upload")
 
-        return Response(
-            {"error": "An unexpected error occurred while processing the file"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        return error_response(
+            "format",
+            "Invalid CSV format. Please check your file.",
+            [{"error": "An unexpected error occurred while processing the file"}],
         )
 
 

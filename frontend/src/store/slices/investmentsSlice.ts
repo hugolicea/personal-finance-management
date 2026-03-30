@@ -1,8 +1,13 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    createAsyncThunk,
+    createSlice,
+    type PayloadAction,
+} from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
 
 import { Investment } from '../../types/investments';
 import apiClient from '../../utils/apiClient';
+import type { RootState } from '../index';
 
 interface InvestmentApiResponse {
     id: number;
@@ -28,6 +33,7 @@ interface InvestmentApiResponse {
 
 interface InvestmentsState {
     investments: Investment[];
+    _deletedCache: Investment[];
     loading: boolean;
     deleting: boolean;
     error: string | null;
@@ -35,6 +41,7 @@ interface InvestmentsState {
 
 const initialState: InvestmentsState = {
     investments: [],
+    _deletedCache: [],
     loading: false,
     deleting: false,
     error: null,
@@ -146,11 +153,13 @@ export const updateInvestment = createAsyncThunk(
 
 export const deleteInvestment = createAsyncThunk(
     'investments/deleteInvestment',
-    async (id: number, { rejectWithValue }) => {
+    async (id: number, { dispatch, rejectWithValue }) => {
+        dispatch(optimisticDelete(id));
         try {
             await apiClient.delete(`/api/v1/investments/${id}/`);
             return id;
         } catch (err: unknown) {
+            dispatch(rollbackDelete(id));
             if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.detail ?? 'Failed to delete investment'
@@ -164,7 +173,33 @@ export const deleteInvestment = createAsyncThunk(
 const investmentsSlice = createSlice({
     name: 'investments',
     initialState,
-    reducers: {},
+    reducers: {
+        optimisticDelete(state, action: PayloadAction<number>) {
+            const index = state.investments.findIndex(
+                (investment) => investment.id === action.payload
+            );
+            if (index === -1) {
+                return;
+            }
+
+            const [deletedInvestment] = state.investments.splice(index, 1);
+            state._deletedCache.push(deletedInvestment!);
+        },
+        rollbackDelete(state, action: PayloadAction<number>) {
+            const cachedIndex = state._deletedCache.findIndex(
+                (investment) => investment.id === action.payload
+            );
+            if (cachedIndex === -1) {
+                return;
+            }
+
+            const [restoredInvestment] = state._deletedCache.splice(
+                cachedIndex,
+                1
+            );
+            state.investments.push(restoredInvestment!);
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchInvestments.pending, (state) => {
@@ -203,6 +238,9 @@ const investmentsSlice = createSlice({
                 state.investments = state.investments.filter(
                     (investment) => investment.id !== action.payload
                 );
+                state._deletedCache = state._deletedCache.filter(
+                    (investment) => investment.id !== action.payload
+                );
             })
             .addCase(deleteInvestment.rejected, (state, action) => {
                 state.deleting = false;
@@ -211,5 +249,13 @@ const investmentsSlice = createSlice({
             });
     },
 });
+
+export const { optimisticDelete, rollbackDelete } = investmentsSlice.actions;
+
+export const selectPortfolioValue = (state: RootState): number =>
+    state.investments.investments.reduce(
+        (sum, inv) => sum + (inv.current_value || 0),
+        0
+    );
 
 export default investmentsSlice.reducer;

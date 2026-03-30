@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import FloatingActionButton from './FloatingActionButton';
+import SkipLinks from './SkipLinks';
 import Navigation from '../components/Navigation';
 import AppRoutes from '../routes/AppRoutes';
 
@@ -16,6 +18,7 @@ function MainLayout() {
 
     return (
         <div className='drawer lg:drawer-open min-h-screen'>
+            <SkipLinks />
             <input
                 id='sidebar-drawer'
                 type='checkbox'
@@ -25,15 +28,20 @@ function MainLayout() {
             />
 
             {/* Main content area */}
-            <div className='drawer-content flex flex-col bg-base-200'>
+            <div className='drawer-content flex flex-col bg-base-200 h-screen overflow-hidden'>
                 <Navigation onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-                <main className='flex-1 lg:pt-16'>
+                <main
+                    id='main-content'
+                    tabIndex={-1}
+                    className='flex-1 overflow-y-auto'
+                >
                     <div className='py-6'>
                         <div className='mx-auto max-w-screen-2xl px-4 sm:px-6 xl:px-8'>
                             <AppRoutes />
                         </div>
                     </div>
                 </main>
+                <FloatingActionButton />
             </div>
 
             {/* Sidebar */}
@@ -44,7 +52,7 @@ function MainLayout() {
                     className='drawer-overlay'
                     onClick={() => setSidebarOpen(false)}
                 />
-                <div className='bg-base-100 w-64 min-h-full shadow flex flex-col pt-16'>
+                <div className='bg-base-100 w-64 min-h-full shadow flex flex-col'>
                     <SidebarContent
                         currentPath={location.pathname}
                         onViewChange={handleViewChange}

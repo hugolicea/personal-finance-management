@@ -5,6 +5,7 @@ import { useAppDispatch } from '../hooks/redux';
 import { createHeritage, updateHeritage } from '../store/slices/heritagesSlice';
 import { Heritage } from '../types/heritage';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
+import FormAutoSave from './FormAutoSave';
 
 interface HeritageFormProps {
     heritage?: Heritage;
@@ -122,8 +123,12 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
         >
-            {({ isSubmitting }) => (
+            {({ errors, touched, isSubmitting }) => (
                 <Form className='space-y-8'>
+                    <FormAutoSave
+                        formName='heritage-form'
+                        initialValues={initialValues}
+                    />
                     {/* Property Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
@@ -162,12 +167,28 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     id='name'
                                     className='input input-bordered w-full'
                                     placeholder='e.g., Downtown Apartment, Family House'
+                                    aria-describedby={
+                                        errors.name && touched.name
+                                            ? 'name-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.name && touched.name
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='name'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='name'>
+                                    {(msg) => (
+                                        <span
+                                            id='name-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -183,6 +204,18 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     name='heritage_type'
                                     id='heritage_type'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.heritage_type &&
+                                        touched.heritage_type
+                                            ? 'heritage_type-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.heritage_type &&
+                                        touched.heritage_type
+                                            ? true
+                                            : undefined
+                                    }
                                 >
                                     <option value='land'>🌄 Land</option>
                                     <option value='house'>🏠 House</option>
@@ -198,11 +231,17 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     </option>
                                     <option value='other'>🏗️ Other</option>
                                 </Field>
-                                <ErrorMessage
-                                    name='heritage_type'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='heritage_type'>
+                                    {(msg) => (
+                                        <span
+                                            id='heritage_type-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -218,12 +257,30 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     name='purchase_date'
                                     id='purchase_date'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.purchase_date &&
+                                        touched.purchase_date
+                                            ? 'purchase_date-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.purchase_date &&
+                                        touched.purchase_date
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='purchase_date'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='purchase_date'>
+                                    {(msg) => (
+                                        <span
+                                            id='purchase_date-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div className='sm:col-span-2'>
@@ -241,12 +298,28 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     rows={3}
                                     className='input input-bordered w-full resize-none'
                                     placeholder='Full address including street, city, state, and postal code'
+                                    aria-describedby={
+                                        errors.address && touched.address
+                                            ? 'address-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.address && touched.address
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='address'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='address'>
+                                    {(msg) => (
+                                        <span
+                                            id='address-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -290,11 +363,34 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         step='any'
                                         className='input input-bordered w-full rounded-r-none'
                                         placeholder='200'
+                                        aria-describedby={
+                                            errors.area && touched.area
+                                                ? 'area-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.area && touched.area
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                     <Field
                                         as='select'
                                         name='area_unit'
+                                        id='area_unit'
                                         className='select select-bordered rounded-l-none min-w-[100px]'
+                                        aria-describedby={
+                                            errors.area_unit &&
+                                            touched.area_unit
+                                                ? 'area_unit-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.area_unit &&
+                                            touched.area_unit
+                                                ? true
+                                                : undefined
+                                        }
                                     >
                                         <option value='sq_m'>sq m</option>
                                         <option value='sq_ft'>sq ft</option>
@@ -307,11 +403,28 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     Optional - leave empty if not applicable
                                 </p>
-                                <ErrorMessage
-                                    name='area'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='area'>
+                                    {(msg) => (
+                                        <span
+                                            id='area-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
+                                <ErrorMessage name='area_unit'>
+                                    {(msg) => (
+                                        <span
+                                            id='area_unit-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -335,16 +448,34 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='0'
+                                        aria-describedby={
+                                            errors.monthly_rental_income &&
+                                            touched.monthly_rental_income
+                                                ? 'monthly_rental_income-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.monthly_rental_income &&
+                                            touched.monthly_rental_income
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     Set to 0 if property is not rented
                                 </p>
-                                <ErrorMessage
-                                    name='monthly_rental_income'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='monthly_rental_income'>
+                                    {(msg) => (
+                                        <span
+                                            id='monthly_rental_income-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -394,13 +525,31 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='250000'
+                                        aria-describedby={
+                                            errors.purchase_price &&
+                                            touched.purchase_price
+                                                ? 'purchase_price-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.purchase_price &&
+                                            touched.purchase_price
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
-                                <ErrorMessage
-                                    name='purchase_price'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='purchase_price'>
+                                    {(msg) => (
+                                        <span
+                                            id='purchase_price-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -423,17 +572,35 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='275000'
+                                        aria-describedby={
+                                            errors.current_value &&
+                                            touched.current_value
+                                                ? 'current_value-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.current_value &&
+                                            touched.current_value
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     Optional - for tracking property
                                     appreciation
                                 </p>
-                                <ErrorMessage
-                                    name='current_value'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='current_value'>
+                                    {(msg) => (
+                                        <span
+                                            id='current_value-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -469,12 +636,28 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                 rows={4}
                                 className='textarea textarea-bordered w-full resize-none'
                                 placeholder='Any additional information about this property (renovations, special features, etc.)'
+                                aria-describedby={
+                                    errors.notes && touched.notes
+                                        ? 'notes-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.notes && touched.notes
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='notes'
-                                component='div'
-                                className='mt-2 text-sm text-red-600 font-medium'
-                            />
+                            <ErrorMessage name='notes'>
+                                {(msg) => (
+                                    <span
+                                        id='notes-error'
+                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
                     </div>
 

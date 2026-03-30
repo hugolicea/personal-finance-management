@@ -12,6 +12,7 @@ import {
 import { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
 import { formatCurrency } from '../utils/formatters';
+import ChartEmptyState from './ChartEmptyState';
 
 const COLORS = [
     '#ef4444', // red-500
@@ -97,14 +98,16 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
 
     if (chartData.length === 0) {
         return (
-            <div className='flex items-center justify-center h-64 text-gray-500'>
-                No expense data to display
-            </div>
+            <ChartEmptyState
+                icon='🍩'
+                title='No spending by category'
+                description='Add transactions with categories to see your spending breakdown.'
+            />
         );
     }
 
     return (
-        <div className='h-64'>
+        <div className='h-96'>
             <ResponsiveContainer
                 width='100%'
                 height='100%'
@@ -114,11 +117,11 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
                 <PieChart>
                     <Pie
                         data={chartData}
-                        cx='50%'
+                        cx='38%'
                         cy='50%'
                         labelLine={false}
                         label={renderCustomizedLabel}
-                        outerRadius={80}
+                        outerRadius='72%'
                         fill='#8884d8'
                         dataKey='value'
                     >
@@ -135,7 +138,13 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
                             'Amount',
                         ]}
                     />
-                    <Legend />
+                    <Legend
+                        layout='vertical'
+                        align='right'
+                        verticalAlign='middle'
+                        iconSize={10}
+                        wrapperStyle={{ fontSize: '12px', lineHeight: '1.6' }}
+                    />
                 </PieChart>
             </ResponsiveContainer>
         </div>

@@ -122,7 +122,7 @@ function Investments() {
                 accessorKey: 'purchase_price',
                 header: 'Purchase Price',
                 cell: ({ row }) => (
-                    <div className='text-sm'>
+                    <div className='text-sm tabular-nums'>
                         {formatCurrency(row.original.purchase_price)}
                     </div>
                 ),
@@ -131,7 +131,7 @@ function Investments() {
                 accessorKey: 'current_price',
                 header: 'Current Price',
                 cell: ({ row }) => (
-                    <div className='text-sm'>
+                    <div className='text-sm tabular-nums'>
                         {row.original.current_price ? (
                             formatCurrency(row.original.current_price)
                         ) : (
@@ -166,7 +166,7 @@ function Investments() {
                 accessorKey: 'total_invested',
                 header: 'Total Invested',
                 cell: ({ row }) => (
-                    <div className='text-sm font-semibold'>
+                    <div className='text-sm font-semibold tabular-nums'>
                         {formatCurrency(row.original.total_invested)}
                     </div>
                 ),
@@ -175,7 +175,7 @@ function Investments() {
                 accessorKey: 'current_value',
                 header: 'Current Value',
                 cell: ({ row }) => (
-                    <div className='text-sm font-semibold text-success'>
+                    <div className='text-sm font-semibold text-success tabular-nums'>
                         {formatCurrency(row.original.current_value)}
                     </div>
                 ),
@@ -188,7 +188,7 @@ function Investments() {
                     const isPositive = gainLoss >= 0;
                     return (
                         <div
-                            className={`text-sm font-semibold ${
+                            className={`text-sm font-semibold tabular-nums ${
                                 isPositive ? 'text-success' : 'text-error'
                             }`}
                         >
@@ -284,7 +284,7 @@ function Investments() {
     }
 
     return (
-        <div className='px-4 sm:px-6 lg:px-8'>
+        <div className='space-y-6'>
             <div className='sm:flex sm:items-center'>
                 <div className='sm:flex-auto'>
                     <h1 className='text-2xl font-semibold'>Investments</h1>
@@ -338,7 +338,7 @@ function Investments() {
                                     <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Portfolio Value
                                     </dt>
-                                    <dd className='text-lg font-medium'>
+                                    <dd className='text-lg font-medium tabular-nums'>
                                         {formatCurrency(totalPortfolioValue)}
                                     </dd>
                                 </dl>
@@ -372,7 +372,7 @@ function Investments() {
                                         Total Gain/Loss
                                     </dt>
                                     <dd
-                                        className={`text-lg font-medium ${
+                                        className={`text-lg font-medium tabular-nums ${
                                             totalGainLoss >= 0
                                                 ? 'text-success'
                                                 : 'text-error'
@@ -503,7 +503,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Purchase Price:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900'>
+                                                    <span className='ml-2 text-gray-900 tabular-nums'>
                                                         {formatCurrency(
                                                             investment.purchase_price
                                                         )}
@@ -513,7 +513,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Current Price:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900'>
+                                                    <span className='ml-2 text-gray-900 tabular-nums'>
                                                         {investment.current_price
                                                             ? formatCurrency(
                                                                   investment.current_price
@@ -525,7 +525,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Total Invested:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold'>
+                                                    <span className='ml-2 text-gray-900 font-semibold tabular-nums'>
                                                         {formatCurrency(
                                                             investment.total_invested
                                                         )}
@@ -535,7 +535,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Current Value:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold text-success'>
+                                                    <span className='ml-2 text-gray-900 font-semibold text-success tabular-nums'>
                                                         {formatCurrency(
                                                             investment.current_value
                                                         )}
@@ -546,7 +546,7 @@ function Investments() {
                                                         Gain/Loss:
                                                     </span>
                                                     <span
-                                                        className={`ml-2 font-semibold ${
+                                                        className={`ml-2 font-semibold tabular-nums ${
                                                             investment.gain_loss >=
                                                             0
                                                                 ? 'text-success'
@@ -646,7 +646,7 @@ function Investments() {
                     <div className='overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
                         <div className='inline-block w-full align-middle'>
                             <table className='table table-zebra w-full'>
-                                <thead>
+                                <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                                     {table
                                         .getHeaderGroups()
                                         .map((headerGroup) => (
@@ -773,7 +773,7 @@ function Investments() {
                                             <span className='font-medium'>
                                                 Current Value:
                                             </span>{' '}
-                                            <span className='text-gray-900 font-semibold'>
+                                            <span className='text-gray-900 font-semibold tabular-nums'>
                                                 {formatCurrency(
                                                     deletingInvestment.current_value
                                                 )}
@@ -784,7 +784,7 @@ function Investments() {
                                                 Gain/Loss:
                                             </span>{' '}
                                             <span
-                                                className={`font-semibold ${
+                                                className={`font-semibold tabular-nums ${
                                                     deletingInvestment.gain_loss >=
                                                     0
                                                         ? 'text-success'

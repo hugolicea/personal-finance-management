@@ -32,7 +32,7 @@ const BalanceOverview = memo(function BalanceOverview({
             <div className='stat'>
                 <div className='stat-title'>Net Balance</div>
                 <div
-                    className={`stat-value text-2xl ${
+                    className={`stat-value text-2xl tabular-nums ${
                         totalBalance >= 0 ? 'text-success' : 'text-error'
                     }`}
                 >
@@ -46,7 +46,7 @@ const BalanceOverview = memo(function BalanceOverview({
 
             <div className='stat'>
                 <div className='stat-title'>Total Income</div>
-                <div className='stat-value text-2xl text-success'>
+                <div className='stat-value text-2xl text-success tabular-nums'>
                     {formatCurrency(totalIncome)}
                 </div>
                 <div className='stat-desc'>Current Period</div>
@@ -54,7 +54,7 @@ const BalanceOverview = memo(function BalanceOverview({
 
             <div className='stat'>
                 <div className='stat-title'>Total Expenses</div>
-                <div className='stat-value text-2xl text-error'>
+                <div className='stat-value text-2xl text-error tabular-nums'>
                     {formatCurrency(totalExpenses)}
                 </div>
                 <div className='stat-desc'>Current Period</div>

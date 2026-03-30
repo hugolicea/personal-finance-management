@@ -8,6 +8,7 @@ import {
     createRetirementAccount,
     updateRetirementAccount,
 } from '../store/slices/retirementAccountsSlice';
+import FormAutoSave from './FormAutoSave';
 
 interface RetirementAccountFormProps {
     retirementAccount?: {
@@ -122,8 +123,12 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
         >
-            {({ isSubmitting }) => (
+            {({ errors, touched, isSubmitting }) => (
                 <Form className='space-y-8'>
+                    <FormAutoSave
+                        formName='retirement-account-form'
+                        initialValues={initialValues}
+                    />
                     {/* Account Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
@@ -162,12 +167,28 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     id='name'
                                     className='input input-bordered w-full'
                                     placeholder='e.g., Main 401(k), Roth IRA'
+                                    aria-describedby={
+                                        errors.name && touched.name
+                                            ? 'name-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.name && touched.name
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='name'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='name'>
+                                    {(msg) => (
+                                        <span
+                                            id='name-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -183,6 +204,18 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     name='account_type'
                                     id='account_type'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.account_type &&
+                                        touched.account_type
+                                            ? 'account_type-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.account_type &&
+                                        touched.account_type
+                                            ? true
+                                            : undefined
+                                    }
                                 >
                                     <option value='traditional_401k'>
                                         🏢 Traditional 401(k)
@@ -204,11 +237,17 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     <option value='annuity'>📅 Annuity</option>
                                     <option value='other'>🔄 Other</option>
                                 </Field>
-                                <ErrorMessage
-                                    name='account_type'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='account_type'>
+                                    {(msg) => (
+                                        <span
+                                            id='account_type-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -225,12 +264,28 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     id='provider'
                                     className='input input-bordered w-full'
                                     placeholder='e.g., Fidelity, Vanguard, Charles Schwab'
+                                    aria-describedby={
+                                        errors.provider && touched.provider
+                                            ? 'provider-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.provider && touched.provider
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='provider'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='provider'>
+                                    {(msg) => (
+                                        <span
+                                            id='provider-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div className='sm:col-span-2'>
@@ -246,15 +301,33 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     id='account_number'
                                     className='input input-bordered w-full'
                                     placeholder='Last 4 digits for security (optional)'
+                                    aria-describedby={
+                                        errors.account_number &&
+                                        touched.account_number
+                                            ? 'account_number-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.account_number &&
+                                        touched.account_number
+                                            ? true
+                                            : undefined
+                                    }
                                 />
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     Optional - for your reference only
                                 </p>
-                                <ErrorMessage
-                                    name='account_number'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='account_number'>
+                                    {(msg) => (
+                                        <span
+                                            id='account_number-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -304,13 +377,31 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='50000'
+                                        aria-describedby={
+                                            errors.current_balance &&
+                                            touched.current_balance
+                                                ? 'current_balance-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.current_balance &&
+                                            touched.current_balance
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
-                                <ErrorMessage
-                                    name='current_balance'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='current_balance'>
+                                    {(msg) => (
+                                        <span
+                                            id='current_balance-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -334,13 +425,31 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='500'
+                                        aria-describedby={
+                                            errors.monthly_contribution &&
+                                            touched.monthly_contribution
+                                                ? 'monthly_contribution-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.monthly_contribution &&
+                                            touched.monthly_contribution
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
-                                <ErrorMessage
-                                    name='monthly_contribution'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='monthly_contribution'>
+                                    {(msg) => (
+                                        <span
+                                            id='monthly_contribution-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -361,6 +470,18 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         max='1'
                                         className='input input-bordered w-full pr-8'
                                         placeholder='0.50'
+                                        aria-describedby={
+                                            errors.employer_match_percentage &&
+                                            touched.employer_match_percentage
+                                                ? 'employer_match_percentage-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.employer_match_percentage &&
+                                            touched.employer_match_percentage
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                     <div className='absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none'>
                                         <span className='text-gray-500 sm:text-sm font-medium'>
@@ -371,11 +492,17 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     e.g., 0.50 for 50% match
                                 </p>
-                                <ErrorMessage
-                                    name='employer_match_percentage'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='employer_match_percentage'>
+                                    {(msg) => (
+                                        <span
+                                            id='employer_match_percentage-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -399,16 +526,34 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         step='any'
                                         className='input input-bordered w-full pl-8'
                                         placeholder='6000'
+                                        aria-describedby={
+                                            errors.employer_match_limit &&
+                                            touched.employer_match_limit
+                                                ? 'employer_match_limit-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.employer_match_limit &&
+                                            touched.employer_match_limit
+                                                ? true
+                                                : undefined
+                                        }
                                     />
                                 </div>
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
                                     Annual maximum employer match
                                 </p>
-                                <ErrorMessage
-                                    name='employer_match_limit'
-                                    component='div'
-                                    className='mt-1 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='employer_match_limit'>
+                                    {(msg) => (
+                                        <span
+                                            id='employer_match_limit-error'
+                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -450,6 +595,16 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     name='risk_level'
                                     id='risk_level'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.risk_level && touched.risk_level
+                                            ? 'risk_level-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.risk_level && touched.risk_level
+                                            ? true
+                                            : undefined
+                                    }
                                 >
                                     <option value='conservative'>
                                         🛡️ Conservative
@@ -464,11 +619,17 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         🚀 Very Aggressive
                                     </option>
                                 </Field>
-                                <ErrorMessage
-                                    name='risk_level'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='risk_level'>
+                                    {(msg) => (
+                                        <span
+                                            id='risk_level-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -487,12 +648,30 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     max='100'
                                     className='input input-bordered w-full'
                                     placeholder='65'
+                                    aria-describedby={
+                                        errors.target_retirement_age &&
+                                        touched.target_retirement_age
+                                            ? 'target_retirement_age-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.target_retirement_age &&
+                                        touched.target_retirement_age
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='target_retirement_age'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='target_retirement_age'>
+                                    {(msg) => (
+                                        <span
+                                            id='target_retirement_age-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -528,12 +707,28 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                 rows={4}
                                 className='textarea textarea-bordered w-full resize-none'
                                 placeholder='Any additional information about this retirement account (investment strategy, goals, etc.)'
+                                aria-describedby={
+                                    errors.notes && touched.notes
+                                        ? 'notes-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.notes && touched.notes
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='notes'
-                                component='div'
-                                className='mt-2 text-sm text-red-600 font-medium'
-                            />
+                            <ErrorMessage name='notes'>
+                                {(msg) => (
+                                    <span
+                                        id='notes-error'
+                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
                     </div>
 

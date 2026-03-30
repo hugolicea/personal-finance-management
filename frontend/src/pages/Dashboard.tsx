@@ -4,6 +4,7 @@ import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
 import InvestmentsChart from '../components/InvestmentsChart';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
+import NetWorthView from '../components/NetWorthView';
 import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
@@ -150,6 +151,17 @@ function Dashboard() {
     );
     const [filterByYear, setFilterByYear] = useState(false);
 
+    const { chartStartDate, chartEndDate } = useMemo(() => {
+        const chartStartDate = filterByYear
+            ? new Date(selectedYear, 0, 1)
+            : new Date(selectedYear, selectedMonth - 1, 1);
+        const chartEndDate = filterByYear
+            ? new Date(selectedYear, 11, 31)
+            : new Date(selectedYear, selectedMonth, 0);
+
+        return { chartStartDate, chartEndDate };
+    }, [filterByYear, selectedMonth, selectedYear]);
+
     // Memoize handlers to prevent unnecessary re-renders
     const handleYearChange = useCallback((year: number) => {
         setSelectedYear(year);
@@ -205,7 +217,7 @@ function Dashboard() {
         <div className='min-h-screen'>
             {/* Header */}
             <header className='bg-base-100 border-b border-base-300'>
-                <div className='max-w-[1600px] mx-auto py-4 px-4 sm:px-6 lg:px-8'>
+                <div className='py-4'>
                     <div className='flex items-center justify-between'>
                         <div>
                             <h1 className='text-2xl font-bold mb-4'>
@@ -229,9 +241,13 @@ function Dashboard() {
                 </div>
             </header>
 
+            <div className='space-y-6 py-6'>
+                <NetWorthView />
+            </div>
+
             {/* Filters */}
             <div className='bg-base-100 border-b border-base-300'>
-                <div className='max-w-[1600px] mx-auto py-5 px-4 sm:px-6 lg:px-8'>
+                <div className='py-5'>
                     <DashboardFilters
                         selectedYear={selectedYear}
                         selectedMonth={selectedMonth}
@@ -244,7 +260,7 @@ function Dashboard() {
                 </div>
             </div>
 
-            <main className='max-w-[1600px] mx-auto py-8 px-4 sm:px-6 lg:px-8'>
+            <main className='py-8'>
                 <div className='space-y-8'>
                     {/* Balance Overview */}
                     <div className='transform transition-all duration-200 hover:scale-[1.01]'>
@@ -291,6 +307,8 @@ function Dashboard() {
                                 <MonthlySpendingChart
                                     transactions={transactions}
                                     year={selectedYear}
+                                    startDate={chartStartDate}
+                                    endDate={chartEndDate}
                                 />
                             </div>
                         </div>
@@ -357,7 +375,11 @@ function Dashboard() {
                                 </div>
                             </div>
                             <div className='p-6'>
-                                <InvestmentsChart investments={investments} />
+                                <InvestmentsChart
+                                    investments={investments}
+                                    startDate={chartStartDate}
+                                    endDate={chartEndDate}
+                                />
                             </div>
                         </div>
 
@@ -384,7 +406,11 @@ function Dashboard() {
                                 </div>
                             </div>
                             <div className='p-6'>
-                                <HeritageChart heritages={heritages} />
+                                <HeritageChart
+                                    heritages={heritages}
+                                    startDate={chartStartDate}
+                                    endDate={chartEndDate}
+                                />
                             </div>
                         </div>
                     </div>
@@ -414,6 +440,8 @@ function Dashboard() {
                         <div className='p-6'>
                             <RetirementChart
                                 retirementAccounts={retirementAccounts}
+                                startDate={chartStartDate}
+                                endDate={chartEndDate}
                             />
                         </div>
                     </div>

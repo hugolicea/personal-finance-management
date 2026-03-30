@@ -137,7 +137,7 @@ function Retirement() {
     }
 
     return (
-        <div className='px-4 sm:px-6 lg:px-8'>
+        <div className='space-y-6'>
             <div className='sm:flex sm:items-center'>
                 <div className='sm:flex-auto'>
                     <h1 className='text-2xl font-semibold'>
@@ -198,7 +198,7 @@ function Retirement() {
                                     <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Balance
                                     </dt>
-                                    <dd className='text-lg font-medium'>
+                                    <dd className='text-lg font-medium tabular-nums'>
                                         {formatCurrency(totalBalance)}
                                     </dd>
                                 </dl>
@@ -230,7 +230,7 @@ function Retirement() {
                                     <dt className='text-sm font-medium opacity-60 truncate'>
                                         Monthly Contributions
                                     </dt>
-                                    <dd className='text-lg font-medium'>
+                                    <dd className='text-lg font-medium tabular-nums'>
                                         {formatCurrency(
                                             totalMonthlyContribution
                                         )}
@@ -264,7 +264,7 @@ function Retirement() {
                                     <dt className='text-sm font-medium opacity-60 truncate'>
                                         Annual Contributions
                                     </dt>
-                                    <dd className='text-lg font-medium'>
+                                    <dd className='text-lg font-medium tabular-nums'>
                                         {formatCurrency(
                                             totalAnnualContribution
                                         )}
@@ -282,7 +282,7 @@ function Retirement() {
                     <div className='inline-block w-full py-2 align-middle md:px-6 lg:px-8'>
                         <div className='overflow-hidden rounded-lg shadow-sm'>
                             <table className='table table-zebra w-full'>
-                                <thead>
+                                <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                                     <tr>
                                         <th
                                             scope='col'
@@ -377,12 +377,12 @@ function Retirement() {
                                             <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
                                                 {account.provider}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900 tabular-nums'>
                                                 {formatCurrency(
                                                     account.current_balance
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900 tabular-nums'>
                                                 {formatCurrency(
                                                     account.monthly_contribution
                                                 )}
@@ -476,7 +476,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Current Balance:
                                             </span>{' '}
-                                            <span className='text-gray-900 font-semibold'>
+                                            <span className='text-gray-900 font-semibold tabular-nums'>
                                                 {formatCurrency(
                                                     deletingRetirementAccount.current_balance
                                                 )}
@@ -486,7 +486,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Monthly Contribution:
                                             </span>{' '}
-                                            <span className='text-gray-900'>
+                                            <span className='text-gray-900 tabular-nums'>
                                                 {formatCurrency(
                                                     deletingRetirementAccount.monthly_contribution
                                                 )}

@@ -148,7 +148,7 @@ function DatabaseBackup() {
     return (
         <div className='max-w-2xl mx-auto space-y-8'>
             <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
+                <h1 className='text-2xl font-bold text-base-content'>
                     Database Backup & Restore
                 </h1>
                 <p className='mt-1 text-sm opacity-60'>

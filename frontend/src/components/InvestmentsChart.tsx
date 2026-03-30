@@ -12,73 +12,124 @@ import {
 } from 'recharts';
 
 import { Investment } from '../types/investments';
+import {
+    aggregateData,
+    formatDateLabel,
+    getAggregationLevel,
+} from '../utils/dataAggregation';
+import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
+import ChartEmptyState from './ChartEmptyState';
 
 interface InvestmentsChartProps {
     investments: Investment[];
+    startDate?: Date;
+    endDate?: Date;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+function InvestmentsChart({
+    investments,
+    startDate,
+    endDate,
+}: InvestmentsChartProps) {
+    const {
+        pieData,
+        trendData,
+        trendLevel,
+        totalValue,
+        totalGainLoss,
+        avgGainLoss,
+    } = useMemo(() => {
+        const byType: Record<string, number> = {};
+        let totalValue = 0;
+        let totalGainLoss = 0;
 
-function InvestmentsChart({ investments }: InvestmentsChartProps) {
-    const { pieData, topInvestments, totalValue, totalGainLoss, avgGainLoss } =
-        useMemo(() => {
-            const byType: Record<string, number> = {};
-            let totalValue = 0;
-            let totalGainLoss = 0;
-            for (const inv of investments) {
-                const type = inv.investment_type
-                    .replace('_', ' ')
-                    .toUpperCase();
-                byType[type] = (byType[type] ?? 0) + (inv.current_value || 0);
-                totalValue += inv.current_value || 0;
-                totalGainLoss += inv.gain_loss || 0;
-            }
+        for (const investment of investments) {
+            const type = investment.investment_type
+                .replace('_', ' ')
+                .toUpperCase();
+            byType[type] =
+                (byType[type] ?? 0) + (investment.current_value || 0);
+            totalValue += investment.current_value || 0;
+            totalGainLoss += investment.gain_loss || 0;
+        }
 
-            const pieData = Object.entries(byType).map(([type, value]) => ({
-                name: type,
-                value: Math.round(value),
+        const pieData = Object.entries(byType).map(([type, value]) => ({
+            name: type,
+            value: Math.round(value),
+        }));
+
+        const datedInvestments = investments.filter((investment) => {
+            const purchaseDate = new Date(investment.purchase_date);
+            return !isNaN(purchaseDate.getTime());
+        });
+
+        const fallbackDate = new Date();
+        const minDate = datedInvestments.length
+            ? new Date(
+                  Math.min(
+                      ...datedInvestments.map((investment) =>
+                          new Date(investment.purchase_date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+        const maxDate = datedInvestments.length
+            ? new Date(
+                  Math.max(
+                      ...datedInvestments.map((investment) =>
+                          new Date(investment.purchase_date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+
+        const rangeStart = startDate ?? minDate;
+        const rangeEnd = endDate ?? maxDate;
+        const trendLevel = getAggregationLevel(rangeStart, rangeEnd);
+
+        const trendPoints = datedInvestments
+            .filter((investment) => {
+                const purchaseDate = new Date(investment.purchase_date);
+                return purchaseDate >= rangeStart && purchaseDate <= rangeEnd;
+            })
+            .map((investment) => ({
+                date: investment.purchase_date,
+                value: investment.current_value || 0,
             }));
 
-            const topInvestments = [...investments]
-                .sort((a, b) => (b.current_value || 0) - (a.current_value || 0))
-                .slice(0, 5)
-                .map((inv) => ({
-                    name: inv.symbol || 'Unknown',
-                    value: Math.round(inv.current_value || 0),
-                    gain: inv.gain_loss_percentage || 0,
-                }));
+        const trendData = aggregateData(trendPoints, trendLevel);
+        const avgGainLoss =
+            investments.length > 0 ? totalGainLoss / investments.length : 0;
 
-            const avgGainLoss =
-                investments.length > 0 ? totalGainLoss / investments.length : 0;
+        return {
+            pieData,
+            trendData,
+            trendLevel,
+            totalValue,
+            totalGainLoss,
+            avgGainLoss,
+        };
+    }, [endDate, investments, startDate]);
 
-            return {
-                pieData,
-                topInvestments,
-                totalValue,
-                totalGainLoss,
-                avgGainLoss,
-            };
-        }, [investments]);
-
-    // Handle empty or invalid data
     if (!investments || investments.length === 0) {
         return (
-            <div className='flex items-center justify-center h-64 text-gray-500'>
-                No investment data available
-            </div>
+            <ChartEmptyState
+                icon='📈'
+                title='No investment data yet'
+                description='Add investments to track your portfolio performance and allocation.'
+            />
         );
     }
 
     return (
         <div className='space-y-6'>
-            {/* Summary Stats */}
             <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div className='bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white'>
                     <div className='text-sm font-medium opacity-90'>
                         Total Portfolio Value
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalValue)}
                     </div>
                 </div>
@@ -92,7 +143,7 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Total Gain/Loss
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {totalGainLoss >= 0 ? '+' : ''}
                         {formatCurrency(totalGainLoss)}
                     </div>
@@ -101,16 +152,14 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Avg Performance
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {avgGainLoss >= 0 ? '+' : ''}
                         {avgGainLoss.toFixed(2)}%
                     </div>
                 </div>
             </div>
 
-            {/* Charts */}
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-                {/* Investment Types Pie Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Portfolio by Type
@@ -139,7 +188,13 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                                 {pieData.map((_, index) => (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={COLORS[index % COLORS.length]}
+                                        fill={
+                                            CHART_COLORS.investments[
+                                                index %
+                                                    CHART_COLORS.investments
+                                                        .length
+                                            ]
+                                        }
                                     />
                                 ))}
                             </Pie>
@@ -152,10 +207,9 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Top Investments Bar Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
-                        Top 5 Investments
+                        Investment Value Over Time
                     </h4>
                     <ResponsiveContainer
                         width='100%'
@@ -163,27 +217,44 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                         minWidth={200}
                         minHeight={200}
                     >
-                        <BarChart data={topInvestments}>
+                        <BarChart data={trendData}>
                             <XAxis
-                                dataKey='name'
+                                dataKey='date'
                                 tick={{ fontSize: 12 }}
-                                angle={-45}
-                                textAnchor='end'
-                                height={60}
+                                tickFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
                             <YAxis
                                 tick={{ fontSize: 12 }}
                                 tickFormatter={(value) =>
                                     `$${(value / 1000).toFixed(0)}k`
                                 }
+                                domain={[0, 'auto']}
                             />
                             <Tooltip
-                                formatter={(value, name) => [
-                                    formatCurrency(value as number),
-                                    name === 'value' ? 'Current Value' : name,
-                                ]}
+                                formatter={(value, _name, item) => {
+                                    const numericValue = Number(value) || 0;
+                                    const count = item?.payload?.count ?? 0;
+                                    const countLabel =
+                                        count === 1
+                                            ? 'investment'
+                                            : 'investments';
+                                    return [
+                                        `${formatCurrency(
+                                            numericValue
+                                        )} (${count} ${countLabel})`,
+                                        'Current Value',
+                                    ];
+                                }}
+                                labelFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
-                            <Bar dataKey='value' fill='#0088FE' />
+                            <Bar
+                                dataKey='value'
+                                fill={CHART_COLORS.investments[0]}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
