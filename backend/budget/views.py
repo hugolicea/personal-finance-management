@@ -2,6 +2,7 @@ import csv
 import hashlib
 import io
 import json
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -51,6 +52,8 @@ from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 # Resolved once at import time — avoids N806 and repeated calls
 User = get_user_model()
+
+logger = logging.getLogger(__name__)
 
 
 @extend_schema(tags=["Categories"])
@@ -724,21 +727,23 @@ def upload_bank_statement(request):
                         }
                     )
 
-                except Exception as e:
-                    errors.append(f"Row {row_num}: {str(e)}")
+                except Exception:
+                    logger.exception("Error processing CSV row %d", row_num)
+                    errors.append(f"Row {row_num}: Failed to process row")
                     validation_errors.append(
                         {
                             "row": row_num,
                             "field": "row",
-                            "error": str(e),
+                            "error": "Failed to process row",
                         }
                     )
                     continue
-        except csv.Error as e:
+        except csv.Error:
+            logger.exception("CSV parse error in upload_bank_statement")
             return error_response(
                 "format",
                 "Invalid CSV format. Please check your file.",
-                [{"error": str(e)}],
+                [{"error": "The file could not be parsed as CSV"}],
             )
 
         if validation_errors:
@@ -768,9 +773,6 @@ def upload_bank_statement(request):
 
     except Exception:
         # Log error securely without exposing details
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error processing bank statement upload")
 
         return error_response(
@@ -964,9 +966,6 @@ def bulk_reclassify_transactions(request):
         )
     except Exception:
         # Log the actual error but don't expose details to client
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error in bulk_reclassify_transactions")
         return Response(
             {"error": "An unexpected error occurred"},
@@ -1108,9 +1107,6 @@ def bulk_execute_reclassification_rules(request):
 
     except Exception:
         # Log the actual error but don't expose details to client
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error in bulk_execute_reclassification_rules")
         return Response(
             {"error": "An unexpected error occurred"},
@@ -1211,9 +1207,6 @@ def preview_reclassification_rule(request):
         )
     except Exception:
         # Log the actual error but don't expose details to client
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error in preview_reclassification_rule")
         return Response(
             {"error": "An unexpected error occurred"},
@@ -1301,9 +1294,6 @@ def bulk_delete_transactions_by_category(request):
 
     except Exception:
         # Log the actual error but don't expose details to client
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error in bulk_delete_transactions_by_category")
         return Response(
             {"error": "An unexpected error occurred"},
@@ -1594,10 +1584,6 @@ def restore_database(request):
 
     Optionally replaces all existing user data when replace_existing=true.
     """
-    import logging
-
-    logger = logging.getLogger(__name__)
-
     if "file" not in request.FILES:
         return Response(
             {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
