@@ -7,6 +7,7 @@ import {
     updateCategory,
 } from '../store/slices/categoriesSlice';
 import { Category } from '../types/categories';
+import FormAutoSave from './FormAutoSave';
 
 interface CategoryFormProps {
     category?: Category;
@@ -72,8 +73,12 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ isSubmitting }) => (
+                {({ errors, touched, isSubmitting }) => (
                     <Form className='space-y-4'>
+                        <FormAutoSave
+                            formName='category-form'
+                            initialValues={initialValues}
+                        />
                         <div>
                             <label
                                 htmlFor='name'
@@ -82,16 +87,33 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
                                 Category Name
                             </label>
                             <Field
+                                id='name'
                                 type='text'
                                 name='name'
                                 className='input input-bordered w-full'
                                 placeholder='Enter category name'
+                                aria-describedby={
+                                    errors.name && touched.name
+                                        ? 'name-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.name && touched.name
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='name'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='name'>
+                                {(msg) => (
+                                    <span
+                                        id='name-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -103,17 +125,36 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
                             </label>
                             <Field
                                 as='select'
+                                id='classification'
                                 name='classification'
                                 className='input input-bordered w-full'
+                                aria-describedby={
+                                    errors.classification &&
+                                    touched.classification
+                                        ? 'classification-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.classification &&
+                                    touched.classification
+                                        ? true
+                                        : undefined
+                                }
                             >
                                 <option value='spend'>Spend</option>
                                 <option value='income'>Income</option>
                             </Field>
-                            <ErrorMessage
-                                name='classification'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='classification'>
+                                {(msg) => (
+                                    <span
+                                        id='classification-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -124,18 +165,37 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
                                 Monthly Budget ($)
                             </label>
                             <Field
+                                id='monthly_budget'
                                 type='number'
                                 name='monthly_budget'
                                 step='0.01'
                                 min='0'
                                 className='input input-bordered w-full'
                                 placeholder='0.00'
+                                aria-describedby={
+                                    errors.monthly_budget &&
+                                    touched.monthly_budget
+                                        ? 'monthly_budget-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.monthly_budget &&
+                                    touched.monthly_budget
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='monthly_budget'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='monthly_budget'>
+                                {(msg) => (
+                                    <span
+                                        id='monthly_budget-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div className='flex justify-end space-x-3 pt-4'>

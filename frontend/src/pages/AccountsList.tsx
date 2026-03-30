@@ -65,7 +65,7 @@ function AccountsList() {
             {/* Header */}
             <div className='flex justify-between items-center'>
                 <div>
-                    <h1 className='text-2xl font-bold text-gray-900'>
+                    <h1 className='text-2xl font-bold text-base-content'>
                         Bank Accounts
                     </h1>
                     <p className='text-gray-500 text-sm mt-1'>

@@ -47,7 +47,7 @@ function FinancialTools() {
         <div className='space-y-6'>
             {/* Page header */}
             <div>
-                <h1 className='text-2xl font-bold text-gray-900'>
+                <h1 className='text-2xl font-bold text-base-content'>
                     Financial Tools
                 </h1>
                 <p className='mt-1 text-sm opacity-60'>
@@ -76,7 +76,7 @@ function FinancialTools() {
                             </div>
 
                             {/* Title + description */}
-                            <h2 className='text-base font-semibold text-gray-900 mb-1'>
+                            <h2 className='text-base font-semibold text-base-content mb-1'>
                                 {tool.title}
                             </h2>
                             <p className='text-sm text-gray-500 mb-4 leading-relaxed'>

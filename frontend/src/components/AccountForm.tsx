@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { useAppDispatch } from '../hooks/redux';
 import { createAccount, updateAccount } from '../store/slices/accountsSlice';
 import type { BankAccount } from '../types/accounts';
+import FormAutoSave from './FormAutoSave';
 
 interface AccountFormProps {
     account?: Partial<BankAccount>;
@@ -68,8 +69,12 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ isSubmitting }) => (
+                {({ errors, touched, isSubmitting }) => (
                     <Form className='space-y-4'>
+                        <FormAutoSave
+                            formName='account-form'
+                            initialValues={initialValues}
+                        />
                         <div>
                             <label
                                 htmlFor='name'
@@ -84,12 +89,28 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 autoComplete='organization'
                                 className='input input-bordered w-full'
                                 placeholder='e.g. Chase Checking'
+                                aria-describedby={
+                                    errors.name && touched.name
+                                        ? 'name-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.name && touched.name
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='name'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='name'>
+                                {(msg) => (
+                                    <span
+                                        id='name-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -104,6 +125,16 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 id='account_type'
                                 name='account_type'
                                 className='input input-bordered w-full'
+                                aria-describedby={
+                                    errors.account_type && touched.account_type
+                                        ? 'account_type-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.account_type && touched.account_type
+                                        ? true
+                                        : undefined
+                                }
                             >
                                 <option value='checking'>🏦 Checking</option>
                                 <option value='savings'>🏧 Savings</option>
@@ -116,11 +147,17 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 </option>
                                 <option value='other'>🏛️ Other</option>
                             </Field>
-                            <ErrorMessage
-                                name='account_type'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='account_type'>
+                                {(msg) => (
+                                    <span
+                                        id='account_type-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -137,12 +174,28 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 autoComplete='organization'
                                 className='input input-bordered w-full'
                                 placeholder='e.g. Chase Bank'
+                                aria-describedby={
+                                    errors.institution && touched.institution
+                                        ? 'institution-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.institution && touched.institution
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='institution'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='institution'>
+                                {(msg) => (
+                                    <span
+                                        id='institution-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -164,12 +217,30 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 spellCheck={false}
                                 className='input input-bordered w-full'
                                 placeholder='e.g. 1234'
+                                aria-describedby={
+                                    errors.account_number &&
+                                    touched.account_number
+                                        ? 'account_number-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.account_number &&
+                                    touched.account_number
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='account_number'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='account_number'>
+                                {(msg) => (
+                                    <span
+                                        id='account_number-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -186,12 +257,28 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 maxLength={3}
                                 className='input input-bordered w-full uppercase'
                                 placeholder='USD'
+                                aria-describedby={
+                                    errors.currency && touched.currency
+                                        ? 'currency-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.currency && touched.currency
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='currency'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='currency'>
+                                {(msg) => (
+                                    <span
+                                        id='currency-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -207,7 +294,28 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 name='notes'
                                 rows={3}
                                 className='textarea textarea-bordered w-full'
+                                aria-describedby={
+                                    errors.notes && touched.notes
+                                        ? 'notes-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.notes && touched.notes
+                                        ? true
+                                        : undefined
+                                }
                             />
+                            <ErrorMessage name='notes'>
+                                {(msg) => (
+                                    <span
+                                        id='notes-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div className='flex items-center gap-2'>
@@ -216,6 +324,16 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 id='is_active'
                                 name='is_active'
                                 className='checkbox checkbox-primary checkbox-sm'
+                                aria-describedby={
+                                    errors.is_active && touched.is_active
+                                        ? 'is_active-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.is_active && touched.is_active
+                                        ? true
+                                        : undefined
+                                }
                             />
                             <label
                                 htmlFor='is_active'
@@ -223,6 +341,17 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                             >
                                 Active account
                             </label>
+                            <ErrorMessage name='is_active'>
+                                {(msg) => (
+                                    <span
+                                        id='is_active-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div className='flex gap-3 pt-2'>

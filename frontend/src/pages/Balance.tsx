@@ -87,8 +87,8 @@ const MODAL_COLUMNS = [
                 <span
                     className={
                         val >= 0
-                            ? 'text-success font-medium'
-                            : 'text-error font-medium'
+                            ? 'text-success font-medium tabular-nums'
+                            : 'text-error font-medium tabular-nums'
                     }
                 >
                     {formatCurrency(val)}
@@ -110,6 +110,16 @@ function Balance() {
     const [selectedMonth, setSelectedMonth] = useState(
         () => new Date().getMonth() + 1
     );
+    const [filtersOpen, setFiltersOpen] = useState(true);
+
+    const activeFilterCount = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+        return [
+            selectedYear !== currentYear,
+            selectedMonth !== currentMonth,
+        ].filter(Boolean).length;
+    }, [selectedYear, selectedMonth]);
 
     useEffect(() => {
         const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
@@ -295,7 +305,7 @@ function Balance() {
                     if (budget === 0) {
                         return (
                             <div>
-                                <div className='text-sm font-semibold text-error'>
+                                <div className='text-sm font-semibold text-error tabular-nums'>
                                     {formatCurrency(spent)}
                                 </div>
                                 <div className='text-xs text-gray-400 mt-0.5'>
@@ -322,10 +332,10 @@ function Balance() {
                     return (
                         <div className='min-w-[160px]'>
                             <div className='flex justify-between text-xs mb-1'>
-                                <span className='font-semibold text-error'>
+                                <span className='font-semibold text-error tabular-nums'>
                                     {formatCurrency(spent)}
                                 </span>
-                                <span className='text-gray-400'>
+                                <span className='text-gray-400 tabular-nums'>
                                     of {formatCurrency(budget)}
                                 </span>
                             </div>
@@ -346,7 +356,7 @@ function Balance() {
                                 />
                             </div>
                             <div
-                                className={`text-xs mt-1 ${
+                                className={`text-xs mt-1 tabular-nums ${
                                     isOver
                                         ? 'text-error font-semibold'
                                         : 'text-gray-400'
@@ -378,7 +388,7 @@ function Balance() {
                     const remaining = budget + row.original.stats.totalSpends;
                     return (
                         <span
-                            className={`text-sm font-semibold ${
+                            className={`text-sm font-semibold tabular-nums ${
                                 remaining >= 0 ? 'text-success' : 'text-error'
                             }`}
                         >
@@ -426,7 +436,7 @@ function Balance() {
                 cell: ({ row }) => {
                     const amount = row.original.stats.totalIncomes;
                     return (
-                        <div className='text-sm font-semibold text-success'>
+                        <div className='text-sm font-semibold text-success tabular-nums'>
                             {formatCurrency(amount)}
                         </div>
                     );
@@ -490,320 +500,358 @@ function Balance() {
     });
 
     return (
-        <div className='pb-6'>
-            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-                <div className='mb-6'>
-                    <h1 className='text-2xl font-bold mb-8'>
-                        Balance Analysis
-                    </h1>
+        <div className='space-y-6'>
+            <div className='mb-6'>
+                <h1 className='text-2xl font-bold mb-8'>Balance Analysis</h1>
 
-                    {/* Period Selection */}
-                    <div className='flex justify-between items-center mb-4'>
-                        <div className='flex items-center gap-4'>
-                            <label
-                                htmlFor='year-select'
-                                className='text-sm font-medium'
+                {/* Period Selection */}
+                <div className='card bg-base-100 shadow-sm mb-6'>
+                    <div className='card-body p-3'>
+                        <div className='flex items-center justify-between'>
+                            <button
+                                type='button'
+                                onClick={() => setFiltersOpen(!filtersOpen)}
+                                className='flex items-center gap-2 btn btn-ghost btn-sm px-2'
+                                aria-expanded={filtersOpen}
+                                aria-controls='balance-filter-panel'
                             >
-                                Year:
-                            </label>
-                            <select
-                                id='year-select'
-                                value={selectedYear}
-                                onChange={(e) =>
-                                    setSelectedYear(parseInt(e.target.value))
-                                }
-                                className='select select-bordered select-sm'
-                            >
-                                {YEAR_OPTIONS.map((year) => (
-                                    <option key={year} value={year}>
-                                        {year}
-                                    </option>
-                                ))}
-                            </select>
-
-                            <label
-                                htmlFor='month-select'
-                                className='text-sm font-medium'
-                            >
-                                Month:
-                            </label>
-                            <select
-                                id='month-select'
-                                value={selectedMonth}
-                                onChange={(e) =>
-                                    setSelectedMonth(parseInt(e.target.value))
-                                }
-                                className='select select-bordered select-sm'
-                            >
-                                <option value={1}>January</option>
-                                <option value={2}>February</option>
-                                <option value={3}>March</option>
-                                <option value={4}>April</option>
-                                <option value={5}>May</option>
-                                <option value={6}>June</option>
-                                <option value={7}>July</option>
-                                <option value={8}>August</option>
-                                <option value={9}>September</option>
-                                <option value={10}>October</option>
-                                <option value={11}>November</option>
-                                <option value={12}>December</option>
-                            </select>
+                                <svg
+                                    className={`w-4 h-4 transition-transform ${
+                                        filtersOpen ? 'rotate-180' : ''
+                                    }`}
+                                    xmlns='http://www.w3.org/2000/svg'
+                                    fill='none'
+                                    viewBox='0 0 24 24'
+                                    stroke='currentColor'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M19 9l-7 7-7-7'
+                                    />
+                                </svg>
+                                <span className='font-medium text-sm'>
+                                    Filters
+                                </span>
+                                {activeFilterCount > 0 && (
+                                    <span className='badge badge-primary badge-sm'>
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                            </button>
                         </div>
+
+                        {filtersOpen && (
+                            <div
+                                id='balance-filter-panel'
+                                className='flex flex-wrap gap-4 pt-2 border-t border-base-200'
+                            >
+                                <label
+                                    htmlFor='year-select'
+                                    className='text-sm font-medium self-center'
+                                >
+                                    Year:
+                                </label>
+                                <select
+                                    id='year-select'
+                                    value={selectedYear}
+                                    onChange={(e) =>
+                                        setSelectedYear(
+                                            parseInt(e.target.value)
+                                        )
+                                    }
+                                    className='select select-bordered select-sm'
+                                >
+                                    {YEAR_OPTIONS.map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <label
+                                    htmlFor='month-select'
+                                    className='text-sm font-medium self-center'
+                                >
+                                    Month:
+                                </label>
+                                <select
+                                    id='month-select'
+                                    value={selectedMonth}
+                                    onChange={(e) =>
+                                        setSelectedMonth(
+                                            parseInt(e.target.value)
+                                        )
+                                    }
+                                    className='select select-bordered select-sm'
+                                >
+                                    <option value={1}>January</option>
+                                    <option value={2}>February</option>
+                                    <option value={3}>March</option>
+                                    <option value={4}>April</option>
+                                    <option value={5}>May</option>
+                                    <option value={6}>June</option>
+                                    <option value={7}>July</option>
+                                    <option value={8}>August</option>
+                                    <option value={9}>September</option>
+                                    <option value={10}>October</option>
+                                    <option value={11}>November</option>
+                                    <option value={12}>December</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                    {/* Spends Table */}
+                    <div className='card bg-base-100 shadow-sm overflow-hidden'>
+                        <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
+                            <div className='flex items-center justify-between'>
+                                <div className='flex items-center'>
+                                    <span
+                                        aria-hidden='true'
+                                        className='text-lg font-medium text-red-900'
+                                    >
+                                        💸
+                                    </span>
+                                    <h3 className='ml-3 text-lg font-medium'>
+                                        Spending Categories
+                                    </h3>
+                                </div>
+                                <div className='text-right'>
+                                    <div className='text-lg font-semibold text-error tabular-nums'>
+                                        {formatCurrency(spendTotalAmount)}
+                                    </div>
+                                    <div className='text-xs text-gray-400 mt-0.5 tabular-nums'>
+                                        of {formatCurrency(spendTotalBudget)}{' '}
+                                        budget
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Global Search for Spends */}
+                        <div className='px-6 py-4 border-b border-base-300'>
+                            <div className='flex gap-4'>
+                                <div className='flex-1'>
+                                    <input
+                                        type='text'
+                                        placeholder='Search spending categories...'
+                                        value={
+                                            spendTable.getState()
+                                                .globalFilter ?? ''
+                                        }
+                                        onChange={(event) =>
+                                            spendTable.setGlobalFilter(
+                                                event.target.value
+                                            )
+                                        }
+                                        className='input input-bordered w-full'
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className='overflow-x-auto'>
+                            <table className='table table-zebra w-full'>
+                                <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
+                                    {spendTable
+                                        .getHeaderGroups()
+                                        .map((headerGroup) => (
+                                            <tr key={headerGroup.id}>
+                                                {headerGroup.headers.map(
+                                                    (header) => (
+                                                        <th
+                                                            key={header.id}
+                                                            scope='col'
+                                                            aria-sort={
+                                                                header.column.getIsSorted() ===
+                                                                'asc'
+                                                                    ? 'ascending'
+                                                                    : header.column.getIsSorted() ===
+                                                                        'desc'
+                                                                      ? 'descending'
+                                                                      : 'none'
+                                                            }
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            onClick={header.column.getToggleSortingHandler()}
+                                                        >
+                                                            {header.isPlaceholder
+                                                                ? null
+                                                                : flexRender(
+                                                                      header
+                                                                          .column
+                                                                          .columnDef
+                                                                          .header,
+                                                                      header.getContext()
+                                                                  )}
+                                                            {header.column.getIsSorted() && (
+                                                                <span aria-hidden='true'>
+                                                                    {header.column.getIsSorted() ===
+                                                                    'asc'
+                                                                        ? ' 🔼'
+                                                                        : ' 🔽'}
+                                                                </span>
+                                                            )}
+                                                        </th>
+                                                    )
+                                                )}
+                                            </tr>
+                                        ))}
+                                </thead>
+                                <tbody>
+                                    {spendTable
+                                        .getRowModel()
+                                        .rows.map((row) => (
+                                            <tr key={row.id} className=''>
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => (
+                                                        <td
+                                                            key={cell.id}
+                                                            className='px-4 py-2 text-sm text-gray-900'
+                                                        >
+                                                            {flexRender(
+                                                                cell.column
+                                                                    .columnDef
+                                                                    .cell,
+                                                                cell.getContext()
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <Paginator table={spendTable} />
                     </div>
 
-                    <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-                        {/* Spends Table */}
-                        <div className='card bg-base-100 shadow-sm overflow-hidden'>
-                            <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
-                                <div className='flex items-center justify-between'>
-                                    <div className='flex items-center'>
-                                        <span
-                                            aria-hidden='true'
-                                            className='text-lg font-medium text-red-900'
-                                        >
-                                            💸
-                                        </span>
-                                        <h3 className='ml-3 text-lg font-medium'>
-                                            Spending Categories
-                                        </h3>
+                    {/* Incomes Table */}
+                    <div className='card bg-base-100 shadow-sm overflow-hidden'>
+                        <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
+                            <div className='flex items-center justify-between'>
+                                <div className='flex items-center'>
+                                    <span
+                                        aria-hidden='true'
+                                        className='text-lg font-medium text-green-700'
+                                    >
+                                        💰
+                                    </span>
+                                    <h3 className='ml-3 text-lg font-medium'>
+                                        Income Categories
+                                    </h3>
+                                </div>
+                                <div className='text-right'>
+                                    <div className='text-sm text-gray-600'>
+                                        Total
                                     </div>
-                                    <div className='text-right'>
-                                        <div className='text-sm text-gray-600'>
-                                            Spent
-                                        </div>
-                                        <div className='text-lg font-semibold text-error'>
-                                            {formatCurrency(spendTotalAmount)}
-                                        </div>
-                                        <div className='text-xs text-gray-400 mt-0.5'>
-                                            of{' '}
-                                            {formatCurrency(spendTotalBudget)}{' '}
-                                            budget
-                                        </div>
+                                    <div className='text-lg font-semibold text-success tabular-nums'>
+                                        {formatCurrency(incomeTotalAmount)}
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Global Search for Spends */}
-                            <div className='px-6 py-4 border-b border-base-300'>
-                                <div className='flex gap-4'>
-                                    <div className='flex-1'>
-                                        <input
-                                            type='text'
-                                            placeholder='Search spending categories...'
-                                            value={
-                                                spendTable.getState()
-                                                    .globalFilter ?? ''
-                                            }
-                                            onChange={(event) =>
-                                                spendTable.setGlobalFilter(
-                                                    event.target.value
-                                                )
-                                            }
-                                            className='input input-bordered w-full'
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='overflow-x-auto'>
-                                <table className='table table-zebra w-full'>
-                                    <thead>
-                                        {spendTable
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <tr key={headerGroup.id}>
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <th
-                                                                key={header.id}
-                                                                scope='col'
-                                                                aria-sort={
-                                                                    header.column.getIsSorted() ===
-                                                                    'asc'
-                                                                        ? 'ascending'
-                                                                        : header.column.getIsSorted() ===
-                                                                            'desc'
-                                                                          ? 'descending'
-                                                                          : 'none'
-                                                                }
-                                                                className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
-                                                                onClick={header.column.getToggleSortingHandler()}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
-                                                                {header.column.getIsSorted() && (
-                                                                    <span aria-hidden='true'>
-                                                                        {header.column.getIsSorted() ===
-                                                                        'asc'
-                                                                            ? ' 🔼'
-                                                                            : ' 🔽'}
-                                                                    </span>
-                                                                )}
-                                                            </th>
-                                                        )
-                                                    )}
-                                                </tr>
-                                            ))}
-                                    </thead>
-                                    <tbody>
-                                        {spendTable
-                                            .getRowModel()
-                                            .rows.map((row) => (
-                                                <tr key={row.id} className=''>
-                                                    {row
-                                                        .getVisibleCells()
-                                                        .map((cell) => (
-                                                            <td
-                                                                key={cell.id}
-                                                                className='px-4 py-2 text-sm text-gray-900'
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </td>
-                                                        ))}
-                                                </tr>
-                                            ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <Paginator table={spendTable} />
                         </div>
 
-                        {/* Incomes Table */}
-                        <div className='card bg-base-100 shadow-sm overflow-hidden'>
-                            <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
-                                <div className='flex items-center justify-between'>
-                                    <div className='flex items-center'>
-                                        <span
-                                            aria-hidden='true'
-                                            className='text-lg font-medium text-green-700'
-                                        >
-                                            💰
-                                        </span>
-                                        <h3 className='ml-3 text-lg font-medium'>
-                                            Income Categories
-                                        </h3>
-                                    </div>
-                                    <div className='text-right'>
-                                        <div className='text-sm text-gray-600'>
-                                            Total
-                                        </div>
-                                        <div className='text-lg font-semibold text-success'>
-                                            {formatCurrency(incomeTotalAmount)}
-                                        </div>
-                                    </div>
+                        {/* Global Search for Incomes */}
+                        <div className='px-6 py-4 border-b border-base-300'>
+                            <div className='flex gap-4'>
+                                <div className='flex-1'>
+                                    <input
+                                        type='text'
+                                        placeholder='Search income categories...'
+                                        value={
+                                            incomeTable.getState()
+                                                .globalFilter ?? ''
+                                        }
+                                        onChange={(event) =>
+                                            incomeTable.setGlobalFilter(
+                                                event.target.value
+                                            )
+                                        }
+                                        className='input input-bordered w-full'
+                                    />
                                 </div>
                             </div>
-
-                            {/* Global Search for Incomes */}
-                            <div className='px-6 py-4 border-b border-base-300'>
-                                <div className='flex gap-4'>
-                                    <div className='flex-1'>
-                                        <input
-                                            type='text'
-                                            placeholder='Search income categories...'
-                                            value={
-                                                incomeTable.getState()
-                                                    .globalFilter ?? ''
-                                            }
-                                            onChange={(event) =>
-                                                incomeTable.setGlobalFilter(
-                                                    event.target.value
-                                                )
-                                            }
-                                            className='input input-bordered w-full'
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='overflow-x-auto'>
-                                <table className='table table-zebra w-full'>
-                                    <thead>
-                                        {incomeTable
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <tr key={headerGroup.id}>
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <th
-                                                                key={header.id}
-                                                                scope='col'
-                                                                aria-sort={
-                                                                    header.column.getIsSorted() ===
-                                                                    'asc'
-                                                                        ? 'ascending'
-                                                                        : header.column.getIsSorted() ===
-                                                                            'desc'
-                                                                          ? 'descending'
-                                                                          : 'none'
-                                                                }
-                                                                className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
-                                                                onClick={header.column.getToggleSortingHandler()}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
-                                                                {header.column.getIsSorted() && (
-                                                                    <span aria-hidden='true'>
-                                                                        {header.column.getIsSorted() ===
-                                                                        'asc'
-                                                                            ? ' 🔼'
-                                                                            : ' 🔽'}
-                                                                    </span>
-                                                                )}
-                                                            </th>
-                                                        )
-                                                    )}
-                                                </tr>
-                                            ))}
-                                    </thead>
-                                    <tbody>
-                                        {incomeTable
-                                            .getRowModel()
-                                            .rows.map((row) => (
-                                                <tr key={row.id} className=''>
-                                                    {row
-                                                        .getVisibleCells()
-                                                        .map((cell) => (
-                                                            <td
-                                                                key={cell.id}
-                                                                className='px-4 py-2 text-sm text-gray-900'
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </td>
-                                                        ))}
-                                                </tr>
-                                            ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <Paginator table={incomeTable} />
                         </div>
+
+                        <div className='overflow-x-auto'>
+                            <table className='table table-zebra w-full'>
+                                <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
+                                    {incomeTable
+                                        .getHeaderGroups()
+                                        .map((headerGroup) => (
+                                            <tr key={headerGroup.id}>
+                                                {headerGroup.headers.map(
+                                                    (header) => (
+                                                        <th
+                                                            key={header.id}
+                                                            scope='col'
+                                                            aria-sort={
+                                                                header.column.getIsSorted() ===
+                                                                'asc'
+                                                                    ? 'ascending'
+                                                                    : header.column.getIsSorted() ===
+                                                                        'desc'
+                                                                      ? 'descending'
+                                                                      : 'none'
+                                                            }
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            onClick={header.column.getToggleSortingHandler()}
+                                                        >
+                                                            {header.isPlaceholder
+                                                                ? null
+                                                                : flexRender(
+                                                                      header
+                                                                          .column
+                                                                          .columnDef
+                                                                          .header,
+                                                                      header.getContext()
+                                                                  )}
+                                                            {header.column.getIsSorted() && (
+                                                                <span aria-hidden='true'>
+                                                                    {header.column.getIsSorted() ===
+                                                                    'asc'
+                                                                        ? ' 🔼'
+                                                                        : ' 🔽'}
+                                                                </span>
+                                                            )}
+                                                        </th>
+                                                    )
+                                                )}
+                                            </tr>
+                                        ))}
+                                </thead>
+                                <tbody>
+                                    {incomeTable
+                                        .getRowModel()
+                                        .rows.map((row) => (
+                                            <tr key={row.id} className=''>
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => (
+                                                        <td
+                                                            key={cell.id}
+                                                            className='px-4 py-2 text-sm text-gray-900'
+                                                        >
+                                                            {flexRender(
+                                                                cell.column
+                                                                    .columnDef
+                                                                    .cell,
+                                                                cell.getContext()
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <Paginator table={incomeTable} />
                     </div>
                 </div>
             </div>
@@ -817,7 +865,7 @@ function Balance() {
             >
                 <div className='overflow-x-auto'>
                     <table className='table table-zebra w-full'>
-                        <thead>
+                        <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                             {modalTable.getHeaderGroups().map((headerGroup) => (
                                 <tr key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (

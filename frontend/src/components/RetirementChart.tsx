@@ -11,7 +11,14 @@ import {
     YAxis,
 } from 'recharts';
 
+import {
+    aggregateData,
+    formatDateLabel,
+    getAggregationLevel,
+} from '../utils/dataAggregation';
+import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
+import ChartEmptyState from './ChartEmptyState';
 
 interface RetirementAccount {
     id: number;
@@ -29,62 +36,104 @@ interface RetirementAccount {
     annual_contribution: number;
     employer_match_amount: number;
     total_annual_contribution: number;
+    created_at?: string | null;
 }
 
 interface RetirementChartProps {
     retirementAccounts: RetirementAccount[];
+    startDate?: Date;
+    endDate?: Date;
 }
 
-const COLORS = ['#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+function RetirementChart({
+    retirementAccounts,
+    startDate,
+    endDate,
+}: RetirementChartProps) {
+    const {
+        pieData,
+        trendData,
+        trendLevel,
+        totalBalance,
+        totalContributionsThisYear,
+    } = useMemo(() => {
+        const byType: Record<string, number> = {};
+        let totalBalance = 0;
+        let totalContributionsThisYear = 0;
+        for (const a of retirementAccounts) {
+            const type = a.account_type.replace('_', ' ').toUpperCase();
+            byType[type] = (byType[type] ?? 0) + (a.current_balance || 0);
+            totalBalance += a.current_balance || 0;
+            totalContributionsThisYear += a.annual_contribution || 0;
+        }
 
-function RetirementChart({ retirementAccounts }: RetirementChartProps) {
-    const { pieData, topAccounts, totalBalance, totalContributionsThisYear } =
-        useMemo(() => {
-            const byType: Record<string, number> = {};
-            let totalBalance = 0;
-            let totalContributionsThisYear = 0;
-            for (const a of retirementAccounts) {
-                const type = a.account_type.replace('_', ' ').toUpperCase();
-                byType[type] = (byType[type] ?? 0) + (a.current_balance || 0);
-                totalBalance += a.current_balance || 0;
-                totalContributionsThisYear += a.annual_contribution || 0;
-            }
+        const pieData = Object.entries(byType).map(([type, value]) => ({
+            name: type,
+            value: Math.round(value),
+        }));
 
-            const pieData = Object.entries(byType).map(([type, value]) => ({
-                name: type,
-                value: Math.round(value),
+        const datedAccounts = retirementAccounts
+            .map((account) => ({
+                ...account,
+                date: account.created_at ? new Date(account.created_at) : null,
+            }))
+            .filter(
+                (account) => account.date && !isNaN(account.date.getTime())
+            );
+
+        const fallbackDate = new Date();
+        const minDate = datedAccounts.length
+            ? new Date(
+                  Math.min(
+                      ...datedAccounts.map((account) =>
+                          (account.date as Date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+        const maxDate = datedAccounts.length
+            ? new Date(
+                  Math.max(
+                      ...datedAccounts.map((account) =>
+                          (account.date as Date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+
+        const rangeStart = startDate ?? minDate;
+        const rangeEnd = endDate ?? maxDate;
+        const trendLevel = getAggregationLevel(rangeStart, rangeEnd);
+
+        const trendPoints = datedAccounts
+            .filter((account) => {
+                const createdAt = account.date as Date;
+                return createdAt >= rangeStart && createdAt <= rangeEnd;
+            })
+            .map((account) => ({
+                date: (account.date as Date).toISOString(),
+                value: account.current_balance || 0,
             }));
 
-            const topAccounts = [...retirementAccounts]
-                .sort(
-                    (a, b) =>
-                        (b.current_balance || 0) - (a.current_balance || 0)
-                )
-                .slice(0, 5)
-                .map((a) => ({
-                    name:
-                        a.name.length > 15
-                            ? a.name.substring(0, 15) + '...'
-                            : a.name,
-                    balance: Math.round(a.current_balance || 0),
-                    contributions: a.annual_contribution || 0,
-                    projected: a.current_balance || 0,
-                }));
+        const trendData = aggregateData(trendPoints, trendLevel);
 
-            return {
-                pieData,
-                topAccounts,
-                totalBalance,
-                totalContributionsThisYear,
-            };
-        }, [retirementAccounts]);
+        return {
+            pieData,
+            trendData,
+            trendLevel,
+            totalBalance,
+            totalContributionsThisYear,
+        };
+    }, [endDate, retirementAccounts, startDate]);
 
     // Handle empty or invalid data
     if (!retirementAccounts || retirementAccounts.length === 0) {
         return (
-            <div className='flex items-center justify-center h-64 text-gray-500'>
-                No retirement account data available
-            </div>
+            <ChartEmptyState
+                icon='💼'
+                title='No retirement data yet'
+                description='Add retirement accounts to track balances and long-term contributions.'
+            />
         );
     }
 
@@ -96,7 +145,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Total Retirement Balance
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalBalance)}
                     </div>
                 </div>
@@ -104,7 +153,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Contributions This Year
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalContributionsThisYear)}
                     </div>
                 </div>
@@ -112,7 +161,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Projected at Retirement
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalBalance)}
                     </div>
                 </div>
@@ -149,7 +198,13 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                                 {pieData.map((_, index) => (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={COLORS[index % COLORS.length]}
+                                        fill={
+                                            CHART_COLORS.retirement[
+                                                index %
+                                                    CHART_COLORS.retirement
+                                                        .length
+                                            ]
+                                        }
                                     />
                                 ))}
                             </Pie>
@@ -165,7 +220,7 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                 {/* Top Accounts Bar Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
-                        Top 5 Retirement Accounts
+                        Retirement Balance Over Time
                     </h4>
                     <ResponsiveContainer
                         width='100%'
@@ -173,31 +228,42 @@ function RetirementChart({ retirementAccounts }: RetirementChartProps) {
                         minWidth={200}
                         minHeight={200}
                     >
-                        <BarChart data={topAccounts}>
+                        <BarChart data={trendData}>
                             <XAxis
-                                dataKey='name'
+                                dataKey='date'
                                 tick={{ fontSize: 12 }}
-                                angle={-45}
-                                textAnchor='end'
-                                height={60}
+                                tickFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
                             <YAxis
                                 tick={{ fontSize: 12 }}
                                 tickFormatter={(value) =>
                                     `$${(value / 1000).toFixed(0)}k`
                                 }
+                                domain={[0, 'auto']}
                             />
                             <Tooltip
-                                formatter={(value, name) => [
-                                    formatCurrency(value as number),
-                                    name === 'balance'
-                                        ? 'Current Balance'
-                                        : name === 'contributions'
-                                          ? 'Contributions YTD'
-                                          : 'Projected Value',
-                                ]}
+                                formatter={(value, _name, item) => {
+                                    const numericValue = Number(value) || 0;
+                                    const count = item?.payload?.count ?? 0;
+                                    const countLabel =
+                                        count === 1 ? 'account' : 'accounts';
+                                    return [
+                                        `${formatCurrency(
+                                            numericValue
+                                        )} (${count} ${countLabel})`,
+                                        'Current Balance',
+                                    ];
+                                }}
+                                labelFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
-                            <Bar dataKey='balance' fill='#00C49F' />
+                            <Bar
+                                dataKey='value'
+                                fill={CHART_COLORS.retirement[0]}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

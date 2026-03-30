@@ -1,4 +1,8 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    createAsyncThunk,
+    createSlice,
+    type PayloadAction,
+} from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
 
 import type {
@@ -8,10 +12,12 @@ import type {
     BulkReclassifyResponse,
     Transaction,
 } from '../../types/transactions';
+import type { RootState } from '..';
 import apiClient from '../../utils/apiClient';
 
 interface TransactionsState {
     transactions: Transaction[];
+    _deletedCache?: Transaction[];
     loading: boolean;
     deleting: boolean;
     error: string | null;
@@ -19,6 +25,7 @@ interface TransactionsState {
 
 const initialState: TransactionsState = {
     transactions: [],
+    _deletedCache: [],
     loading: false,
     deleting: false,
     error: null,
@@ -124,11 +131,17 @@ export const updateTransaction = createAsyncThunk(
 
 export const deleteTransaction = createAsyncThunk(
     'transactions/deleteTransaction',
-    async (id: number, { rejectWithValue }) => {
+    async (id: number, { dispatch, getState, rejectWithValue }) => {
+        const state = getState() as { transactions: TransactionsState };
+        if (state.transactions.transactions.some((tx) => tx.id === id)) {
+            dispatch(transactionsSlice.actions.optimisticDelete(id));
+        }
+
         try {
             await apiClient.delete(`/api/v1/transactions/${id}/`);
             return id;
         } catch (err: unknown) {
+            dispatch(transactionsSlice.actions.rollbackDelete(id));
             if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.detail ?? 'Failed to delete transaction'
@@ -220,7 +233,34 @@ export const bulkDeleteTransactions = createAsyncThunk(
 const transactionsSlice = createSlice({
     name: 'transactions',
     initialState,
-    reducers: {},
+    reducers: {
+        optimisticDelete: (state, action: PayloadAction<number>) => {
+            const removed = state.transactions.find(
+                (transaction) => transaction.id === action.payload
+            );
+
+            if (!removed) {
+                return;
+            }
+
+            state.transactions = state.transactions.filter(
+                (transaction) => transaction.id !== action.payload
+            );
+            state._deletedCache = [...(state._deletedCache ?? []), removed];
+        },
+        rollbackDelete: (state, action: PayloadAction<number>) => {
+            const deletedIndex = state._deletedCache?.findIndex(
+                (transaction) => transaction.id === action.payload
+            );
+
+            if (deletedIndex === undefined || deletedIndex < 0) {
+                return;
+            }
+
+            const [restored] = state._deletedCache!.splice(deletedIndex, 1);
+            state.transactions.push(restored!);
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchTransactions.pending, (state) => {
@@ -290,15 +330,19 @@ const transactionsSlice = createSlice({
             })
             .addCase(deleteTransaction.pending, (state) => {
                 state.deleting = true;
+                state.error = null;
             })
             .addCase(deleteTransaction.fulfilled, (state, action) => {
                 state.deleting = false;
-                state.transactions = state.transactions.filter(
-                    (tx) => tx.id !== action.payload
+                state._deletedCache = (state._deletedCache ?? []).filter(
+                    (transaction) => transaction.id !== action.payload
                 );
             })
-            .addCase(deleteTransaction.rejected, (state) => {
+            .addCase(deleteTransaction.rejected, (state, action) => {
                 state.deleting = false;
+                state.error =
+                    (action.payload as string) ||
+                    'Failed to delete transaction';
             })
             .addCase(uploadBankStatement.pending, (state) => {
                 state.loading = true;
@@ -345,5 +389,16 @@ const transactionsSlice = createSlice({
             });
     },
 });
+
+export const { optimisticDelete, rollbackDelete } = transactionsSlice.actions;
+
+export const selectTransactions = (state: RootState) =>
+    state.transactions.transactions;
+export const selectTransactionsLoading = (state: RootState) =>
+    state.transactions.loading;
+export const selectTransactionsDeleting = (state: RootState) =>
+    state.transactions.deleting;
+export const selectTransactionsError = (state: RootState) =>
+    state.transactions.error;
 
 export default transactionsSlice.reducer;

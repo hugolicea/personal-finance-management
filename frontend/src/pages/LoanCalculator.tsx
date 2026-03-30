@@ -117,7 +117,7 @@ interface YearRow {
 function AmortizationChart({ schedule }: { schedule: YearRow[] }) {
     return (
         <div className='bg-base-100 mx-4 mb-4 rounded-lg p-4'>
-            <h3 className='text-sm font-semibold text-gray-700 text-center mb-3'>
+            <h3 className='text-sm font-semibold text-base-content/80 text-center mb-3'>
                 Annual Principal vs Interest
             </h3>
             <ResponsiveContainer width='100%' height={200}>
@@ -943,7 +943,7 @@ function LoanCalculator() {
                     ← Back
                 </button>
                 <div>
-                    <h1 className='text-2xl font-bold text-gray-900'>
+                    <h1 className='text-2xl font-bold text-base-content'>
                         🏦 Loan Calculator
                     </h1>
                     <p className='mt-0.5 text-sm text-gray-500'>

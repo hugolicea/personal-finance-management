@@ -1,7 +1,12 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    createAsyncThunk,
+    createSlice,
+    type PayloadAction,
+} from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
 
 import apiClient from '../../utils/apiClient';
+import type { RootState } from '../index';
 
 interface RetirementAccountApiResponse {
     id: number;
@@ -19,6 +24,7 @@ interface RetirementAccountApiResponse {
     annual_contribution: string;
     employer_match_amount: string;
     total_annual_contribution: string;
+    created_at?: string | null;
 }
 
 interface RetirementAccount {
@@ -37,10 +43,12 @@ interface RetirementAccount {
     annual_contribution: number;
     employer_match_amount: number;
     total_annual_contribution: number;
+    created_at?: string | null;
 }
 
 interface RetirementAccountsState {
     retirementAccounts: RetirementAccount[];
+    _deletedCache: RetirementAccount[];
     loading: boolean;
     deleting: boolean;
     error: string | null;
@@ -48,6 +56,7 @@ interface RetirementAccountsState {
 
 const initialState: RetirementAccountsState = {
     retirementAccounts: [],
+    _deletedCache: [],
     loading: false,
     deleting: false,
     error: null,
@@ -156,11 +165,13 @@ export const updateRetirementAccount = createAsyncThunk(
 
 export const deleteRetirementAccount = createAsyncThunk(
     'retirementAccounts/deleteRetirementAccount',
-    async (id: number, { rejectWithValue }) => {
+    async (id: number, { dispatch, rejectWithValue }) => {
+        dispatch(optimisticDelete(id));
         try {
             await apiClient.delete(`/api/v1/retirement-accounts/${id}/`);
             return id;
         } catch (err: unknown) {
+            dispatch(rollbackDelete(id));
             if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.detail ??
@@ -175,7 +186,33 @@ export const deleteRetirementAccount = createAsyncThunk(
 const retirementAccountsSlice = createSlice({
     name: 'retirementAccounts',
     initialState,
-    reducers: {},
+    reducers: {
+        optimisticDelete(state, action: PayloadAction<number>) {
+            const index = state.retirementAccounts.findIndex(
+                (account) => account.id === action.payload
+            );
+            if (index === -1) {
+                return;
+            }
+
+            const [deletedAccount] = state.retirementAccounts.splice(index, 1);
+            state._deletedCache.push(deletedAccount!);
+        },
+        rollbackDelete(state, action: PayloadAction<number>) {
+            const cachedIndex = state._deletedCache.findIndex(
+                (account) => account.id === action.payload
+            );
+            if (cachedIndex === -1) {
+                return;
+            }
+
+            const [restoredAccount] = state._deletedCache.splice(
+                cachedIndex,
+                1
+            );
+            state.retirementAccounts.push(restoredAccount!);
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchRetirementAccounts.pending, (state) => {
@@ -217,6 +254,9 @@ const retirementAccountsSlice = createSlice({
                 state.retirementAccounts = state.retirementAccounts.filter(
                     (account) => account.id !== action.payload
                 );
+                state._deletedCache = state._deletedCache.filter(
+                    (account) => account.id !== action.payload
+                );
             })
             .addCase(deleteRetirementAccount.rejected, (state, action) => {
                 state.deleting = false;
@@ -226,5 +266,14 @@ const retirementAccountsSlice = createSlice({
             });
     },
 });
+
+export const { optimisticDelete, rollbackDelete } =
+    retirementAccountsSlice.actions;
+
+export const selectRetirementValue = (state: RootState): number =>
+    state.retirementAccounts.retirementAccounts.reduce(
+        (sum, a) => sum + (a.current_balance || 0),
+        0
+    );
 
 export default retirementAccountsSlice.reducer;

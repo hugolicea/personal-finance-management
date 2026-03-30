@@ -56,7 +56,22 @@ function AccountTransactionsPage() {
         new Date().getMonth() + 1
     );
     const [filterByYear, setFilterByYear] = useState(false);
+    const [filtersOpen, setFiltersOpen] = useState(true);
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+
+    const activeFilterCount = [
+        searchTerm !== '',
+        selectedCategory !== '',
+        filterByYear,
+    ].filter(Boolean).length;
+
+    const resetFilters = () => {
+        setSearchTerm('');
+        setSelectedCategory('');
+        setFilterByYear(false);
+        setSelectedYear(new Date().getFullYear());
+        setSelectedMonth(new Date().getMonth() + 1);
+    };
 
     useEffect(() => {
         dispatch(fetchCategories());
@@ -182,7 +197,7 @@ function AccountTransactionsPage() {
     const renderTransactionList = (list: Transaction[], label: string) => (
         <div className='card bg-base-100 shadow-sm'>
             <div className='p-4 border-b flex justify-between items-center'>
-                <h2 className='font-semibold text-gray-800'>
+                <h2 className='font-semibold text-base-content'>
                     {label} ({list.length})
                 </h2>
                 {selectedTransactions.length > 0 && (
@@ -198,7 +213,7 @@ function AccountTransactionsPage() {
             {viewMode === 'table' ? (
                 <div className='overflow-x-auto'>
                     <table className='table table-zebra w-full'>
-                        <thead>
+                        <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                             <tr>
                                 <th className='p-3 text-left'>
                                     <input
@@ -252,7 +267,7 @@ function AccountTransactionsPage() {
                                         {getCategoryName(t.category)}
                                     </td>
                                     <td
-                                        className={`p-3 text-right font-medium ${
+                                        className={`p-3 text-right font-medium tabular-nums ${
                                             t.amount < 0
                                                 ? 'text-error'
                                                 : 'text-success'
@@ -300,7 +315,7 @@ function AccountTransactionsPage() {
                                 </p>
                             </div>
                             <span
-                                className={`font-bold ${
+                                className={`font-bold tabular-nums ${
                                     t.amount < 0 ? 'text-error' : 'text-success'
                                 }`}
                             >
@@ -343,7 +358,7 @@ function AccountTransactionsPage() {
                                       ] ?? '🏦'
                                     : '🏦'}
                             </span>
-                            <h1 className='text-2xl font-bold text-gray-900'>
+                            <h1 className='text-2xl font-bold text-base-content'>
                                 {account?.name ?? 'Account'}
                             </h1>
                         </div>
@@ -371,20 +386,20 @@ function AccountTransactionsPage() {
             <div className='grid grid-cols-3 gap-4'>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Expenses</p>
-                    <p className='text-xl font-bold text-error'>
+                    <p className='text-xl font-bold text-error tabular-nums'>
                         {formatCurrency(-totalSpends)}
                     </p>
                 </div>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Income</p>
-                    <p className='text-xl font-bold text-success'>
+                    <p className='text-xl font-bold text-success tabular-nums'>
                         +{formatCurrency(totalIncomes)}
                     </p>
                 </div>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
                     <p className='text-sm text-gray-500'>Net</p>
                     <p
-                        className={`text-xl font-bold ${
+                        className={`text-xl font-bold tabular-nums ${
                             totalAmount >= 0 ? 'text-success' : 'text-error'
                         }`}
                     >
@@ -393,159 +408,221 @@ function AccountTransactionsPage() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className='card bg-base-100 shadow-sm p-4'>
-                <div className='grid grid-cols-1 md:grid-cols-6 gap-4'>
-                    <div>
-                        <label
-                            htmlFor='filter-search'
-                            className='block text-sm font-medium mb-1'
+            {/* Filter Panel */}
+            <div className='card bg-base-100 shadow-sm mb-4'>
+                <div className='card-body p-3'>
+                    {/* Filter header - always visible */}
+                    <div className='flex items-center justify-between'>
+                        <button
+                            type='button'
+                            onClick={() => setFiltersOpen(!filtersOpen)}
+                            className='flex items-center gap-2 btn btn-ghost btn-sm px-2'
+                            aria-expanded={filtersOpen}
+                            aria-controls='filter-panel'
                         >
-                            Search
-                        </label>
-                        <input
-                            id='filter-search'
-                            type='text'
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder='Search transactions…'
-                            className='input input-bordered w-full'
-                        />
-                    </div>
-                    <div>
-                        <label
-                            htmlFor='filter-category'
-                            className='block text-sm font-medium mb-1'
-                        >
-                            Category
-                        </label>
-                        <CategorySelect
-                            id='filter-category'
-                            categories={categories}
-                            placeholder='All Categories'
-                            value={selectedCategory}
-                            onChange={(e) =>
-                                setSelectedCategory(e.target.value)
-                            }
-                            className='input input-bordered w-full'
-                        />
-                    </div>
-                    <div>
-                        <label
-                            htmlFor='filter-year'
-                            className='block text-sm font-medium mb-1'
-                        >
-                            Year
-                        </label>
-                        <select
-                            id='filter-year'
-                            value={selectedYear}
-                            onChange={(e) =>
-                                setSelectedYear(parseInt(e.target.value))
-                            }
-                            className='input input-bordered w-full'
-                        >
-                            {Array.from({ length: 5 }, (_, i) => {
-                                const y = new Date().getFullYear() - 2 + i;
-                                return (
-                                    <option key={y} value={y}>
-                                        {y}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            htmlFor='filter-month'
-                            className='block text-sm font-medium mb-1'
-                        >
-                            Month
-                        </label>
-                        <select
-                            id='filter-month'
-                            value={selectedMonth}
-                            onChange={(e) =>
-                                setSelectedMonth(parseInt(e.target.value))
-                            }
-                            disabled={filterByYear}
-                            className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
-                        >
-                            {[
-                                'January',
-                                'February',
-                                'March',
-                                'April',
-                                'May',
-                                'June',
-                                'July',
-                                'August',
-                                'September',
-                                'October',
-                                'November',
-                                'December',
-                            ].map((name, i) => (
-                                <option key={i + 1} value={i + 1}>
-                                    {name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className='block text-sm font-medium mb-1'>
-                            Period
-                        </label>
-                        <div className='join'>
-                            <button
-                                onClick={() => setFilterByYear(false)}
-                                className={`join-item btn btn-sm ${
-                                    !filterByYear
-                                        ? 'btn-primary'
-                                        : 'btn-outline'
+                            <svg
+                                className={`w-4 h-4 transition-transform ${
+                                    filtersOpen ? 'rotate-180' : ''
                                 }`}
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
                             >
-                                Month
-                            </button>
+                                <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M19 9l-7 7-7-7'
+                                />
+                            </svg>
+                            <span className='font-medium text-sm'>Filters</span>
+                            {activeFilterCount > 0 && (
+                                <span className='badge badge-primary badge-sm'>
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
+                        {activeFilterCount > 0 && (
                             <button
-                                onClick={() => setFilterByYear(true)}
-                                className={`join-item btn btn-sm ${
-                                    filterByYear ? 'btn-primary' : 'btn-outline'
-                                }`}
+                                type='button'
+                                onClick={resetFilters}
+                                className='btn btn-ghost btn-xs text-base-content/60'
                             >
-                                Year
+                                Clear filters
                             </button>
+                        )}
+                    </div>
+
+                    {/* Filter controls - collapsible */}
+                    {filtersOpen && (
+                        <div
+                            id='filter-panel'
+                            className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-base-200'
+                        >
+                            <div>
+                                <label
+                                    htmlFor='filter-search'
+                                    className='block text-sm font-medium mb-1'
+                                >
+                                    Search
+                                </label>
+                                <input
+                                    id='filter-search'
+                                    type='text'
+                                    value={searchTerm}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
+                                    placeholder='Search transactions…'
+                                    className='input input-bordered w-full'
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    htmlFor='filter-category'
+                                    className='block text-sm font-medium mb-1'
+                                >
+                                    Category
+                                </label>
+                                <CategorySelect
+                                    id='filter-category'
+                                    categories={categories}
+                                    placeholder='All Categories'
+                                    value={selectedCategory}
+                                    onChange={(e) =>
+                                        setSelectedCategory(e.target.value)
+                                    }
+                                    className='input input-bordered w-full'
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    htmlFor='filter-year'
+                                    className='block text-sm font-medium mb-1'
+                                >
+                                    Year
+                                </label>
+                                <select
+                                    id='filter-year'
+                                    value={selectedYear}
+                                    onChange={(e) =>
+                                        setSelectedYear(
+                                            parseInt(e.target.value)
+                                        )
+                                    }
+                                    className='input input-bordered w-full'
+                                >
+                                    {Array.from({ length: 5 }, (_, i) => {
+                                        const y =
+                                            new Date().getFullYear() - 2 + i;
+                                        return (
+                                            <option key={y} value={y}>
+                                                {y}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    htmlFor='filter-month'
+                                    className='block text-sm font-medium mb-1'
+                                >
+                                    Month
+                                </label>
+                                <select
+                                    id='filter-month'
+                                    value={selectedMonth}
+                                    onChange={(e) =>
+                                        setSelectedMonth(
+                                            parseInt(e.target.value)
+                                        )
+                                    }
+                                    disabled={filterByYear}
+                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                                >
+                                    {[
+                                        'January',
+                                        'February',
+                                        'March',
+                                        'April',
+                                        'May',
+                                        'June',
+                                        'July',
+                                        'August',
+                                        'September',
+                                        'October',
+                                        'November',
+                                        'December',
+                                    ].map((name, i) => (
+                                        <option key={i + 1} value={i + 1}>
+                                            {name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className='block text-sm font-medium mb-1'>
+                                    Period
+                                </label>
+                                <div className='join'>
+                                    <button
+                                        onClick={() => setFilterByYear(false)}
+                                        className={`join-item btn btn-sm ${
+                                            !filterByYear
+                                                ? 'btn-primary'
+                                                : 'btn-outline'
+                                        }`}
+                                    >
+                                        Month
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterByYear(true)}
+                                        className={`join-item btn btn-sm ${
+                                            filterByYear
+                                                ? 'btn-primary'
+                                                : 'btn-outline'
+                                        }`}
+                                    >
+                                        Year
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <label className='block text-sm font-medium mb-1'>
-                            View
-                        </label>
-                        <div className='join'>
-                            <button
-                                onClick={() => setViewMode('cards')}
-                                aria-label='Cards view'
-                                aria-pressed={viewMode === 'cards'}
-                                className={`join-item btn btn-sm ${
-                                    viewMode === 'cards'
-                                        ? 'btn-primary'
-                                        : 'btn-outline'
-                                }`}
-                            >
-                                <span aria-hidden='true'>📋</span>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('table')}
-                                aria-label='Table view'
-                                aria-pressed={viewMode === 'table'}
-                                className={`join-item btn btn-sm ${
-                                    viewMode === 'table'
-                                        ? 'btn-primary'
-                                        : 'btn-outline'
-                                }`}
-                            >
-                                <span aria-hidden='true'>📊</span>
-                            </button>
-                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className='flex justify-end'>
+                <div>
+                    <label className='block text-sm font-medium mb-1'>
+                        View
+                    </label>
+                    <div className='join'>
+                        <button
+                            onClick={() => setViewMode('cards')}
+                            aria-label='Cards view'
+                            aria-pressed={viewMode === 'cards'}
+                            className={`join-item btn btn-sm ${
+                                viewMode === 'cards'
+                                    ? 'btn-primary'
+                                    : 'btn-outline'
+                            }`}
+                        >
+                            <span aria-hidden='true'>📋</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('table')}
+                            aria-label='Table view'
+                            aria-pressed={viewMode === 'table'}
+                            className={`join-item btn btn-sm ${
+                                viewMode === 'table'
+                                    ? 'btn-primary'
+                                    : 'btn-outline'
+                            }`}
+                        >
+                            <span aria-hidden='true'>📊</span>
+                        </button>
                     </div>
                 </div>
             </div>

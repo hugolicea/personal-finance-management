@@ -8,6 +8,7 @@ import {
 } from '../store/slices/investmentsSlice';
 import { Investment } from '../types/investments';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
+import FormAutoSave from './FormAutoSave';
 
 interface InvestmentFormProps {
     investment?: Investment;
@@ -189,8 +190,12 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
         >
-            {({ isSubmitting, values }) => (
+            {({ errors, touched, isSubmitting, values }) => (
                 <Form className='space-y-8'>
+                    <FormAutoSave
+                        formName='investment-form'
+                        initialValues={initialValues}
+                    />
                     {/* Investment Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
@@ -229,12 +234,28 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     id='symbol'
                                     className='input input-bordered w-full uppercase'
                                     placeholder='AAPL'
+                                    aria-describedby={
+                                        errors.symbol && touched.symbol
+                                            ? 'symbol-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.symbol && touched.symbol
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='symbol'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='symbol'>
+                                    {(msg) => (
+                                        <span
+                                            id='symbol-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div className='sm:col-span-2'>
@@ -251,12 +272,28 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     id='name'
                                     className='input input-bordered w-full'
                                     placeholder='e.g., Apple Inc., Bitcoin, Vanguard S&P 500 ETF'
+                                    aria-describedby={
+                                        errors.name && touched.name
+                                            ? 'name-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.name && touched.name
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='name'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='name'>
+                                    {(msg) => (
+                                        <span
+                                            id='name-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             <div>
@@ -272,6 +309,18 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     name='investment_type'
                                     id='investment_type'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.investment_type &&
+                                        touched.investment_type
+                                            ? 'investment_type-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.investment_type &&
+                                        touched.investment_type
+                                            ? true
+                                            : undefined
+                                    }
                                 >
                                     <option value='stock'>📈 Stock</option>
                                     <option value='bond'>📊 Bond</option>
@@ -286,11 +335,17 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         💰 Fixed Income
                                     </option>
                                 </Field>
-                                <ErrorMessage
-                                    name='investment_type'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='investment_type'>
+                                    {(msg) => (
+                                        <span
+                                            id='investment_type-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
 
                             {values.investment_type !== 'fixed_income' && (
@@ -309,12 +364,28 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         step='any'
                                         className='input input-bordered w-full'
                                         placeholder='100'
+                                        aria-describedby={
+                                            errors.quantity && touched.quantity
+                                                ? 'quantity-error'
+                                                : undefined
+                                        }
+                                        aria-invalid={
+                                            errors.quantity && touched.quantity
+                                                ? true
+                                                : undefined
+                                        }
                                     />
-                                    <ErrorMessage
-                                        name='quantity'
-                                        component='div'
-                                        className='mt-2 text-sm text-red-600 font-medium'
-                                    />
+                                    <ErrorMessage name='quantity'>
+                                        {(msg) => (
+                                            <span
+                                                id='quantity-error'
+                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                role='alert'
+                                            >
+                                                {msg}
+                                            </span>
+                                        )}
+                                    </ErrorMessage>
                                 </div>
                             )}
                         </div>
@@ -366,13 +437,31 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             step='any'
                                             className='input input-bordered w-full pl-8'
                                             placeholder='150.00'
+                                            aria-describedby={
+                                                errors.purchase_price &&
+                                                touched.purchase_price
+                                                    ? 'purchase_price-error'
+                                                    : undefined
+                                            }
+                                            aria-invalid={
+                                                errors.purchase_price &&
+                                                touched.purchase_price
+                                                    ? true
+                                                    : undefined
+                                            }
                                         />
                                     </div>
-                                    <ErrorMessage
-                                        name='purchase_price'
-                                        component='div'
-                                        className='mt-2 text-sm text-red-600 font-medium'
-                                    />
+                                    <ErrorMessage name='purchase_price'>
+                                        {(msg) => (
+                                            <span
+                                                id='purchase_price-error'
+                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                role='alert'
+                                            >
+                                                {msg}
+                                            </span>
+                                        )}
+                                    </ErrorMessage>
                                 </div>
                             )}
 
@@ -398,13 +487,31 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             step='any'
                                             className='input input-bordered w-full pl-8'
                                             placeholder='5000.00'
+                                            aria-describedby={
+                                                errors.principal_amount &&
+                                                touched.principal_amount
+                                                    ? 'principal_amount-error'
+                                                    : undefined
+                                            }
+                                            aria-invalid={
+                                                errors.principal_amount &&
+                                                touched.principal_amount
+                                                    ? true
+                                                    : undefined
+                                            }
                                         />
                                     </div>
-                                    <ErrorMessage
-                                        name='principal_amount'
-                                        component='div'
-                                        className='mt-2 text-sm text-red-600 font-medium'
-                                    />
+                                    <ErrorMessage name='principal_amount'>
+                                        {(msg) => (
+                                            <span
+                                                id='principal_amount-error'
+                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                role='alert'
+                                            >
+                                                {msg}
+                                            </span>
+                                        )}
+                                    </ErrorMessage>
                                 </div>
                             )}
 
@@ -429,17 +536,35 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             step='any'
                                             className='input input-bordered w-full pl-8'
                                             placeholder='175.00'
+                                            aria-describedby={
+                                                errors.current_price &&
+                                                touched.current_price
+                                                    ? 'current_price-error'
+                                                    : undefined
+                                            }
+                                            aria-invalid={
+                                                errors.current_price &&
+                                                touched.current_price
+                                                    ? true
+                                                    : undefined
+                                            }
                                         />
                                     </div>
                                     <p className='mt-2 text-xs text-gray-500 font-medium'>
                                         Optional - for tracking unrealized
                                         gains/losses
                                     </p>
-                                    <ErrorMessage
-                                        name='current_price'
-                                        component='div'
-                                        className='mt-1 text-sm text-red-600 font-medium'
-                                    />
+                                    <ErrorMessage name='current_price'>
+                                        {(msg) => (
+                                            <span
+                                                id='current_price-error'
+                                                className='mt-1 text-sm text-red-600 font-medium'
+                                                role='alert'
+                                            >
+                                                {msg}
+                                            </span>
+                                        )}
+                                    </ErrorMessage>
                                 </div>
                             )}
 
@@ -465,6 +590,18 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                                 max='100'
                                                 className='input input-bordered w-full'
                                                 placeholder='8.00'
+                                                aria-describedby={
+                                                    errors.interest_rate &&
+                                                    touched.interest_rate
+                                                        ? 'interest_rate-error'
+                                                        : undefined
+                                                }
+                                                aria-invalid={
+                                                    errors.interest_rate &&
+                                                    touched.interest_rate
+                                                        ? true
+                                                        : undefined
+                                                }
                                             />
                                             <div className='absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none'>
                                                 <span className='text-gray-500 sm:text-sm font-medium'>
@@ -472,11 +609,17 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                                 </span>
                                             </div>
                                         </div>
-                                        <ErrorMessage
-                                            name='interest_rate'
-                                            component='div'
-                                            className='mt-2 text-sm text-red-600 font-medium'
-                                        />
+                                        <ErrorMessage name='interest_rate'>
+                                            {(msg) => (
+                                                <span
+                                                    id='interest_rate-error'
+                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    role='alert'
+                                                >
+                                                    {msg}
+                                                </span>
+                                            )}
+                                        </ErrorMessage>
                                     </div>
 
                                     <div>
@@ -494,6 +637,18 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             name='compounding_frequency'
                                             id='compounding_frequency'
                                             className='input input-bordered w-full'
+                                            aria-describedby={
+                                                errors.compounding_frequency &&
+                                                touched.compounding_frequency
+                                                    ? 'compounding_frequency-error'
+                                                    : undefined
+                                            }
+                                            aria-invalid={
+                                                errors.compounding_frequency &&
+                                                touched.compounding_frequency
+                                                    ? true
+                                                    : undefined
+                                            }
                                         >
                                             <option value='annual'>
                                                 Annual
@@ -508,11 +663,17 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                                 Monthly
                                             </option>
                                         </Field>
-                                        <ErrorMessage
-                                            name='compounding_frequency'
-                                            component='div'
-                                            className='mt-2 text-sm text-red-600 font-medium'
-                                        />
+                                        <ErrorMessage name='compounding_frequency'>
+                                            {(msg) => (
+                                                <span
+                                                    id='compounding_frequency-error'
+                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    role='alert'
+                                                >
+                                                    {msg}
+                                                </span>
+                                            )}
+                                        </ErrorMessage>
                                     </div>
 
                                     <div>
@@ -533,12 +694,30 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             min='0'
                                             className='input input-bordered w-full'
                                             placeholder='5.00'
+                                            aria-describedby={
+                                                errors.term_years &&
+                                                touched.term_years
+                                                    ? 'term_years-error'
+                                                    : undefined
+                                            }
+                                            aria-invalid={
+                                                errors.term_years &&
+                                                touched.term_years
+                                                    ? true
+                                                    : undefined
+                                            }
                                         />
-                                        <ErrorMessage
-                                            name='term_years'
-                                            component='div'
-                                            className='mt-2 text-sm text-red-600 font-medium'
-                                        />
+                                        <ErrorMessage name='term_years'>
+                                            {(msg) => (
+                                                <span
+                                                    id='term_years-error'
+                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    role='alert'
+                                                >
+                                                    {msg}
+                                                </span>
+                                            )}
+                                        </ErrorMessage>
                                     </div>
                                 </>
                             )}
@@ -556,12 +735,30 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     name='purchase_date'
                                     id='purchase_date'
                                     className='input input-bordered w-full'
+                                    aria-describedby={
+                                        errors.purchase_date &&
+                                        touched.purchase_date
+                                            ? 'purchase_date-error'
+                                            : undefined
+                                    }
+                                    aria-invalid={
+                                        errors.purchase_date &&
+                                        touched.purchase_date
+                                            ? true
+                                            : undefined
+                                    }
                                 />
-                                <ErrorMessage
-                                    name='purchase_date'
-                                    component='div'
-                                    className='mt-2 text-sm text-red-600 font-medium'
-                                />
+                                <ErrorMessage name='purchase_date'>
+                                    {(msg) => (
+                                        <span
+                                            id='purchase_date-error'
+                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            role='alert'
+                                        >
+                                            {msg}
+                                        </span>
+                                    )}
+                                </ErrorMessage>
                             </div>
                         </div>
                     </div>
@@ -597,12 +794,28 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 rows={4}
                                 className='textarea textarea-bordered w-full resize-none'
                                 placeholder='Any additional information about this investment (strategy, goals, etc.)'
+                                aria-describedby={
+                                    errors.notes && touched.notes
+                                        ? 'notes-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.notes && touched.notes
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='notes'
-                                component='div'
-                                className='mt-2 text-sm text-red-600 font-medium'
-                            />
+                            <ErrorMessage name='notes'>
+                                {(msg) => (
+                                    <span
+                                        id='notes-error'
+                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
                     </div>
 

@@ -1,11 +1,17 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    createAsyncThunk,
+    createSlice,
+    type PayloadAction,
+} from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
 
 import type { BankAccount } from '../../types/accounts';
 import apiClient from '../../utils/apiClient';
+import type { RootState } from '../index';
 
 interface AccountsState {
     accounts: BankAccount[];
+    _deletedCache: BankAccount[];
     loading: boolean;
     deleting: boolean;
     error: string | null;
@@ -13,6 +19,7 @@ interface AccountsState {
 
 const initialState: AccountsState = {
     accounts: [],
+    _deletedCache: [],
     loading: false,
     deleting: false,
     error: null,
@@ -92,11 +99,13 @@ export const updateAccount = createAsyncThunk(
 
 export const deleteAccount = createAsyncThunk(
     'accounts/deleteAccount',
-    async (id: number, { rejectWithValue }) => {
+    async (id: number, { dispatch, rejectWithValue }) => {
+        dispatch(optimisticDelete(id));
         try {
             await apiClient.delete(`/api/v1/bank-accounts/${id}/`);
             return id;
         } catch (err: unknown) {
+            dispatch(rollbackDelete(id));
             if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.detail ?? 'Failed to delete account'
@@ -110,7 +119,33 @@ export const deleteAccount = createAsyncThunk(
 const accountsSlice = createSlice({
     name: 'accounts',
     initialState,
-    reducers: {},
+    reducers: {
+        optimisticDelete(state, action: PayloadAction<number>) {
+            const index = state.accounts.findIndex(
+                (account) => account.id === action.payload
+            );
+            if (index === -1) {
+                return;
+            }
+
+            const [deletedAccount] = state.accounts.splice(index, 1);
+            state._deletedCache.push(deletedAccount!);
+        },
+        rollbackDelete(state, action: PayloadAction<number>) {
+            const cachedIndex = state._deletedCache.findIndex(
+                (account) => account.id === action.payload
+            );
+            if (cachedIndex === -1) {
+                return;
+            }
+
+            const [restoredAccount] = state._deletedCache.splice(
+                cachedIndex,
+                1
+            );
+            state.accounts.push(restoredAccount!);
+        },
+    },
     extraReducers: (builder) => {
         builder
             // fetchAccounts
@@ -147,11 +182,21 @@ const accountsSlice = createSlice({
                 state.accounts = state.accounts.filter(
                     (a) => a.id !== action.payload
                 );
+                state._deletedCache = state._deletedCache.filter(
+                    (a) => a.id !== action.payload
+                );
             })
             .addCase(deleteAccount.rejected, (state) => {
                 state.deleting = false;
             });
     },
 });
+
+export const { optimisticDelete, rollbackDelete } = accountsSlice.actions;
+
+export const selectTotalBalance = (state: RootState): number =>
+    state.accounts.accounts
+        .filter((a) => a.account_type !== 'credit_card')
+        .reduce((sum, a) => sum + (a.total_balance || 0), 0);
 
 export default accountsSlice.reducer;

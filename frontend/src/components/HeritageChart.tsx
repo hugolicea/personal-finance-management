@@ -12,70 +12,110 @@ import {
 } from 'recharts';
 
 import { Heritage } from '../types/heritage';
+import {
+    aggregateData,
+    formatDateLabel,
+    getAggregationLevel,
+} from '../utils/dataAggregation';
+import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
+import ChartEmptyState from './ChartEmptyState';
 
 interface HeritageChartProps {
     heritages: Heritage[];
+    startDate?: Date;
+    endDate?: Date;
 }
 
-const COLORS = ['#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+function HeritageChart({ heritages, startDate, endDate }: HeritageChartProps) {
+    const {
+        pieData,
+        trendData,
+        trendLevel,
+        totalValue,
+        totalRentalIncome,
+        avgYield,
+    } = useMemo(() => {
+        const byType: Record<string, number> = {};
+        let totalValue = 0;
+        let totalRentalIncome = 0;
+        let totalYield = 0;
+        for (const h of heritages) {
+            const type = h.heritage_type.replace('_', ' ').toUpperCase();
+            const value = h.current_value || h.purchase_price || 0;
+            byType[type] = (byType[type] ?? 0) + value;
+            totalValue += value;
+            totalRentalIncome += h.monthly_rental_income || 0;
+            totalYield += h.rental_yield_percentage || 0;
+        }
 
-function HeritageChart({ heritages }: HeritageChartProps) {
-    const { pieData, topProperties, totalValue, totalRentalIncome, avgYield } =
-        useMemo(() => {
-            const byType: Record<string, number> = {};
-            let totalValue = 0;
-            let totalRentalIncome = 0;
-            let totalYield = 0;
-            for (const h of heritages) {
-                const type = h.heritage_type.replace('_', ' ').toUpperCase();
-                const value = h.current_value || h.purchase_price || 0;
-                byType[type] = (byType[type] ?? 0) + value;
-                totalValue += value;
-                totalRentalIncome += h.monthly_rental_income || 0;
-                totalYield += h.rental_yield_percentage || 0;
-            }
+        const pieData = Object.entries(byType).map(([type, value]) => ({
+            name: type,
+            value: Math.round(value),
+        }));
 
-            const pieData = Object.entries(byType).map(([type, value]) => ({
-                name: type,
-                value: Math.round(value),
+        const datedProperties = heritages.filter((heritage) => {
+            const purchaseDate = new Date(heritage.purchase_date);
+            return !isNaN(purchaseDate.getTime());
+        });
+
+        const fallbackDate = new Date();
+        const minDate = datedProperties.length
+            ? new Date(
+                  Math.min(
+                      ...datedProperties.map((heritage) =>
+                          new Date(heritage.purchase_date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+        const maxDate = datedProperties.length
+            ? new Date(
+                  Math.max(
+                      ...datedProperties.map((heritage) =>
+                          new Date(heritage.purchase_date).getTime()
+                      )
+                  )
+              )
+            : fallbackDate;
+
+        const rangeStart = startDate ?? minDate;
+        const rangeEnd = endDate ?? maxDate;
+        const trendLevel = getAggregationLevel(rangeStart, rangeEnd);
+
+        const trendPoints = datedProperties
+            .filter((heritage) => {
+                const purchaseDate = new Date(heritage.purchase_date);
+                return purchaseDate >= rangeStart && purchaseDate <= rangeEnd;
+            })
+            .map((heritage) => ({
+                date: heritage.purchase_date,
+                value: heritage.current_value || heritage.purchase_price || 0,
             }));
 
-            const topProperties = [...heritages]
-                .sort(
-                    (a, b) =>
-                        (b.current_value || b.purchase_price || 0) -
-                        (a.current_value || a.purchase_price || 0)
-                )
-                .slice(0, 5)
-                .map((h) => ({
-                    name:
-                        h.name.length > 15
-                            ? h.name.substring(0, 15) + '...'
-                            : h.name,
-                    value: Math.round(h.current_value || h.purchase_price || 0),
-                    rental: h.monthly_rental_income || 0,
-                    yield: h.rental_yield_percentage || 0,
-                }));
+        const trendData = aggregateData(trendPoints, trendLevel);
 
-            const avgYield =
-                heritages.length > 0 ? totalYield / heritages.length : 0;
+        const avgYield =
+            heritages.length > 0 ? totalYield / heritages.length : 0;
 
-            return {
-                pieData,
-                topProperties,
-                totalValue,
-                totalRentalIncome,
-                avgYield,
-            };
-        }, [heritages]);
+        return {
+            pieData,
+            trendData,
+            trendLevel,
+            totalValue,
+            totalRentalIncome,
+            avgYield,
+        };
+    }, [endDate, heritages, startDate]);
 
     // Handle empty or invalid data
     if (!heritages || heritages.length === 0) {
         return (
-            <div className='flex items-center justify-center h-64 text-gray-500'>
-                No heritage data available
-            </div>
+            <ChartEmptyState
+                icon='🏠'
+                title='No heritage data yet'
+                description='Add properties to monitor your real estate value and rental income.'
+            />
         );
     }
 
@@ -87,7 +127,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Total Property Value
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalValue)}
                     </div>
                 </div>
@@ -95,7 +135,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Monthly Rental Income
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {formatCurrency(totalRentalIncome)}
                     </div>
                 </div>
@@ -103,7 +143,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                     <div className='text-sm font-medium opacity-90'>
                         Avg Rental Yield
                     </div>
-                    <div className='text-2xl font-bold'>
+                    <div className='text-2xl font-bold tabular-nums'>
                         {avgYield.toFixed(2)}%
                     </div>
                 </div>
@@ -140,7 +180,12 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                                 {pieData.map((_, index) => (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={COLORS[index % COLORS.length]}
+                                        fill={
+                                            CHART_COLORS.heritage[
+                                                index %
+                                                    CHART_COLORS.heritage.length
+                                            ]
+                                        }
                                     />
                                 ))}
                             </Pie>
@@ -156,7 +201,7 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                 {/* Top Properties Bar Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
-                        Top 5 Properties by Value
+                        Property Value Over Time
                     </h4>
                     <ResponsiveContainer
                         width='100%'
@@ -164,33 +209,42 @@ function HeritageChart({ heritages }: HeritageChartProps) {
                         minWidth={200}
                         minHeight={200}
                     >
-                        <BarChart data={topProperties}>
+                        <BarChart data={trendData}>
                             <XAxis
-                                dataKey='name'
+                                dataKey='date'
                                 tick={{ fontSize: 12 }}
-                                angle={-45}
-                                textAnchor='end'
-                                height={60}
+                                tickFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
                             <YAxis
                                 tick={{ fontSize: 12 }}
                                 tickFormatter={(value) =>
                                     `$${(value / 1000).toFixed(0)}k`
                                 }
+                                domain={[0, 'auto']}
                             />
                             <Tooltip
-                                formatter={(value, name) => [
-                                    name === 'value'
-                                        ? formatCurrency(value as number)
-                                        : `${value}%`,
-                                    name === 'value'
-                                        ? 'Property Value'
-                                        : name === 'rental'
-                                          ? 'Monthly Rent'
-                                          : 'Yield %',
-                                ]}
+                                formatter={(value, _name, item) => {
+                                    const numericValue = Number(value) || 0;
+                                    const count = item?.payload?.count ?? 0;
+                                    const countLabel =
+                                        count === 1 ? 'property' : 'properties';
+                                    return [
+                                        `${formatCurrency(
+                                            numericValue
+                                        )} (${count} ${countLabel})`,
+                                        'Property Value',
+                                    ];
+                                }}
+                                labelFormatter={(date) =>
+                                    formatDateLabel(String(date), trendLevel)
+                                }
                             />
-                            <Bar dataKey='value' fill='#00C49F' />
+                            <Bar
+                                dataKey='value'
+                                fill={CHART_COLORS.heritage[0]}
+                            />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

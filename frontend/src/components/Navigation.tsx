@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { logout } from '../store/slices/authSlice';
+import ThemeToggle from './ThemeToggle';
 
 interface NavigationProps {
     onMenuClick?: () => void;
@@ -18,7 +19,7 @@ function Navigation({ onMenuClick }: NavigationProps) {
     };
 
     return (
-        <div className='navbar bg-base-100 shadow-sm border-b border-base-300 lg:fixed lg:top-0 lg:left-0 lg:right-0 lg:z-10 lg:h-16'>
+        <div className='navbar bg-base-100 shadow-sm border-b border-base-300 lg:h-16'>
             {/* Mobile hamburger */}
             <div className='flex-none lg:hidden'>
                 <button
@@ -44,8 +45,8 @@ function Navigation({ onMenuClick }: NavigationProps) {
 
             {/* Logo */}
             <div className='flex-1'>
-                <h1 className='text-xl font-bold px-2'>
-                    💰 Personal Finance 365
+                <h1 className='text-xl font-bold px-2 text-base-content'>
+                    💰 Personal Finance 360
                 </h1>
             </div>
 
@@ -53,6 +54,7 @@ function Navigation({ onMenuClick }: NavigationProps) {
             <div className='flex-none hidden lg:flex items-center gap-3'>
                 {isAuthenticated ? (
                     <>
+                        <ThemeToggle />
                         <span className='text-sm'>
                             Welcome,{' '}
                             <span className='font-medium'>
@@ -67,9 +69,12 @@ function Navigation({ onMenuClick }: NavigationProps) {
                         </button>
                     </>
                 ) : (
-                    <span className='text-sm opacity-60'>
-                        Professional Budget Management
-                    </span>
+                    <>
+                        <ThemeToggle />
+                        <span className='text-sm opacity-60'>
+                            Professional Budget Management
+                        </span>
+                    </>
                 )}
             </div>
         </div>

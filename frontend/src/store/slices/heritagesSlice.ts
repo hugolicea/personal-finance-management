@@ -1,8 +1,13 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import {
+    createAsyncThunk,
+    createSlice,
+    type PayloadAction,
+} from '@reduxjs/toolkit';
 import { isAxiosError } from 'axios';
 
 import { Heritage } from '../../types/heritage';
 import apiClient from '../../utils/apiClient';
+import type { RootState } from '../index';
 
 interface HeritageApiResponse {
     id: number;
@@ -24,6 +29,7 @@ interface HeritageApiResponse {
 
 interface HeritagesState {
     heritages: Heritage[];
+    _deletedCache: Heritage[];
     loading: boolean;
     deleting: boolean;
     error: string | null;
@@ -31,6 +37,7 @@ interface HeritagesState {
 
 const initialState: HeritagesState = {
     heritages: [],
+    _deletedCache: [],
     loading: false,
     deleting: false,
     error: null,
@@ -132,11 +139,13 @@ export const updateHeritage = createAsyncThunk(
 
 export const deleteHeritage = createAsyncThunk(
     'heritages/deleteHeritage',
-    async (id: number, { rejectWithValue }) => {
+    async (id: number, { dispatch, rejectWithValue }) => {
+        dispatch(optimisticDelete(id));
         try {
             await apiClient.delete(`/api/v1/heritages/${id}/`);
             return id;
         } catch (err: unknown) {
+            dispatch(rollbackDelete(id));
             if (isAxiosError(err)) {
                 return rejectWithValue(
                     err.response?.data?.detail ?? 'Failed to delete heritage'
@@ -150,7 +159,33 @@ export const deleteHeritage = createAsyncThunk(
 const heritagesSlice = createSlice({
     name: 'heritages',
     initialState,
-    reducers: {},
+    reducers: {
+        optimisticDelete(state, action: PayloadAction<number>) {
+            const index = state.heritages.findIndex(
+                (heritage) => heritage.id === action.payload
+            );
+            if (index === -1) {
+                return;
+            }
+
+            const [deletedHeritage] = state.heritages.splice(index, 1);
+            state._deletedCache.push(deletedHeritage!);
+        },
+        rollbackDelete(state, action: PayloadAction<number>) {
+            const cachedIndex = state._deletedCache.findIndex(
+                (heritage) => heritage.id === action.payload
+            );
+            if (cachedIndex === -1) {
+                return;
+            }
+
+            const [restoredHeritage] = state._deletedCache.splice(
+                cachedIndex,
+                1
+            );
+            state.heritages.push(restoredHeritage!);
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchHeritages.pending, (state) => {
@@ -189,6 +224,9 @@ const heritagesSlice = createSlice({
                 state.heritages = state.heritages.filter(
                     (heritage) => heritage.id !== action.payload
                 );
+                state._deletedCache = state._deletedCache.filter(
+                    (heritage) => heritage.id !== action.payload
+                );
             })
             .addCase(deleteHeritage.rejected, (state, action) => {
                 state.deleting = false;
@@ -197,5 +235,13 @@ const heritagesSlice = createSlice({
             });
     },
 });
+
+export const { optimisticDelete, rollbackDelete } = heritagesSlice.actions;
+
+export const selectPropertyValue = (state: RootState): number =>
+    state.heritages.heritages.reduce(
+        (sum, h) => sum + (h.current_value || h.purchase_price || 0),
+        0
+    );
 
 export default heritagesSlice.reducer;

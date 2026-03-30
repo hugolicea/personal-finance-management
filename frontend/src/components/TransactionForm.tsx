@@ -12,17 +12,28 @@ import {
 import type { Transaction } from '../types/transactions';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 import CategorySelect from './CategorySelect';
+import FormAutoSave from './FormAutoSave';
 
 interface TransactionFormProps {
     transaction?: Partial<Transaction>;
     onClose: () => void;
     accountId?: number;
+    onDirtyChange?: (dirty: boolean) => void;
+}
+
+interface TransactionFormValues {
+    amount: string;
+    description: string;
+    date: string;
+    category: string;
+    type: 'income' | 'expense';
 }
 
 const TransactionForm: React.FC<TransactionFormProps> = ({
     transaction,
     onClose,
     accountId,
+    onDirtyChange,
 }) => {
     const dispatch = useAppDispatch();
     const { categories, loading: categoriesLoading } = useAppSelector(
@@ -35,7 +46,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         }
     }, [dispatch, categories.length]);
 
-    const initialValues = {
+    const initialValues: TransactionFormValues = {
         amount: transaction?.amount ? String(Math.abs(transaction.amount)) : '',
         description: transaction?.description || '',
         date: transaction?.date
@@ -65,7 +76,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
             .required('Type is required'),
     });
 
-    const handleSubmit = async (values: typeof initialValues) => {
+    const handleSubmit = async (values: TransactionFormValues) => {
         try {
             // Convert amount based on type: negative for expenses, positive for incomes
             const amount =
@@ -122,8 +133,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ isSubmitting }) => (
+                {({ errors, touched, isSubmitting }) => (
                     <Form className='space-y-4'>
+                        <FormAutoSave
+                            formName='transaction-form'
+                            initialValues={initialValues}
+                            onDirtyChange={onDirtyChange}
+                        />
                         <div>
                             <label
                                 htmlFor='type'
@@ -133,17 +149,34 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             </label>
                             <Field
                                 as='select'
+                                id='type'
                                 name='type'
                                 className='input input-bordered w-full'
+                                aria-describedby={
+                                    errors.type && touched.type
+                                        ? 'type-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.type && touched.type
+                                        ? true
+                                        : undefined
+                                }
                             >
                                 <option value='expense'>Expense</option>
                                 <option value='income'>Income</option>
                             </Field>
-                            <ErrorMessage
-                                name='type'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='type'>
+                                {(msg) => (
+                                    <span
+                                        id='type-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -154,17 +187,34 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 Amount
                             </label>
                             <Field
+                                id='amount'
                                 type='number'
                                 name='amount'
                                 step='0.01'
                                 className='input input-bordered w-full'
                                 placeholder='0.00'
+                                aria-describedby={
+                                    errors.amount && touched.amount
+                                        ? 'amount-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.amount && touched.amount
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='amount'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='amount'>
+                                {(msg) => (
+                                    <span
+                                        id='amount-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -175,16 +225,33 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 Description
                             </label>
                             <Field
+                                id='description'
                                 type='text'
                                 name='description'
                                 className='input input-bordered w-full'
                                 placeholder='Transaction description'
+                                aria-describedby={
+                                    errors.description && touched.description
+                                        ? 'description-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.description && touched.description
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='description'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='description'>
+                                {(msg) => (
+                                    <span
+                                        id='description-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -195,15 +262,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 Date
                             </label>
                             <Field
+                                id='date'
                                 type='date'
                                 name='date'
                                 className='input input-bordered w-full'
+                                aria-describedby={
+                                    errors.date && touched.date
+                                        ? 'date-error'
+                                        : undefined
+                                }
+                                aria-invalid={
+                                    errors.date && touched.date
+                                        ? true
+                                        : undefined
+                                }
                             />
-                            <ErrorMessage
-                                name='date'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='date'>
+                                {(msg) => (
+                                    <span
+                                        id='date-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div>
@@ -214,17 +298,24 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 Category
                             </label>
                             <Field
+                                id='category'
                                 name='category'
                                 as={CategorySelect}
                                 categories={categories}
                                 placeholder='Select a category'
                                 className='input input-bordered w-full'
                             />
-                            <ErrorMessage
-                                name='category'
-                                component='div'
-                                className='text-error text-sm mt-1'
-                            />
+                            <ErrorMessage name='category'>
+                                {(msg) => (
+                                    <span
+                                        id='category-error'
+                                        className='text-error text-sm mt-1'
+                                        role='alert'
+                                    >
+                                        {msg}
+                                    </span>
+                                )}
+                            </ErrorMessage>
                         </div>
 
                         <div className='flex justify-end space-x-3 pt-4'>

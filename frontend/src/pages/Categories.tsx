@@ -68,7 +68,7 @@ function CategoryPanel({
             </div>
             <div className='overflow-x-auto'>
                 <table className='table table-zebra w-full'>
-                    <thead>
+                    <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                         {table.getHeaderGroups().map((hg) => (
                             <tr key={hg.id}>
                                 {hg.headers.map((h) => (
@@ -205,7 +205,7 @@ function Categories() {
                     const numericValue =
                         typeof value === 'string' ? parseFloat(value) : value;
                     return (
-                        <div className='text-sm font-semibold text-primary'>
+                        <div className='text-sm font-semibold text-primary tabular-nums'>
                             {formatCurrency(numericValue || 0)}
                         </div>
                     );
@@ -257,34 +257,32 @@ function Categories() {
     });
 
     return (
-        <div className='pb-6'>
-            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-                <div className='mb-6'>
-                    <h1 className='text-2xl font-bold mb-8'>Categories</h1>
+        <div className='space-y-6'>
+            <div className='mb-6'>
+                <h1 className='text-2xl font-bold mb-8'>Categories</h1>
 
-                    <div className='flex justify-end mb-4'>
-                        <button
-                            onClick={handleAddCategory}
-                            className='btn btn-primary'
-                        >
-                            Add Category
-                        </button>
-                    </div>
+                <div className='flex justify-end mb-4'>
+                    <button
+                        onClick={handleAddCategory}
+                        className='btn btn-primary'
+                    >
+                        Add Category
+                    </button>
+                </div>
 
-                    <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-                        <CategoryPanel
-                            title='💸 Spending Categories'
-                            count={spendCategories.length}
-                            colorScheme='red'
-                            table={spendTable}
-                        />
-                        <CategoryPanel
-                            title='💰 Income Categories'
-                            count={incomeCategories.length}
-                            colorScheme='green'
-                            table={incomeTable}
-                        />
-                    </div>
+                <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                    <CategoryPanel
+                        title='💸 Spending Categories'
+                        count={spendCategories.length}
+                        colorScheme='red'
+                        table={spendTable}
+                    />
+                    <CategoryPanel
+                        title='💰 Income Categories'
+                        count={incomeCategories.length}
+                        colorScheme='green'
+                        table={incomeTable}
+                    />
                 </div>
             </div>
 
