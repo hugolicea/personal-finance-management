@@ -28,75 +28,36 @@ const BalanceOverview = memo(function BalanceOverview({
     }, [transactions]);
 
     return (
-        <div className='bg-white overflow-hidden shadow rounded-lg'>
-            <div className='p-5'>
-                <h3 className='text-lg leading-6 font-medium text-gray-900 mb-4'>
-                    Balance Overview
-                </h3>
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                    <div className='bg-gray-50 p-4 rounded-lg'>
-                        <div className='flex items-center justify-between'>
-                            <div>
-                                <p className='text-sm font-medium text-gray-500'>
-                                    Net Balance
-                                </p>
-                                <p className='text-xs text-gray-400'>
-                                    Current Period
-                                </p>
-                            </div>
-                            <div className='text-right'>
-                                <p
-                                    className={`text-lg font-semibold ${
-                                        totalBalance >= 0
-                                            ? 'text-green-600'
-                                            : 'text-red-600'
-                                    }`}
-                                >
-                                    {formatCurrency(Math.abs(totalBalance))}
-                                </p>
-                                <p className='text-xs text-gray-500'>
-                                    {totalBalance >= 0 ? 'surplus' : 'deficit'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='bg-green-50 p-4 rounded-lg'>
-                        <div className='flex items-center justify-between'>
-                            <div>
-                                <p className='text-sm font-medium text-green-700'>
-                                    Total Income
-                                </p>
-                                <p className='text-xs text-green-600'>
-                                    Current Period
-                                </p>
-                            </div>
-                            <div className='text-right'>
-                                <p className='text-lg font-semibold text-green-600'>
-                                    {formatCurrency(totalIncome)}
-                                </p>
-                                <p className='text-xs text-green-500'>income</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className='bg-red-50 p-4 rounded-lg'>
-                        <div className='flex items-center justify-between'>
-                            <div>
-                                <p className='text-sm font-medium text-red-700'>
-                                    Total Expenses
-                                </p>
-                                <p className='text-xs text-red-600'>
-                                    Current Period
-                                </p>
-                            </div>
-                            <div className='text-right'>
-                                <p className='text-lg font-semibold text-red-600'>
-                                    {formatCurrency(totalExpenses)}
-                                </p>
-                                <p className='text-xs text-red-500'>expenses</p>
-                            </div>
-                        </div>
-                    </div>
+        <div className='stats stats-vertical md:stats-horizontal shadow w-full bg-base-100'>
+            <div className='stat'>
+                <div className='stat-title'>Net Balance</div>
+                <div
+                    className={`stat-value text-2xl ${
+                        totalBalance >= 0 ? 'text-success' : 'text-error'
+                    }`}
+                >
+                    {formatCurrency(Math.abs(totalBalance))}
                 </div>
+                <div className='stat-desc'>
+                    {totalBalance >= 0 ? '▲ surplus' : '▼ deficit'} — Current
+                    Period
+                </div>
+            </div>
+
+            <div className='stat'>
+                <div className='stat-title'>Total Income</div>
+                <div className='stat-value text-2xl text-success'>
+                    {formatCurrency(totalIncome)}
+                </div>
+                <div className='stat-desc'>Current Period</div>
+            </div>
+
+            <div className='stat'>
+                <div className='stat-title'>Total Expenses</div>
+                <div className='stat-value text-2xl text-error'>
+                    {formatCurrency(totalExpenses)}
+                </div>
+                <div className='stat-desc'>Current Period</div>
             </div>
         </div>
     );

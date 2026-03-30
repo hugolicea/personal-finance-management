@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -140,7 +140,7 @@ function MonthlySpendingChart({
 
             {/* Monthly Spending Bar Chart */}
             <div
-                className='bg-white p-4 rounded-lg shadow'
+                className='bg-base-100 p-4 rounded-lg shadow-sm'
                 style={{ minHeight: '400px' }}
             >
                 <ResponsiveContainer

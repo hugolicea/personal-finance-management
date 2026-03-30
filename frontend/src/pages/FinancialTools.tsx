@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 
 // Tool card definitions — hoisted to module level (rendering-hoist-jsx)
 const TOOLS = [
@@ -50,7 +50,7 @@ function FinancialTools() {
                 <h1 className='text-2xl font-bold text-gray-900'>
                     Financial Tools
                 </h1>
-                <p className='mt-1 text-sm text-gray-500'>
+                <p className='mt-1 text-sm opacity-60'>
                     Interactive calculators to help you plan your financial
                     future.
                 </p>
@@ -64,7 +64,7 @@ function FinancialTools() {
                         <button
                             key={tool.path}
                             onClick={() => navigate(tool.path)}
-                            className='group relative bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-left hover:shadow-md hover:border-gray-300 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'
+                            className='group relative card bg-base-100 shadow-sm border border-base-300 p-6 text-left hover:shadow-md hover:border-base-300 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500'
                         >
                             {/* Icon */}
                             <div

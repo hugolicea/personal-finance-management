@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCategories } from '../store/slices/categoriesSlice';
@@ -104,7 +104,7 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
     };
 
     return (
-        <div className='bg-white overflow-hidden shadow rounded-lg'>
+        <div className='card bg-base-100 shadow-sm'>
             <div className='px-4 py-3'>
                 <div className='flex items-center gap-4'>
                     {/* Drop zone */}
@@ -112,7 +112,7 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                         className={`flex-1 border-2 border-dashed rounded-lg px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
                             dragActive
                                 ? 'border-blue-400 bg-blue-50'
-                                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                                : 'border-base-300 hover:bg-gray-50'
                         }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
@@ -157,15 +157,15 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                         type='button'
                         onClick={handleClick}
                         disabled={loading}
-                        className='flex-shrink-0 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+                        className='btn btn-primary btn-sm flex-shrink-0'
                     >
                         {loading ? 'Uploading…' : 'Upload CSV'}
                     </button>
                 </div>
 
                 {error && (
-                    <div className='mt-2 p-2 bg-red-50 border border-red-200 rounded-md'>
-                        <p className='text-sm text-red-600'>{error}</p>
+                    <div className='alert alert-error mt-2'>
+                        <p className='text-sm'>{error}</p>
                     </div>
                 )}
             </div>
@@ -177,51 +177,43 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
 
                     {uploadResult && (
                         <div className='space-y-4'>
-                            <div className='bg-green-50 border border-green-200 rounded-md p-4'>
-                                <p className='text-green-800'>
-                                    {uploadResult.message}
-                                </p>
+                            <div className='alert alert-success'>
+                                <p className=''>{uploadResult.message}</p>
                             </div>
 
                             <div className='grid grid-cols-3 gap-4'>
-                                <div className='bg-blue-50 border border-blue-200 rounded-md p-4 text-center'>
-                                    <div className='text-2xl font-bold text-blue-600'>
+                                <div className='card bg-base-200 p-4 text-center'>
+                                    <div className='text-2xl font-bold text-primary'>
                                         {uploadResult.summary.created}
                                     </div>
-                                    <div className='text-sm text-blue-800'>
-                                        Created
-                                    </div>
+                                    <div className='text-sm'>Created</div>
                                 </div>
-                                <div className='bg-yellow-50 border border-yellow-200 rounded-md p-4 text-center'>
-                                    <div className='text-2xl font-bold text-yellow-600'>
+                                <div className='card bg-warning/10 p-4 text-center'>
+                                    <div className='text-2xl font-bold text-warning'>
                                         {uploadResult.summary.skipped}
                                     </div>
-                                    <div className='text-sm text-yellow-800'>
-                                        Skipped
-                                    </div>
+                                    <div className='text-sm'>Skipped</div>
                                 </div>
-                                <div className='bg-red-50 border border-red-200 rounded-md p-4 text-center'>
-                                    <div className='text-2xl font-bold text-red-600'>
+                                <div className='card bg-error/10 p-4 text-center'>
+                                    <div className='text-2xl font-bold text-error'>
                                         {uploadResult.summary.errors}
                                     </div>
-                                    <div className='text-sm text-red-800'>
-                                        Errors
-                                    </div>
+                                    <div className='text-sm'>Errors</div>
                                 </div>
                             </div>
 
                             {uploadResult.transactions_created.length > 0 && (
                                 <div>
-                                    <h3 className='font-medium text-gray-900 mb-2'>
+                                    <h3 className='font-medium mb-2'>
                                         Transactions Created:
                                     </h3>
-                                    <div className='max-h-40 overflow-y-auto bg-gray-50 rounded-md p-2'>
+                                    <div className='max-h-40 overflow-y-auto bg-base-200 rounded-md p-2'>
                                         {uploadResult.transactions_created
                                             .slice(0, 10)
                                             .map((tx, index) => (
                                                 <div
                                                     key={index}
-                                                    className='text-sm text-gray-600 py-1'
+                                                    className='text-sm py-1'
                                                 >
                                                     {tx.date} - {tx.description}{' '}
                                                     - ${tx.amount}
@@ -229,7 +221,7 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                                             ))}
                                         {uploadResult.transactions_created
                                             .length > 10 && (
-                                            <div className='text-sm text-gray-500 mt-2'>
+                                            <div className='text-sm opacity-60 mt-2'>
                                                 ... and{' '}
                                                 {uploadResult
                                                     .transactions_created
@@ -243,15 +235,15 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
 
                             {uploadResult.transactions_skipped.length > 0 && (
                                 <div>
-                                    <h3 className='font-medium text-yellow-900 mb-2'>
+                                    <h3 className='font-medium mb-2'>
                                         Transactions Skipped:
                                     </h3>
-                                    <div className='max-h-40 overflow-y-auto bg-yellow-50 rounded-md p-2'>
+                                    <div className='max-h-40 overflow-y-auto bg-warning/10 rounded-md p-2'>
                                         {uploadResult.transactions_skipped.map(
                                             (tx, index) => (
                                                 <div
                                                     key={index}
-                                                    className='text-sm text-yellow-700 py-1'
+                                                    className='text-sm py-1'
                                                 >
                                                     Row {tx.row}:{' '}
                                                     {tx.description} -{' '}
@@ -265,15 +257,15 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
 
                             {uploadResult.errors.length > 0 && (
                                 <div>
-                                    <h3 className='font-medium text-red-900 mb-2'>
+                                    <h3 className='font-medium mb-2'>
                                         Errors:
                                     </h3>
-                                    <div className='max-h-40 overflow-y-auto bg-red-50 rounded-md p-2'>
+                                    <div className='max-h-40 overflow-y-auto bg-error/10 rounded-md p-2'>
                                         {uploadResult.errors.map(
                                             (error, index) => (
                                                 <div
                                                     key={index}
-                                                    className='text-sm text-red-600 py-1'
+                                                    className='text-sm py-1'
                                                 >
                                                     {error}
                                                 </div>
@@ -286,7 +278,7 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                             <div className='flex justify-end pt-4'>
                                 <button
                                     onClick={closeModal}
-                                    className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                    className='btn btn-primary'
                                 >
                                     Close
                                 </button>

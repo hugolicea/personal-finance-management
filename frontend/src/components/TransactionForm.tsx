@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
@@ -106,13 +106,13 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     if (categoriesLoading) {
         return (
             <div className='flex justify-center items-center p-8'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+                <span className='loading loading-spinner text-primary loading-md'></span>
             </div>
         );
     }
 
     return (
-        <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full'>
+        <div className='w-full'>
             <h2 className='text-xl font-bold mb-4'>
                 {transaction ? 'Edit Transaction' : 'Add Transaction'}
             </h2>
@@ -127,14 +127,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                         <div>
                             <label
                                 htmlFor='type'
-                                className='block text-sm font-medium text-gray-700 mb-1'
+                                className='block text-sm font-medium mb-1'
                             >
                                 Type
                             </label>
                             <Field
                                 as='select'
                                 name='type'
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='input input-bordered w-full'
                             >
                                 <option value='expense'>Expense</option>
                                 <option value='income'>Income</option>
@@ -142,14 +142,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             <ErrorMessage
                                 name='type'
                                 component='div'
-                                className='text-red-500 text-sm mt-1'
+                                className='text-error text-sm mt-1'
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor='amount'
-                                className='block text-sm font-medium text-gray-700 mb-1'
+                                className='block text-sm font-medium mb-1'
                             >
                                 Amount
                             </label>
@@ -157,59 +157,59 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 type='number'
                                 name='amount'
                                 step='0.01'
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='input input-bordered w-full'
                                 placeholder='0.00'
                             />
                             <ErrorMessage
                                 name='amount'
                                 component='div'
-                                className='text-red-500 text-sm mt-1'
+                                className='text-error text-sm mt-1'
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor='description'
-                                className='block text-sm font-medium text-gray-700 mb-1'
+                                className='block text-sm font-medium mb-1'
                             >
                                 Description
                             </label>
                             <Field
                                 type='text'
                                 name='description'
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='input input-bordered w-full'
                                 placeholder='Transaction description'
                             />
                             <ErrorMessage
                                 name='description'
                                 component='div'
-                                className='text-red-500 text-sm mt-1'
+                                className='text-error text-sm mt-1'
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor='date'
-                                className='block text-sm font-medium text-gray-700 mb-1'
+                                className='block text-sm font-medium mb-1'
                             >
                                 Date
                             </label>
                             <Field
                                 type='date'
                                 name='date'
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='input input-bordered w-full'
                             />
                             <ErrorMessage
                                 name='date'
                                 component='div'
-                                className='text-red-500 text-sm mt-1'
+                                className='text-error text-sm mt-1'
                             />
                         </div>
 
                         <div>
                             <label
                                 htmlFor='category'
-                                className='block text-sm font-medium text-gray-700 mb-1'
+                                className='block text-sm font-medium mb-1'
                             >
                                 Category
                             </label>
@@ -218,12 +218,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                                 as={CategorySelect}
                                 categories={categories}
                                 placeholder='Select a category'
-                                className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                className='input input-bordered w-full'
                             />
                             <ErrorMessage
                                 name='category'
                                 component='div'
-                                className='text-red-500 text-sm mt-1'
+                                className='text-error text-sm mt-1'
                             />
                         </div>
 
@@ -231,14 +231,14 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
                             <button
                                 type='button'
                                 onClick={onClose}
-                                className='px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500'
+                                className='btn btn-ghost btn-sm'
                             >
                                 Cancel
                             </button>
                             <button
                                 type='submit'
                                 disabled={isSubmitting}
-                                className='px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50'
+                                className='btn btn-primary btn-sm'
                             >
                                 {isSubmitting
                                     ? 'Saving...'

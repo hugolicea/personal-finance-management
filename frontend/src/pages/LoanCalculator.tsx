@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+﻿import { ChangeEvent, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Bar,
@@ -30,8 +30,8 @@ function fmtAxis(value: number): string {
 
 function StepHeader({ step, title }: { step: number; title: string }) {
     return (
-        <div className='bg-teal-700 px-4 py-2'>
-            <h3 className='text-sm font-semibold text-white'>
+        <div className='bg-secondary px-4 py-2'>
+            <h3 className='text-sm font-semibold text-secondary-content'>
                 Step {step}: {title}
             </h3>
         </div>
@@ -50,14 +50,14 @@ function FieldRow({
     children: React.ReactNode;
 }) {
     return (
-        <div className='flex items-center justify-between gap-4 px-4 py-4 bg-slate-800 border-b border-slate-700 last:border-b-0'>
+        <div className='flex items-center justify-between gap-4 px-4 py-4 bg-base-200 border-b border-base-300 last:border-b-0'>
             <div className='flex-1 min-w-0'>
-                <p className='text-sm font-semibold text-white'>
+                <p className='text-sm font-semibold'>
                     {label}
                     {required && <span className='ml-1 text-red-400'>*</span>}
                 </p>
                 {description && (
-                    <p className='mt-0.5 text-xs text-slate-400 leading-snug'>
+                    <p className='mt-0.5 text-xs opacity-60 leading-snug'>
                         {description}
                     </p>
                 )}
@@ -67,10 +67,8 @@ function FieldRow({
     );
 }
 
-const INPUT_CLS =
-    'w-36 rounded border border-slate-500 bg-white px-3 py-1.5 text-sm text-slate-900 text-right shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
-const SELECT_CLS =
-    'w-36 rounded border border-slate-500 bg-white px-3 py-1.5 text-sm text-slate-900 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500';
+const INPUT_CLS = 'input input-sm input-bordered w-36 text-right';
+const SELECT_CLS = 'select select-sm select-bordered w-36';
 
 function FormButtons({
     onCalculate,
@@ -82,17 +80,17 @@ function FormButtons({
     disabled: boolean;
 }) {
     return (
-        <div className='flex justify-end gap-3 bg-slate-800 px-4 py-4'>
+        <div className='flex justify-end gap-3 bg-base-200 px-4 py-4'>
             <button
                 onClick={onReset}
-                className='rounded px-5 py-2 text-sm font-bold text-white bg-teal-700 hover:bg-teal-600 uppercase tracking-wide transition-colors'
+                className='btn btn-secondary btn-sm uppercase'
             >
                 Reset
             </button>
             <button
                 onClick={onCalculate}
                 disabled={disabled}
-                className='rounded px-5 py-2 text-sm font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 uppercase tracking-wide transition-colors'
+                className='btn btn-accent btn-sm uppercase'
             >
                 Calculate
             </button>
@@ -102,7 +100,7 @@ function FormButtons({
 
 function EmptyResults() {
     return (
-        <div className='flex h-48 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white text-sm text-gray-400'>
+        <div className='flex h-48 items-center justify-center rounded-xl border border-dashed border-base-300 bg-base-100 text-sm opacity-60'>
             Fill in the form and click{' '}
             <strong className='mx-1'>Calculate</strong> to see results.
         </div>
@@ -118,7 +116,7 @@ interface YearRow {
 
 function AmortizationChart({ schedule }: { schedule: YearRow[] }) {
     return (
-        <div className='bg-white mx-4 mb-4 rounded-lg p-4'>
+        <div className='bg-base-100 mx-4 mb-4 rounded-lg p-4'>
             <h3 className='text-sm font-semibold text-gray-700 text-center mb-3'>
                 Annual Principal vs Interest
             </h3>
@@ -174,37 +172,34 @@ function AmortizationTable({
             <div className='px-4 pb-4 text-center'>
                 <button
                     onClick={onToggle}
-                    className='px-8 py-2 bg-slate-800 text-white text-sm font-bold uppercase tracking-wide rounded hover:bg-slate-700 transition-colors'
+                    className='btn btn-outline btn-sm uppercase'
                 >
                     {show ? 'Hide Table' : 'Show Table'}
                 </button>
             </div>
             {show && (
-                <div className='bg-white mx-4 mb-4 rounded-lg overflow-hidden'>
+                <div className='bg-base-100 mx-4 mb-4 rounded-lg overflow-hidden'>
                     <div className='overflow-auto max-h-72'>
-                        <table className='min-w-full text-sm'>
-                            <thead className='bg-gray-50 sticky top-0'>
+                        <table className='min-table table-zebra w-full'>
+                            <thead className='sticky top-0 bg-base-100'>
                                 <tr>
-                                    <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                    <th className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase'>
                                         Year
                                     </th>
-                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                    <th className='px-4 py-2 text-right text-xs font-medium opacity-60 uppercase'>
                                         Principal
                                     </th>
-                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                    <th className='px-4 py-2 text-right text-xs font-medium opacity-60 uppercase'>
                                         Interest
                                     </th>
-                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                    <th className='px-4 py-2 text-right text-xs font-medium opacity-60 uppercase'>
                                         Balance
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className='divide-y divide-gray-100'>
+                            <tbody className='divide-y divide-base-300'>
                                 {schedule.map((row) => (
-                                    <tr
-                                        key={row.year}
-                                        className='hover:bg-gray-50'
-                                    >
+                                    <tr key={row.year} className=''>
                                         <td className='px-4 py-2 text-gray-700'>
                                             {row.year}
                                         </td>
@@ -370,7 +365,7 @@ function MortgageCalculatorPanel() {
     return (
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
             {/* Form */}
-            <div className='overflow-hidden rounded-xl shadow-sm border border-gray-200'>
+            <div className='overflow-hidden rounded-xl shadow-sm border border-base-300'>
                 <StepHeader step={1} title='Home & Loan Info' />
                 <FieldRow label='Home Price' required>
                     <input
@@ -490,23 +485,23 @@ function MortgageCalculatorPanel() {
             {/* Results */}
             <div>
                 {results ? (
-                    <div className='rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-teal-700'>
-                        <div className='px-6 py-5 text-center text-white'>
+                    <div className='rounded-xl overflow-hidden shadow-sm border border-base-300 bg-secondary'>
+                        <div className='px-6 py-5 text-center text-secondary-content'>
                             <h2 className='text-xl font-bold'>
                                 Your Estimated Payment
                             </h2>
                             <p className='mt-2 text-base'>
                                 Total monthly payment:{' '}
-                                <span className='inline-block bg-teal-900 font-bold px-2 py-0.5 rounded'>
+                                <span className='inline-block bg-secondary-content/20 font-bold px-2 py-0.5 rounded'>
                                     {fmt(results.totalMonthly)}
                                 </span>
                             </p>
                         </div>
 
                         {/* Monthly breakdown */}
-                        <div className='bg-white mx-4 mb-4 rounded-lg overflow-hidden'>
-                            <table className='min-w-full text-sm'>
-                                <tbody className='divide-y divide-gray-100'>
+                        <div className='bg-base-100 mx-4 mb-4 rounded-lg overflow-hidden'>
+                            <table className='min-table table-zebra w-full'>
+                                <tbody className='divide-y divide-base-300'>
                                     <tr>
                                         <td className='px-4 py-2 text-gray-600'>
                                             Principal &amp; Interest
@@ -554,7 +549,7 @@ function MortgageCalculatorPanel() {
                                             </td>
                                         </tr>
                                     )}
-                                    <tr className='bg-teal-50'>
+                                    <tr className='bg-secondary/10'>
                                         <td className='px-4 py-2 font-bold text-teal-800'>
                                             Total Monthly
                                         </td>
@@ -588,7 +583,7 @@ function MortgageCalculatorPanel() {
                             ].map((p) => (
                                 <div
                                     key={p.label}
-                                    className='bg-teal-800 rounded-lg p-3 text-white'
+                                    className='bg-secondary/80 rounded-lg p-3 text-secondary-content'
                                 >
                                     <p className='text-xs font-medium text-teal-300 uppercase tracking-wide'>
                                         {p.label}
@@ -749,7 +744,7 @@ function AutoLoanCalculatorPanel() {
     return (
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
             {/* Form */}
-            <div className='overflow-hidden rounded-xl shadow-sm border border-gray-200'>
+            <div className='overflow-hidden rounded-xl shadow-sm border border-base-300'>
                 <StepHeader step={1} title='Vehicle Price' />
                 <FieldRow label='Auto Price' required>
                     <input
@@ -861,14 +856,14 @@ function AutoLoanCalculatorPanel() {
             {/* Results */}
             <div>
                 {results ? (
-                    <div className='rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-teal-700'>
-                        <div className='px-6 py-5 text-center text-white'>
+                    <div className='rounded-xl overflow-hidden shadow-sm border border-base-300 bg-secondary'>
+                        <div className='px-6 py-5 text-center text-secondary-content'>
                             <h2 className='text-xl font-bold'>
                                 Your Estimated Payment
                             </h2>
                             <p className='mt-2 text-base'>
                                 Monthly payment:{' '}
-                                <span className='inline-block bg-teal-900 font-bold px-2 py-0.5 rounded'>
+                                <span className='inline-block bg-secondary-content/20 font-bold px-2 py-0.5 rounded'>
                                     {fmt(results.monthlyPayment)}
                                 </span>
                             </p>
@@ -896,7 +891,7 @@ function AutoLoanCalculatorPanel() {
                             ].map((p) => (
                                 <div
                                     key={p.label}
-                                    className='bg-teal-800 rounded-lg p-3 text-white'
+                                    className='bg-secondary/80 rounded-lg p-3 text-secondary-content'
                                 >
                                     <p className='text-xs font-medium text-teal-300 uppercase tracking-wide'>
                                         {p.label}
@@ -942,7 +937,7 @@ function LoanCalculator() {
             <div className='flex items-center gap-3'>
                 <button
                     onClick={() => navigate('/tools')}
-                    className='text-gray-400 hover:text-gray-600 transition-colors'
+                    className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
                     ← Back
@@ -959,7 +954,7 @@ function LoanCalculator() {
             </div>
 
             {/* Tabs */}
-            <div className='border-b border-gray-200'>
+            <div className='border-b border-base-300'>
                 <nav className='-mb-px flex gap-1'>
                     {TABS.map((t) => (
                         <button
@@ -968,7 +963,7 @@ function LoanCalculator() {
                             className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                                 tab === t.id
                                     ? 'border-teal-600 text-teal-700'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-base-300'
                             }`}
                         >
                             <span role='img' aria-hidden='true'>

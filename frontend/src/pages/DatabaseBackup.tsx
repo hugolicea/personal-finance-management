@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+﻿import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
@@ -151,17 +151,15 @@ function DatabaseBackup() {
                 <h1 className='text-2xl font-bold text-gray-900'>
                     Database Backup & Restore
                 </h1>
-                <p className='mt-1 text-sm text-gray-500'>
+                <p className='mt-1 text-sm opacity-60'>
                     Export your data to a JSON file or restore from a previous
                     backup.
                 </p>
             </div>
 
             {/* Backup section */}
-            <div className='bg-white shadow rounded-lg p-6 space-y-4'>
-                <h2 className='text-lg font-medium text-gray-900 mb-1'>
-                    Export Backup
-                </h2>
+            <div className='card bg-base-100 shadow-sm p-6 space-y-4'>
+                <h2 className='text-lg font-medium mb-1'>Export Backup</h2>
                 <p className='text-sm text-gray-500'>
                     Downloads a JSON file containing your selected data. Choose
                     which models to include below.
@@ -169,18 +167,18 @@ function DatabaseBackup() {
 
                 {/* Model selector */}
                 <fieldset>
-                    <legend className='text-sm font-medium text-gray-700 mb-2'>
+                    <legend className='text-sm font-medium mb-2'>
                         Include in backup
                     </legend>
-                    <div className='rounded-md border border-gray-200 divide-y divide-gray-100'>
+                    <div className='rounded-md border border-base-300 divide-y divide-gray-100'>
                         {/* "All" master toggle — controls regular models only */}
-                        <label className='flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 rounded-t-md'>
+                        <label className='flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-t-md'>
                             <input
                                 ref={allCheckboxRef}
                                 type='checkbox'
                                 checked={allRegularSelected}
                                 onChange={handleToggleAll}
-                                className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                className='h-4 w-4 rounded border-base-300 text-indigo-600'
                                 aria-label='Select all data types'
                             />
                             <span className='text-sm font-semibold text-gray-800'>
@@ -200,15 +198,15 @@ function DatabaseBackup() {
                         {REGULAR_MODEL_KEYS.map((model) => (
                             <label
                                 key={model}
-                                className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer hover:bg-gray-50'
+                                className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer'
                             >
                                 <input
                                     type='checkbox'
                                     checked={selectedModels.has(model)}
                                     onChange={() => handleToggleModel(model)}
-                                    className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                    className='h-4 w-4 rounded border-base-300 text-indigo-600'
                                 />
-                                <span className='text-sm text-gray-700'>
+                                <span className='text-sm opacity-70'>
                                     {MODEL_LABELS[model]}
                                 </span>
                             </label>
@@ -219,7 +217,7 @@ function DatabaseBackup() {
                             STAFF_MODEL_KEYS.map((model) => (
                                 <label
                                     key={model}
-                                    className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer hover:bg-gray-50 last:rounded-b-md'
+                                    className='flex items-center gap-3 px-4 py-2.5 pl-8 cursor-pointer last:rounded-b-md'
                                 >
                                     <input
                                         type='checkbox'
@@ -227,9 +225,9 @@ function DatabaseBackup() {
                                         onChange={() =>
                                             handleToggleModel(model)
                                         }
-                                        className='h-4 w-4 rounded border-gray-300 text-indigo-600'
+                                        className='h-4 w-4 rounded border-base-300 text-indigo-600'
                                     />
-                                    <span className='text-sm text-gray-700'>
+                                    <span className='text-sm opacity-70'>
                                         {MODEL_LABELS[model]}
                                     </span>
                                     <span className='ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700'>
@@ -279,10 +277,8 @@ function DatabaseBackup() {
             </div>
 
             {/* Restore section */}
-            <div className='bg-white shadow rounded-lg p-6 space-y-4'>
-                <h2 className='text-lg font-medium text-gray-900'>
-                    Restore from Backup
-                </h2>
+            <div className='card bg-base-100 shadow-sm p-6 space-y-4'>
+                <h2 className='text-lg font-medium'>Restore from Backup</h2>
                 <p className='text-sm text-gray-500'>
                     Upload a <code>.json</code> backup file exported from this
                     application. Duplicate transactions (same reference ID) will
@@ -292,7 +288,7 @@ function DatabaseBackup() {
                 <div>
                     <label
                         htmlFor='backup-file'
-                        className='block text-sm font-medium text-gray-700 mb-1'
+                        className='block text-sm font-medium mb-1'
                     >
                         Backup file
                     </label>
@@ -302,7 +298,7 @@ function DatabaseBackup() {
                         type='file'
                         accept='.json'
                         onChange={handleFileSelect}
-                        className='block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+                        className='block table table-zebra w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
                     />
                 </div>
 
@@ -313,7 +309,7 @@ function DatabaseBackup() {
                             type='checkbox'
                             checked={replaceExisting}
                             onChange={handleReplaceExistingChange}
-                            className='h-4 w-4 rounded border-gray-300 text-red-600'
+                            className='h-4 w-4 rounded border-base-300 text-error'
                         />
                         <span className='text-sm font-medium text-yellow-800'>
                             Replace all existing data
@@ -330,7 +326,7 @@ function DatabaseBackup() {
                                 type='checkbox'
                                 checked={confirmReplace}
                                 onChange={handleConfirmReplaceChange}
-                                className='h-4 w-4 rounded border-red-400 text-red-600'
+                                className='h-4 w-4 rounded border-red-400 text-error'
                             />
                             <span className='text-xs font-semibold text-red-700'>
                                 I understand this will permanently delete my
@@ -343,7 +339,7 @@ function DatabaseBackup() {
                 <button
                     onClick={handleRestore}
                     disabled={restoreLoading || !selectedFile}
-                    className='inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='btn btn-primary'
                 >
                     {restoreLoading ? (
                         <svg
@@ -372,7 +368,7 @@ function DatabaseBackup() {
                     Restore Backup
                 </button>
                 {confirmError && (
-                    <p role='alert' className='text-sm text-red-600'>
+                    <p role='alert' className='text-sm text-error'>
                         {confirmError}
                     </p>
                 )}
@@ -395,7 +391,7 @@ function DatabaseBackup() {
                         <span aria-hidden='true'>✅ </span>
                         {restoreResult.message}
                     </p>
-                    <table className='min-w-full text-sm'>
+                    <table className='min-table table-zebra w-full'>
                         <tbody>
                             {Object.entries(restoreResult.summary).map(
                                 ([key, value]) => (

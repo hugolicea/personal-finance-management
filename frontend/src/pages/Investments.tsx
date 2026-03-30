@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -86,7 +86,7 @@ function Investments() {
                 accessorKey: 'symbol',
                 header: 'Symbol',
                 cell: ({ row }) => (
-                    <div className='font-semibold text-blue-600'>
+                    <div className='font-semibold text-primary'>
                         {row.original.symbol}
                     </div>
                 ),
@@ -102,7 +102,7 @@ function Investments() {
                 accessorKey: 'investment_type',
                 header: 'Type',
                 cell: ({ row }) => (
-                    <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                    <span className='badge badge-primary badge-sm'>
                         {row.original.investment_type
                             .replace(/_/g, ' ')
                             .toUpperCase()}
@@ -175,7 +175,7 @@ function Investments() {
                 accessorKey: 'current_value',
                 header: 'Current Value',
                 cell: ({ row }) => (
-                    <div className='text-sm font-semibold text-green-600'>
+                    <div className='text-sm font-semibold text-success'>
                         {formatCurrency(row.original.current_value)}
                     </div>
                 ),
@@ -189,7 +189,7 @@ function Investments() {
                     return (
                         <div
                             className={`text-sm font-semibold ${
-                                isPositive ? 'text-green-600' : 'text-red-600'
+                                isPositive ? 'text-success' : 'text-error'
                             }`}
                         >
                             {isPositive ? '+' : ''}
@@ -209,7 +209,7 @@ function Investments() {
                     return (
                         <div
                             className={`text-sm font-semibold ${
-                                isPositive ? 'text-green-600' : 'text-red-600'
+                                isPositive ? 'text-success' : 'text-error'
                             }`}
                         >
                             {isPositive ? '+' : ''}
@@ -278,7 +278,7 @@ function Investments() {
     if (loading) {
         return (
             <div className='flex items-center justify-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+                <div className='loading loading-spinner loading-lg text-primary'></div>
             </div>
         );
     }
@@ -287,10 +287,8 @@ function Investments() {
         <div className='px-4 sm:px-6 lg:px-8'>
             <div className='sm:flex sm:items-center'>
                 <div className='sm:flex-auto'>
-                    <h1 className='text-2xl font-semibold text-gray-900'>
-                        Investments
-                    </h1>
-                    <p className='mt-2 text-sm text-gray-700'>
+                    <h1 className='text-2xl font-semibold'>Investments</h1>
+                    <p className='mt-2 text-sm opacity-70'>
                         Track your investment portfolio and monitor performance.
                     </p>
                 </div>
@@ -301,7 +299,7 @@ function Investments() {
                 <button
                     type='button'
                     onClick={handleOpenModal}
-                    className='inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200'
+                    className='btn btn-primary'
                 >
                     <svg
                         className='-ml-1 mr-3 h-5 w-5'
@@ -322,7 +320,7 @@ function Investments() {
 
             {/* Portfolio Summary */}
             <div className='mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3'>
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -337,10 +335,10 @@ function Investments() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Portfolio Value
                                     </dt>
-                                    <dd className='text-lg font-medium text-gray-900'>
+                                    <dd className='text-lg font-medium'>
                                         {formatCurrency(totalPortfolioValue)}
                                     </dd>
                                 </dl>
@@ -349,7 +347,7 @@ function Investments() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -370,14 +368,14 @@ function Investments() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Gain/Loss
                                     </dt>
                                     <dd
                                         className={`text-lg font-medium ${
                                             totalGainLoss >= 0
-                                                ? 'text-green-600'
-                                                : 'text-red-600'
+                                                ? 'text-success'
+                                                : 'text-error'
                                         }`}
                                     >
                                         {totalGainLoss >= 0 ? '+' : ''}
@@ -389,7 +387,7 @@ function Investments() {
                     </div>
                 </div>
 
-                <div className='bg-white overflow-hidden shadow rounded-lg'>
+                <div className='card bg-base-100 shadow-sm'>
                     <div className='p-5'>
                         <div className='flex items-center'>
                             <div className='flex-shrink-0'>
@@ -410,14 +408,14 @@ function Investments() {
                             </div>
                             <div className='ml-5 w-0 flex-1'>
                                 <dl>
-                                    <dt className='text-sm font-medium text-gray-500 truncate'>
+                                    <dt className='text-sm font-medium opacity-60 truncate'>
                                         Total Return %
                                     </dt>
                                     <dd
                                         className={`text-lg font-medium ${
                                             totalGainLossPercentage >= 0
-                                                ? 'text-green-600'
-                                                : 'text-red-600'
+                                                ? 'text-success'
+                                                : 'text-error'
                                         }`}
                                     >
                                         {totalGainLossPercentage >= 0
@@ -441,7 +439,7 @@ function Investments() {
                             placeholder='Search investments...'
                             value={globalFilter}
                             onChange={(e) => setGlobalFilter(e.target.value)}
-                            className='block w-full max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
+                            className='block w-full max-w-md px-3 py-2 border border-base-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
                         />
                     </div>
                     <div className='text-sm text-gray-500 lg:hidden'>
@@ -470,11 +468,11 @@ function Investments() {
                             return (
                                 <div
                                     key={row.id}
-                                    className='bg-white rounded-lg shadow p-4 border border-gray-200'
+                                    className='card bg-base-100 shadow-sm p-4 border border-base-300'
                                 >
                                     <div className='flex items-start justify-between'>
                                         <div className='flex-1'>
-                                            <h3 className='text-lg font-semibold text-blue-600 mb-2'>
+                                            <h3 className='text-lg font-semibold text-primary mb-2'>
                                                 {investment.symbol}
                                             </h3>
                                             <p className='text-sm text-gray-600 mb-3'>
@@ -482,17 +480,17 @@ function Investments() {
                                             </p>
                                             <div className='grid grid-cols-2 gap-4 text-sm'>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Type:
                                                     </span>
-                                                    <span className='ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+                                                    <span className='ml-2 badge badge-primary badge-sm'>
                                                         {investment.investment_type
                                                             .replace('_', ' ')
                                                             .toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Quantity:
                                                     </span>
                                                     <span className='ml-2 text-gray-900 font-mono'>
@@ -502,7 +500,7 @@ function Investments() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Purchase Price:
                                                     </span>
                                                     <span className='ml-2 text-gray-900'>
@@ -512,7 +510,7 @@ function Investments() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Current Price:
                                                     </span>
                                                     <span className='ml-2 text-gray-900'>
@@ -524,7 +522,7 @@ function Investments() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Total Invested:
                                                     </span>
                                                     <span className='ml-2 text-gray-900 font-semibold'>
@@ -534,25 +532,25 @@ function Investments() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Current Value:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold text-green-600'>
+                                                    <span className='ml-2 text-gray-900 font-semibold text-success'>
                                                         {formatCurrency(
                                                             investment.current_value
                                                         )}
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Gain/Loss:
                                                     </span>
                                                     <span
                                                         className={`ml-2 font-semibold ${
                                                             investment.gain_loss >=
                                                             0
-                                                                ? 'text-green-600'
-                                                                : 'text-red-600'
+                                                                ? 'text-success'
+                                                                : 'text-error'
                                                         }`}
                                                     >
                                                         {investment.gain_loss >=
@@ -565,15 +563,15 @@ function Investments() {
                                                     </span>
                                                 </div>
                                                 <div>
-                                                    <span className='font-medium text-gray-700'>
+                                                    <span className='font-medium'>
                                                         Gain/Loss %:
                                                     </span>
                                                     <span
                                                         className={`ml-2 font-semibold ${
                                                             investment.gain_loss_percentage >=
                                                             0
-                                                                ? 'text-green-600'
-                                                                : 'text-red-600'
+                                                                ? 'text-success'
+                                                                : 'text-error'
                                                         }`}
                                                     >
                                                         {investment.gain_loss_percentage >=
@@ -644,11 +642,11 @@ function Investments() {
                 </div>
 
                 {/* Desktop Table Layout */}
-                <div className='hidden lg:block bg-white shadow overflow-hidden sm:rounded-md'>
+                <div className='hidden lg:block card bg-base-100 shadow-sm overflow-hidden'>
                     <div className='overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100'>
                         <div className='inline-block w-full align-middle'>
-                            <table className='w-full table-auto divide-y divide-gray-200'>
-                                <thead className='bg-gray-50'>
+                            <table className='table table-zebra w-full'>
+                                <thead>
                                     {table
                                         .getHeaderGroups()
                                         .map((headerGroup) => (
@@ -667,7 +665,7 @@ function Investments() {
                                                                       ? 'descending'
                                                                       : 'none'
                                                             }
-                                                            className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -693,12 +691,9 @@ function Investments() {
                                             </tr>
                                         ))}
                                 </thead>
-                                <tbody className='bg-white divide-y divide-gray-200'>
+                                <tbody>
                                     {table.getRowModel().rows.map((row) => (
-                                        <tr
-                                            key={row.id}
-                                            className='hover:bg-gray-50'
-                                        >
+                                        <tr key={row.id} className=''>
                                             {row
                                                 .getVisibleCells()
                                                 .map((cell) => (
@@ -752,11 +747,11 @@ function Investments() {
                             . This action cannot be undone.
                         </p>
                         {deletingInvestment && (
-                            <div className='mt-3 p-3 bg-gray-50 rounded-md'>
+                            <div className='mt-3 p-3 bg-base-200 rounded-md'>
                                 <div className='text-sm'>
                                     <div className='grid grid-cols-2 gap-4'>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Symbol:
                                             </span>{' '}
                                             <span className='text-gray-900'>
@@ -764,7 +759,7 @@ function Investments() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Type:
                                             </span>{' '}
                                             <span className='text-gray-900 capitalize'>
@@ -775,7 +770,7 @@ function Investments() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Current Value:
                                             </span>{' '}
                                             <span className='text-gray-900 font-semibold'>
@@ -785,15 +780,15 @@ function Investments() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className='font-medium text-gray-700'>
+                                            <span className='font-medium'>
                                                 Gain/Loss:
                                             </span>{' '}
                                             <span
                                                 className={`font-semibold ${
                                                     deletingInvestment.gain_loss >=
                                                     0
-                                                        ? 'text-green-600'
-                                                        : 'text-red-600'
+                                                        ? 'text-success'
+                                                        : 'text-error'
                                                 }`}
                                             >
                                                 {deletingInvestment.gain_loss >=
@@ -810,7 +805,7 @@ function Investments() {
                             </div>
                         )}
                         <div className='mt-3'>
-                            <p className='text-sm text-red-600 font-medium'>
+                            <p className='text-sm text-error font-medium'>
                                 <span aria-hidden='true'>⚠️ </span>This will
                                 permanently remove all data associated with this
                                 investment.

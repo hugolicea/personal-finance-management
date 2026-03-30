@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
@@ -125,7 +125,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
             {({ isSubmitting }) => (
                 <Form className='space-y-8'>
                     {/* Account Information Section */}
-                    <div className='bg-gray-50 rounded-lg p-6 border border-gray-200'>
+                    <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
                             <div className='flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
                                 <svg
@@ -142,7 +142,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Account Information
                             </h3>
                         </div>
@@ -160,7 +160,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     type='text'
                                     name='name'
                                     id='name'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                     placeholder='e.g., Main 401(k), Roth IRA'
                                 />
                                 <ErrorMessage
@@ -182,7 +182,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     as='select'
                                     name='account_type'
                                     id='account_type'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                 >
                                     <option value='traditional_401k'>
                                         🏢 Traditional 401(k)
@@ -223,7 +223,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     type='text'
                                     name='provider'
                                     id='provider'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                     placeholder='e.g., Fidelity, Vanguard, Charles Schwab'
                                 />
                                 <ErrorMessage
@@ -244,7 +244,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     type='text'
                                     name='account_number'
                                     id='account_number'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                     placeholder='Last 4 digits for security (optional)'
                                 />
                                 <p className='mt-2 text-xs text-gray-500 font-medium'>
@@ -277,7 +277,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Financial Information
                             </h3>
                         </div>
@@ -302,7 +302,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         name='current_balance'
                                         id='current_balance'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='50000'
                                     />
                                 </div>
@@ -332,7 +332,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         name='monthly_contribution'
                                         id='monthly_contribution'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='500'
                                     />
                                 </div>
@@ -359,7 +359,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         step='0.01'
                                         min='0'
                                         max='1'
-                                        className='block w-full pr-8 pl-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pr-8'
                                         placeholder='0.50'
                                     />
                                     <div className='absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none'>
@@ -397,7 +397,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         name='employer_match_limit'
                                         id='employer_match_limit'
                                         step='any'
-                                        className='block w-full pl-8 pr-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 sm:text-sm bg-white'
+                                        className='input input-bordered w-full pl-8'
                                         placeholder='6000'
                                     />
                                 </div>
@@ -431,7 +431,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Planning Information
                             </h3>
                         </div>
@@ -449,7 +449,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     as='select'
                                     name='risk_level'
                                     id='risk_level'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                 >
                                     <option value='conservative'>
                                         🛡️ Conservative
@@ -485,7 +485,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     id='target_retirement_age'
                                     min='50'
                                     max='100'
-                                    className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200 sm:text-sm bg-white'
+                                    className='input input-bordered w-full'
                                     placeholder='65'
                                 />
                                 <ErrorMessage
@@ -498,7 +498,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                     </div>
 
                     {/* Additional Notes Section */}
-                    <div className='bg-gray-50 rounded-lg p-6 border border-gray-200'>
+                    <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
                             <div className='flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
                                 <svg
@@ -515,7 +515,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     />
                                 </svg>
                             </div>
-                            <h3 className='ml-3 text-lg font-medium text-gray-900'>
+                            <h3 className='ml-3 text-lg font-medium'>
                                 Additional Notes
                             </h3>
                         </div>
@@ -526,7 +526,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                 name='notes'
                                 id='notes'
                                 rows={4}
-                                className='block w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200 sm:text-sm bg-white resize-none'
+                                className='textarea textarea-bordered w-full resize-none'
                                 placeholder='Any additional information about this retirement account (investment strategy, goals, etc.)'
                             />
                             <ErrorMessage
@@ -538,11 +538,11 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0 pt-6 border-t border-gray-200'>
+                    <div className='flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0 pt-6 border-t border-base-300'>
                         <button
                             type='button'
                             onClick={onClose}
-                            className='w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border-2 border-gray-300 rounded-lg shadow-sm text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200'
+                            className='btn btn-outline'
                         >
                             <svg
                                 className='-ml-1 mr-2 h-4 w-4'
@@ -562,7 +562,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                         <button
                             type='submit'
                             disabled={isSubmitting}
-                            className='w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border-2 border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+                            className='btn btn-primary'
                         >
                             {isSubmitting ? (
                                 <>

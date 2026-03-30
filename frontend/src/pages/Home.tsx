@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import CategoryForm from '../components/CategoryForm';
@@ -329,7 +329,7 @@ function Home() {
                                                         className={`px-3 py-2 text-sm rounded-md border ${
                                                             !filterByYear
                                                                 ? 'bg-red-600 text-white border-red-600'
-                                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                                : 'bg-white text-gray-700 border-gray-300'
                                                         }`}
                                                     >
                                                         Month
@@ -343,7 +343,7 @@ function Home() {
                                                         className={`px-3 py-2 text-sm rounded-md border ${
                                                             filterByYear
                                                                 ? 'bg-red-600 text-white border-red-600'
-                                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                                                : 'bg-white text-gray-700 border-gray-300'
                                                         }`}
                                                     >
                                                         Year

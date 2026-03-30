@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import AccountForm from '../components/AccountForm';
@@ -55,7 +55,7 @@ function AccountsList() {
     if (loading) {
         return (
             <div className='flex justify-center items-center h-64'>
-                <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600'></div>
+                <div className='loading loading-spinner loading-lg text-primary'></div>
             </div>
         );
     }
@@ -75,7 +75,7 @@ function AccountsList() {
                 </div>
                 <button
                     onClick={() => setShowModal(true)}
-                    className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2'
+                    className='btn btn-primary flex items-center gap-2'
                 >
                     <span className='text-lg'>+</span> Add Account
                 </button>
@@ -83,7 +83,7 @@ function AccountsList() {
 
             {/* Account grid */}
             {accounts.length === 0 ? (
-                <div className='text-center py-16 bg-white rounded-lg shadow'>
+                <div className='text-center py-16 card bg-base-100 shadow-sm'>
                     <p className='text-5xl mb-4'>🏦</p>
                     <p className='text-gray-500 text-lg'>No accounts yet.</p>
                     <p className='text-gray-400 text-sm mt-1'>
@@ -91,7 +91,7 @@ function AccountsList() {
                     </p>
                     <button
                         onClick={() => setShowModal(true)}
-                        className='mt-6 bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors'
+                        className='mt-6 btn btn-primary'
                     >
                         Add Account
                     </button>
@@ -101,10 +101,10 @@ function AccountsList() {
                     {accounts.map((account) => (
                         <div
                             key={account.id}
-                            className={`bg-white rounded-lg shadow hover:shadow-md transition-shadow border-l-4 relative ${
+                            className={`card bg-base-100 shadow-sm hover:shadow-md transition-shadow border-l-4 relative ${
                                 account.is_active
                                     ? 'border-blue-500'
-                                    : 'border-gray-300 opacity-60'
+                                    : 'border-base-300 opacity-60'
                             }`}
                         >
                             <button
@@ -126,7 +126,7 @@ function AccountsList() {
                                             ] ?? '🏛️'}
                                         </span>
                                         <div>
-                                            <h3 className='font-semibold text-gray-900 text-sm leading-tight truncate max-w-[140px]'>
+                                            <h3 className='font-semibold text-sm leading-tight truncate max-w-[140px]'>
                                                 {account.name}
                                             </h3>
                                             <p className='text-xs text-gray-500'>
@@ -166,8 +166,8 @@ function AccountsList() {
                                                 className={`font-bold text-sm ${
                                                     account.current_month_balance >=
                                                     0
-                                                        ? 'text-green-600'
-                                                        : 'text-red-600'
+                                                        ? 'text-success'
+                                                        : 'text-error'
                                                 }`}
                                             >
                                                 {formatCurrency(

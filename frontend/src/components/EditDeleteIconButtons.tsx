@@ -12,10 +12,10 @@ export default function EditDeleteIconButtons({
     className = '',
 }: Props): ReactElement {
     return (
-        <div className={className + ' flex items-center space-x-2'}>
+        <div className={className + ' flex items-center gap-1'}>
             <button
                 onClick={onEdit}
-                className='inline-flex items-center justify-center p-1 rounded-md text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                className='btn btn-ghost btn-circle btn-xs text-info'
                 aria-label='Edit'
                 title='Edit'
             >
@@ -35,7 +35,7 @@ export default function EditDeleteIconButtons({
             </button>
             <button
                 onClick={onDelete}
-                className='inline-flex items-center justify-center p-1 rounded-md text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
+                className='btn btn-ghost btn-circle btn-xs text-error'
                 aria-label='Delete'
                 title='Delete'
             >

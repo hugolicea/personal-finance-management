@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+﻿import { useMemo } from 'react';
 import {
     Bar,
     BarChart,
@@ -111,7 +111,7 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
             {/* Charts */}
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Investment Types Pie Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Portfolio by Type
                     </h4>
@@ -153,7 +153,7 @@ function InvestmentsChart({ investments }: InvestmentsChartProps) {
                 </div>
 
                 {/* Top Investments Bar Chart */}
-                <div className='bg-white p-4 rounded-lg shadow'>
+                <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
                     <h4 className='text-lg font-medium text-gray-900 mb-4'>
                         Top 5 Investments
                     </h4>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 import { Category } from '../types/categories';
 import ConfirmModal from './ConfirmModal';
@@ -93,7 +93,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             {/* Reclassify Button */}
             <button
                 onClick={() => setIsReclassifyModalOpen(true)}
-                className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors'
+                className='btn btn-primary'
             >
                 Reclassify Transactions
             </button>
@@ -101,7 +101,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             {/* Delete Button */}
             <button
                 onClick={() => setIsDeleteModalOpen(true)}
-                className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition-colors'
+                className='btn btn-error'
             >
                 Delete Transactions by Category
             </button>
@@ -118,7 +118,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             >
                 <form onSubmit={handleReclassifySubmit} className='space-y-4'>
                     <div>
-                        <label className='block text-sm font-medium text-gray-300 mb-1'>
+                        <label className='block text-sm font-medium mb-1'>
                             From Category
                         </label>
                         <select
@@ -126,7 +126,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                             onChange={(e) =>
                                 setFromCategoryId(Number(e.target.value))
                             }
-                            className='w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                            className='select select-bordered w-full'
                             required
                         >
                             <option value=''>
@@ -141,7 +141,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                     </div>
 
                     <div>
-                        <label className='block text-sm font-medium text-gray-300 mb-1'>
+                        <label className='block text-sm font-medium mb-1'>
                             To Category
                         </label>
                         <select
@@ -149,7 +149,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                             onChange={(e) =>
                                 setToCategoryId(Number(e.target.value))
                             }
-                            className='w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                            className='select select-bordered w-full'
                             required
                         >
                             <option value=''>Select target category...</option>
@@ -184,7 +184,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 setFromCategoryId('');
                                 setToCategoryId('');
                             }}
-                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors'
+                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700  rounded-md transition-colors'
                         >
                             Cancel
                         </button>
@@ -195,7 +195,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 !toCategoryId ||
                                 fromCategoryId === toCategoryId
                             }
-                            className='px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='px-4 py-2 bg-blue-600 hover:bg-blue-700  rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             Reclassify
                         </button>
@@ -214,19 +214,19 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             >
                 <form onSubmit={handleDeleteSubmit} className='space-y-4'>
                     <div>
-                        <p className='text-sm text-gray-300 mb-3'>
+                        <p className='text-sm opacity-60 mb-3'>
                             Select categories to delete all their transactions:
                         </p>
-                        <div className='max-h-64 overflow-y-auto space-y-2 bg-gray-700 p-3 rounded-md'>
+                        <div className='max-h-64 overflow-y-auto space-y-2 bg-base-200 p-3 rounded-md'>
                             {availableCategories.length === 0 ? (
-                                <p className='text-gray-400 text-sm'>
+                                <p className='text-sm opacity-50'>
                                     No categories available
                                 </p>
                             ) : (
                                 availableCategories.map((category) => (
                                     <label
                                         key={category.id}
-                                        className='flex items-center space-x-2 cursor-pointer hover:bg-gray-600 p-2 rounded'
+                                        className='flex items-center gap-2 cursor-pointer hover:bg-base-300 p-2 rounded'
                                     >
                                         <input
                                             type='checkbox'
@@ -238,9 +238,9 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                                     category.id
                                                 )
                                             }
-                                            className='w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2'
+                                            className='checkbox checkbox-primary checkbox-sm'
                                         />
-                                        <span className='text-white'>
+                                        <span className=''>
                                             {category.name}
                                         </span>
                                     </label>
@@ -248,7 +248,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                             )}
                         </div>
                         {selectedCategories.length > 0 && (
-                            <p className='text-sm text-blue-400 mt-2'>
+                            <p className='text-sm text-primary mt-2'>
                                 {selectedCategories.length} category(ies)
                                 selected
                             </p>
@@ -262,14 +262,14 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 setIsDeleteModalOpen(false);
                                 setSelectedCategories([]);
                             }}
-                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors'
+                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700  rounded-md transition-colors'
                         >
                             Cancel
                         </button>
                         <button
                             type='submit'
                             disabled={selectedCategories.length === 0}
-                            className='px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='px-4 py-2 bg-red-600 hover:bg-red-700  rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             Delete Transactions
                         </button>

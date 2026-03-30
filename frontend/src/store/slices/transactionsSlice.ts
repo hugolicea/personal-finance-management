@@ -106,7 +106,7 @@ export const updateTransaction = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            const response = await apiClient.put(
+            const response = await apiClient.patch(
                 `/api/v1/transactions/${id}/`,
                 transaction
             );
