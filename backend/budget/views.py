@@ -4,6 +4,7 @@ import io
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+import logging
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
@@ -51,6 +52,7 @@ from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 # Resolved once at import time — avoids N806 and repeated calls
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @extend_schema(tags=["Categories"])
@@ -725,20 +727,30 @@ def upload_bank_statement(request):
                     )
 
                 except Exception as e:
-                    errors.append(f"Row {row_num}: {str(e)}")
+                    # Log full exception server-side, but return only generic error details to the client
+                    logger.exception("Error processing row %s in bank statement upload", row_num)
+                    errors.append(
+                        f"Row {row_num}: An error occurred while processing this row."
+                    )
                     validation_errors.append(
                         {
                             "row": row_num,
                             "field": "row",
-                            "error": str(e),
+                            "error": "Invalid data in this row.",
                         }
                     )
                     continue
         except csv.Error as e:
+            # Log parsing errors but avoid exposing raw exception details to the client
+            logger.exception("CSV parsing error while processing bank statement upload")
             return error_response(
                 "format",
                 "Invalid CSV format. Please check your file.",
-                [{"error": str(e)}],
+                [
+                    {
+                        "error": "The CSV file could not be parsed. Please ensure it is a valid CSV export.",
+                    }
+                ],
             )
 
         if validation_errors:
@@ -768,9 +780,6 @@ def upload_bank_statement(request):
 
     except Exception:
         # Log error securely without exposing details
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.exception("Error processing bank statement upload")
 
         return error_response(
