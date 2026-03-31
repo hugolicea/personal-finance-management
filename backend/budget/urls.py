@@ -6,10 +6,7 @@ from .views import (
     BankAccountViewSet,
     CategoryDeletionRuleViewSet,
     CategoryViewSet,
-    HeritageViewSet,
-    InvestmentViewSet,
     ReclassificationRuleViewSet,
-    RetirementAccountViewSet,
     TransactionViewSet,
     backup_database,
     balance_by_period,
@@ -26,9 +23,6 @@ from .views import (
 router = DefaultRouter()
 router.register(r"bank-accounts", BankAccountViewSet)
 router.register(r"categories", CategoryViewSet)
-router.register(r"heritages", HeritageViewSet)
-router.register(r"investments", InvestmentViewSet)
-router.register(r"retirement-accounts", RetirementAccountViewSet)
 router.register(r"transactions", TransactionViewSet)
 router.register(r"reclassification-rules", ReclassificationRuleViewSet)
 router.register(r"category-deletion-rules", CategoryDeletionRuleViewSet)

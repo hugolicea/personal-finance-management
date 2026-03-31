@@ -26,6 +26,7 @@ urlpatterns = [
     path("", lambda request: redirect("/api/v1/")),
     path("admin/", admin.site.urls),
     path("api/v1/", include("budget.urls")),
+    path("api/v1/", include("wealth.urls")),
     # Override logout to allow unauthenticated requests (expired tokens)
     path(
         "api/v1/auth/logout/", UnauthenticatedLogoutView.as_view(), name="rest_logout"

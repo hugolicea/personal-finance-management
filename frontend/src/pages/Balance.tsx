@@ -23,6 +23,7 @@ import {
 import { fetchTransactions } from '../store/slices/transactionsSlice';
 import { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
+import { formatDateLong } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 interface CategoryStats {
@@ -59,12 +60,7 @@ const txColumnHelper = createColumnHelper<Transaction>();
 const MODAL_COLUMNS = [
     txColumnHelper.accessor('date', {
         header: 'Date',
-        cell: (info) =>
-            new Date(info.getValue()).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            }),
+        cell: (info) => formatDateLong(info.getValue()),
         sortingFn: 'datetime',
     }),
     txColumnHelper.accessor('description', {

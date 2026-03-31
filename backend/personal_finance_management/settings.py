@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "budget",
+    "core",
+    "wealth",
 ]
 
 SITE_ID = 1

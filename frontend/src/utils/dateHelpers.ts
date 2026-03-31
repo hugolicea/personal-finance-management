@@ -46,6 +46,31 @@ export function formatDateForDisplay(dateString: string): string {
 }
 
 /**
+ * Format a date string for display in local timezone, long format (e.g., "Mar 29, 2026")
+ * @param dateString - Date string in YYYY-MM-DD format
+ * @returns Formatted date string
+ */
+export function formatDateLong(dateString: string): string {
+    if (!dateString) return '';
+
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+
+    const year = parseInt(parts[0]!, 10);
+    const month = parseInt(parts[1]!, 10);
+    const day = parseInt(parts[2]!, 10);
+
+    if (isNaN(year) || isNaN(month) || isNaN(day)) return dateString;
+
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
+/**
  * Get today's date in YYYY-MM-DD format (local timezone)
  * @returns Today's date as YYYY-MM-DD string
  */

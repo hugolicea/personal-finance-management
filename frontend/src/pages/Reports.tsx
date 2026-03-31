@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import { fetchCategories } from '../store/slices/categoriesSlice';
 import { fetchTransactions } from '../store/slices/transactionsSlice';
 import type { Transaction } from '../types/transactions';
+import { formatDateLong } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 const columnHelper = createColumnHelper<Transaction>();
@@ -141,12 +142,7 @@ function Reports() {
         () => [
             columnHelper.accessor('date', {
                 header: 'Date',
-                cell: (info) =>
-                    new Date(info.getValue()).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                    }),
+                cell: (info) => formatDateLong(info.getValue()),
                 sortingFn: 'datetime',
             }),
             columnHelper.accessor('description', {
