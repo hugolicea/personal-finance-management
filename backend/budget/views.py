@@ -47,7 +47,7 @@ from .serializers import (
 from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 # Resolved once at import time — avoids N806 and repeated calls
-User = get_user_model()
+user_model = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -1447,7 +1447,7 @@ def _restore_budget_domain(
 
     if multi_user_mode:
         for u in data.get("users", []):
-            obj, created = User.objects.get_or_create(
+            obj, created = user_model.objects.get_or_create(
                 username=u["username"],
                 defaults={
                     "email": u.get("email", ""),
@@ -1713,7 +1713,7 @@ def backup_database(request):
 
     # In multi-user mode query all regular users; otherwise scope to requester
     if multi_user_mode:
-        target_users_qs = User.objects.filter(is_staff=False, is_superuser=False)
+        target_users_qs = user_model.objects.filter(is_staff=False, is_superuser=False)
         user_filter: dict = {"user__in": target_users_qs}
         backup_data["users"] = list(
             target_users_qs.values(
