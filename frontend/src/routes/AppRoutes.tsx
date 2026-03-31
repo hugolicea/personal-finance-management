@@ -4,6 +4,7 @@ import PrivateRoute from '../components/PrivateRoute';
 import AccountsList from '../pages/AccountsList';
 import AccountTransactionsPage from '../pages/AccountTransactionsPage';
 import Balance from '../pages/Balance';
+import BudgetProgress from '../pages/BudgetProgress';
 import Categories from '../pages/Categories';
 import CleanAndReclassify from '../pages/CleanAndReclassify';
 import CompoundInterestCalculator from '../pages/CompoundInterestCalculator';
@@ -92,6 +93,14 @@ function AppRoutes() {
                 element={
                     <PrivateRoute>
                         <Balance />
+                    </PrivateRoute>
+                }
+            />
+            <Route
+                path='/budget-progress'
+                element={
+                    <PrivateRoute>
+                        <BudgetProgress />
                     </PrivateRoute>
                 }
             />

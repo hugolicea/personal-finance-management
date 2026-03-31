@@ -260,6 +260,23 @@ def balance_by_period(request, period):
     return JsonResponse({f"balance_{period}": total})
 
 
+def _get_spending_by_category(user, start_date, end_date):
+    """
+    Return a dict mapping category_id -> Decimal total for transactions
+    within the given date range for a user.
+    """
+    rows = (
+        Transaction.objects.filter(
+            user=user,
+            date__gte=start_date,
+            date__lte=end_date,
+        )
+        .values("category_id")
+        .annotate(total=Sum("amount"))
+    )
+    return {row["category_id"]: abs(row["total"]) for row in rows if row["category_id"]}
+
+
 @extend_schema(
     parameters=[
         OpenApiParameter(
@@ -287,6 +304,7 @@ def balance_by_period(request, period):
     },
 )
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def category_spending_by_period(request, period):
     """
     Get spending by category for a specific period.
@@ -295,19 +313,28 @@ def category_spending_by_period(request, period):
     Returns category budgets vs actual spending.
     Optimized to prevent N+1 queries.
     """
-    now = datetime.now().date()
+    now = timezone.now().date()
 
     # Check if period is in YYYY-MM format
     if len(period) == 7 and period[4] == "-":
         try:
             year = int(period[:4])
             month = int(period[5:])
-            start = datetime(year, month, 1).date()
+            from datetime import date as date_type
+
+            current_year = timezone.now().year
+            if year < 2000 or year > current_year + 1:
+                return Response(
+                    {"error": "Period out of valid range."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            start: date_type = datetime(year, month, 1).date()
             # Calculate end of month
             if month == 12:
-                end = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+                end: date_type = datetime(year + 1, 1, 1).date() - timedelta(days=1)
             else:
-                end = datetime(year, month + 1, 1).date() - timedelta(days=1)
+                end: date_type = datetime(year, month + 1, 1).date() - timedelta(days=1)
         except ValueError:
             return JsonResponse({"error": "Invalid year-month format"}, status=400)
     else:
@@ -325,15 +352,13 @@ def category_spending_by_period(request, period):
         end = now
 
     # Optimized: Get all spending in one query grouped by category
-    spending_by_category = dict(
-        Transaction.objects.filter(user=request.user, date__gte=start, date__lte=end)
-        .values("category")
-        .annotate(total=Sum("amount"))
-        .values_list("category", "total")
-    )
+    spending_by_category = _get_spending_by_category(request.user, start, end)
 
     # Get all categories with their budgets
-    categories = Category.objects.filter(user=request.user)
+    categories = Category.objects.filter(
+        user=request.user,
+        classification=Category.SPEND,
+    )
 
     result = []
     for category in categories:
@@ -363,6 +388,77 @@ def category_spending_by_period(request, period):
             "period": period,
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
+            "categories": result,
+        }
+    )
+
+
+@extend_schema(
+    tags=["Categories"],
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "month": {"type": "string", "example": "2026-03"},
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "integer"},
+                            "name": {"type": "string"},
+                            "total_spent": {"type": "number"},
+                            "budget_limit": {"type": "number"},
+                            "percentage_used": {
+                                "type": "number",
+                                "nullable": True,
+                            },
+                        },
+                    },
+                },
+            },
+        }
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def spending_summary(request):
+    """Get current month spending grouped by spend category."""
+    now = timezone.now()
+    start = now.date().replace(day=1)
+    if now.month == 12:
+        end = now.date().replace(year=now.year + 1, month=1, day=1) - timedelta(days=1)
+    else:
+        end = now.date().replace(month=now.month + 1, day=1) - timedelta(days=1)
+
+    spending_dict = _get_spending_by_category(request.user, start, end)
+
+    categories = Category.objects.filter(
+        user=request.user,
+        classification=Category.SPEND,
+    ).order_by("name")
+
+    result = []
+    for category in categories:
+        total_spent = float(spending_dict.get(category.id, 0))
+        budget_limit = float(category.monthly_budget)
+        percentage_used = (
+            (total_spent / budget_limit * 100) if budget_limit > 0 else None
+        )
+
+        result.append(
+            {
+                "id": category.id,
+                "name": category.name,
+                "total_spent": total_spent,
+                "budget_limit": budget_limit,
+                "percentage_used": percentage_used,
+            }
+        )
+
+    return JsonResponse(
+        {
+            "month": f"{timezone.now().year:04d}-{timezone.now().month:02d}",
             "categories": result,
         }
     )

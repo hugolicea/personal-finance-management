@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import FloatingActionButton from './FloatingActionButton';
-import SkipLinks from './SkipLinks';
 import Navigation from '../components/Navigation';
 import AppRoutes from '../routes/AppRoutes';
+import FloatingActionButton from './FloatingActionButton';
+import SkipLinks from './SkipLinks';
 
 function MainLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -71,6 +71,7 @@ interface SidebarContentProps {
 function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
     const menuItems = [
         { path: '/', label: 'Dashboard', icon: '📊' },
+        { path: '/budget-progress', label: 'Budget Progress', icon: '🎯' },
         { path: '/accounts', label: 'Accounts', icon: '🏦' },
         { path: '/categories', label: 'Categories', icon: '🏷️' },
         { path: '/investments', label: 'Investments', icon: '📈' },
@@ -87,17 +88,14 @@ function SidebarContent({ currentPath, onViewChange }: SidebarContentProps) {
         { path: '/tools', label: 'Financial Tools', icon: '🧮' },
     ];
 
-    const isAccountsActive =
-        currentPath === '/accounts' || currentPath.startsWith('/accounts/');
-
     return (
         <nav className='mt-4 flex-1'>
             <ul className='menu px-3 space-y-0.5'>
                 {menuItems.map((item) => {
                     const isActive =
-                        item.path === '/accounts'
-                            ? isAccountsActive
-                            : currentPath === item.path;
+                        item.path === '/'
+                            ? currentPath === '/'
+                            : currentPath.startsWith(item.path);
                     return (
                         <li key={item.path}>
                             <button

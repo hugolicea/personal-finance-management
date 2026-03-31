@@ -19,6 +19,7 @@ from .views import (
     category_spending_by_period,
     preview_reclassification_rule,
     restore_database,
+    spending_summary,
     upload_bank_statement,
 )
 
@@ -40,6 +41,7 @@ urlpatterns = [
         category_spending_by_period,
         name="category_spending_by_period",
     ),
+    path("spending-summary/", spending_summary, name="spending_summary"),
     path(
         "upload-bank-statement/",
         upload_bank_statement,
