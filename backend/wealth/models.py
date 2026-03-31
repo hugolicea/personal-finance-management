@@ -88,6 +88,7 @@ class Investment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
+        db_table = "budget_investment"
         unique_together = [["user", "symbol"]]
         indexes = [
             models.Index(fields=["user", "investment_type"]),
@@ -265,6 +266,7 @@ class Heritage(models.Model):
         return 0
 
     class Meta:
+        db_table = "budget_heritage"
         indexes = [
             models.Index(fields=["user", "heritage_type"]),
         ]
@@ -389,6 +391,7 @@ class RetirementAccount(models.Model):
         return self.annual_contribution + self.employer_match_amount
 
     class Meta:
+        db_table = "budget_retirementaccount"
         indexes = [
             models.Index(fields=["user", "account_type"]),
         ]

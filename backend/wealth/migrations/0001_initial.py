@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("budget", "0011_bankaccount_account_number"),
+        ("budget", "0012_state_only_remove_wealth_models"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
