@@ -18,6 +18,15 @@ These are the only agents you can call. Each has a specific role:
 - **Planner** — Creates implementation strategies and technical plans
 - **Coder** — Writes code, fixes bugs, implements logic
 - **Designer** — Creates UI/UX, styling, visual design
+- **Tester** — Writes tests, verifies correctness, catches regressions
+- **Critic** — Reviews integrated output, challenges architecture, flags
+  over-engineering
+- **Security** — Reviews for authorization gaps, data exposure, and attack
+  surface risks
+- **Documenter** — Writes user and developer documentation from the final
+  integrated output
+- **Ops** — Manages CI/CD pipelines, deployments, Docker config, and
+  infrastructure automation
 
 ## Execution Model
 

@@ -4,7 +4,7 @@ on:
     push:
         branches: [main, dev, develop]
     pull_request:
-        branches: [main]
+        branches: [main, dev]
 
 # Cancel in-progress runs when a new run is triggered
 concurrency:
@@ -32,10 +32,10 @@ jobs:
                     --health-retries 5
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Set up Python
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                   python-version: '3.11'
                   cache: 'pip'
@@ -56,8 +56,9 @@ jobs:
               working-directory: ./backend
               env:
                   DJANGO_SETTINGS_MODULE: personal_finance_management.settings
-                  SECRET_KEY: test-secret-key
+                  SECRET_KEY: ${{ secrets.CI_SECRET_KEY }}
                   DEBUG: True
+                  DB_ENGINE: postgresql
                   DB_NAME: test_db
                   DB_USER: test_user
                   DB_PASSWORD: test_password
@@ -68,7 +69,7 @@ jobs:
                   pytest --cov=budget --cov-report=xml --cov-report=term
 
             - name: Upload coverage
-              uses: codecov/codecov-action@v3
+              uses: codecov/codecov-action@v5
               with:
                   file: ./backend/coverage.xml
                   flags: backend
@@ -78,10 +79,10 @@ jobs:
         timeout-minutes: 8 # GitHub best practice: Node.js builds typically 5-8min
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Set up Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: '20' # Updated to Node 20 (LTS)
                   cache: 'npm'
@@ -93,13 +94,15 @@ jobs:
 
             - name: Run linting
               working-directory: ./frontend
-              run: |
-                  npm run lint || echo "Linting completed with warnings"
-              continue-on-error: true # Don't fail on lint warnings
+              run: npm run lint
 
             - name: Type check
               working-directory: ./frontend
               run: npx tsc --noEmit
+
+            - name: Run tests
+              working-directory: ./frontend
+              run: npm test
 
             - name: Build
               working-directory: ./frontend
@@ -110,20 +113,18 @@ jobs:
         timeout-minutes: 10
         permissions:
             contents: read
-            actions: read # Required for workflow run telemetry
             security-events: write # Required for uploading SARIF
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Run Trivy vulnerability scanner
-              uses: aquasecurity/trivy-action@master
+              uses: aquasecurity/trivy-action@0.30.0
               with:
                   scan-type: 'fs'
                   scan-ref: '.'
                   format: 'sarif'
                   output: 'trivy-results.sarif'
-              continue-on-error: true # Don't fail if vulnerabilities found
 
             - name: Upload Trivy results to GitHub Security
               uses: github/codeql-action/upload-sarif@v4

@@ -561,69 +561,72 @@ function AccountTransactionsPage() {
                                     ))}
                                 </select>
                             </div>
-                            <div>
-                                <label className='block text-sm font-medium mb-1'>
-                                    Period
-                                </label>
-                                <div className='join'>
-                                    <button
-                                        onClick={() => setFilterByYear(false)}
-                                        className={`join-item btn btn-sm ${
-                                            !filterByYear
-                                                ? 'btn-primary'
-                                                : 'btn-outline'
-                                        }`}
-                                    >
-                                        Month
-                                    </button>
-                                    <button
-                                        onClick={() => setFilterByYear(true)}
-                                        className={`join-item btn btn-sm ${
-                                            filterByYear
-                                                ? 'btn-primary'
-                                                : 'btn-outline'
-                                        }`}
-                                    >
-                                        Year
-                                    </button>
+                            <div className='col-span-full flex items-end justify-between'>
+                                <div>
+                                    <label className='block text-sm font-medium mb-1'>
+                                        Period
+                                    </label>
+                                    <div className='join'>
+                                        <button
+                                            onClick={() =>
+                                                setFilterByYear(false)
+                                            }
+                                            className={`join-item btn btn-sm ${
+                                                !filterByYear
+                                                    ? 'btn-primary'
+                                                    : 'btn-outline'
+                                            }`}
+                                        >
+                                            Month
+                                        </button>
+                                        <button
+                                            onClick={() =>
+                                                setFilterByYear(true)
+                                            }
+                                            className={`join-item btn btn-sm ${
+                                                filterByYear
+                                                    ? 'btn-primary'
+                                                    : 'btn-outline'
+                                            }`}
+                                        >
+                                            Year
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className='block text-sm font-medium mb-1'>
+                                        View
+                                    </label>
+                                    <div className='join'>
+                                        <button
+                                            onClick={() => setViewMode('cards')}
+                                            aria-label='Cards view'
+                                            aria-pressed={viewMode === 'cards'}
+                                            className={`join-item btn btn-sm ${
+                                                viewMode === 'cards'
+                                                    ? 'btn-primary'
+                                                    : 'btn-outline'
+                                            }`}
+                                        >
+                                            <span aria-hidden='true'>📋</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode('table')}
+                                            aria-label='Table view'
+                                            aria-pressed={viewMode === 'table'}
+                                            className={`join-item btn btn-sm ${
+                                                viewMode === 'table'
+                                                    ? 'btn-primary'
+                                                    : 'btn-outline'
+                                            }`}
+                                        >
+                                            <span aria-hidden='true'>📊</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
-
-            <div className='flex justify-end'>
-                <div>
-                    <label className='block text-sm font-medium mb-1'>
-                        View
-                    </label>
-                    <div className='join'>
-                        <button
-                            onClick={() => setViewMode('cards')}
-                            aria-label='Cards view'
-                            aria-pressed={viewMode === 'cards'}
-                            className={`join-item btn btn-sm ${
-                                viewMode === 'cards'
-                                    ? 'btn-primary'
-                                    : 'btn-outline'
-                            }`}
-                        >
-                            <span aria-hidden='true'>📋</span>
-                        </button>
-                        <button
-                            onClick={() => setViewMode('table')}
-                            aria-label='Table view'
-                            aria-pressed={viewMode === 'table'}
-                            className={`join-item btn btn-sm ${
-                                viewMode === 'table'
-                                    ? 'btn-primary'
-                                    : 'btn-outline'
-                            }`}
-                        >
-                            <span aria-hidden='true'>📊</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
