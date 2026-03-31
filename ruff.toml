@@ -50,7 +50,7 @@ exclude = [
 
 [lint.isort]
 # isort configuration (replaces isort)
-known-first-party = ["budget", "personal_finance_management"]
+known-first-party = ["budget", "core", "personal_finance_management", "wealth"]
 section-order = ["future", "standard-library", "django", "third-party", "first-party", "local-folder"]
 
 [lint.isort.sections]

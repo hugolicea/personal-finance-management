@@ -14,7 +14,6 @@ from django.http import JsonResponse
 from django.utils import timezone
 
 import django_filters
-from core.backup import backup_all, register_backup_provider, restore_all
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -29,6 +28,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from core.backup import backup_all, register_backup_provider, restore_all
 
 from .models import (
     BankAccount,
