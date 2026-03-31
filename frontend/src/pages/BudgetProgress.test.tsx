@@ -122,7 +122,9 @@ describe('BudgetProgress', () => {
             const { container } = renderBudgetProgress();
 
             // Each of the 8 skeleton cards contains 5 animate-pulse divs
-            const pulseElements = container.querySelectorAll('.animate-pulse');
+            const pulseElements = container.querySelectorAll(
+                '[class*="animate-pulse"]'
+            );
             expect(pulseElements.length).toBeGreaterThanOrEqual(8);
         });
 
@@ -163,7 +165,7 @@ describe('BudgetProgress', () => {
             renderBudgetProgress();
 
             expect(
-                screen.getByText('No budget categories yet')
+                screen.getByText('No spend categories with a budget')
             ).toBeInTheDocument();
         });
 
