@@ -21,6 +21,8 @@ These are the only agents you can call. Each has a specific role:
 - **Tester** — Writes tests, verifies correctness, catches regressions
 - **Critic** — Reviews integrated output, challenges architecture, flags
   over-engineering
+- **Architect** — Evaluates technology choices, defines module boundaries,
+  identifies structural risks, and produces ADRs
 - **Security** — Reviews for authorization gaps, data exposure, and attack
   surface risks
 - **Documenter** — Writes user and developer documentation from the final
