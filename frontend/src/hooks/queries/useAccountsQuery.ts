@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { QueryKey, useMutation, useQuery } from '@tanstack/react-query';
 
 import { queryClient } from '../../lib/queryClient';
 import type { BankAccount } from '../../types/accounts';
@@ -83,9 +83,11 @@ export function useDeleteAccount() {
             return { allAccountCaches };
         },
         onError: (_err, _id, context) => {
-            context?.allAccountCaches.forEach(([queryKey, data]) => {
-                queryClient.setQueryData(queryKey, data);
-            });
+            context?.allAccountCaches.forEach(
+                ([queryKey, data]: [QueryKey, BankAccount[] | undefined]) => {
+                    queryClient.setQueryData(queryKey, data);
+                }
+            );
         },
         onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ['accounts'] });
