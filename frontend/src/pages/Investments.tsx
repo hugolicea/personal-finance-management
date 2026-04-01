@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -17,20 +17,19 @@ import EditDeleteButtons from '../components/EditDeleteButtons';
 import InvestmentForm from '../components/InvestmentForm';
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
-    deleteInvestment,
-    fetchInvestments,
-} from '../store/slices/investmentsSlice';
+    useDeleteInvestment,
+    useInvestmentsQuery,
+} from '../hooks/queries/useInvestmentsQuery';
 import { Investment } from '../types/investments';
 import { formatDateForDisplay } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function Investments() {
-    const dispatch = useAppDispatch();
-    const { investments, loading, deleting } = useAppSelector(
-        (state) => state.investments
-    );
+    const { data: investments = [], isLoading: loading } =
+        useInvestmentsQuery();
+    const deleteMutation = useDeleteInvestment();
+    const deleting = deleteMutation.isPending;
 
     const [showInvestmentModal, setShowInvestmentModal] = useState(false);
     const [editingInvestment, setEditingInvestment] =
@@ -44,10 +43,6 @@ function Investments() {
     ]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
-
-    useEffect(() => {
-        dispatch(fetchInvestments());
-    }, [dispatch]);
 
     const handleOpenModal = useCallback(() => {
         setShowInvestmentModal(true);
@@ -69,11 +64,11 @@ function Investments() {
 
     const confirmDeleteInvestment = useCallback(async () => {
         if (deletingInvestment) {
-            await dispatch(deleteInvestment(deletingInvestment.id));
+            await deleteMutation.mutateAsync(deletingInvestment.id);
             setShowDeleteInvestmentDialog(false);
             setDeletingInvestment(null);
         }
-    }, [deletingInvestment, dispatch]);
+    }, [deleteMutation, deletingInvestment]);
 
     const handleCloseModal = useCallback(() => {
         setShowInvestmentModal(false);
@@ -259,23 +254,25 @@ function Investments() {
         },
     });
 
-    const { totalPortfolioValue, totalGainLoss, totalGainLossPercentage } =
-        useMemo(() => {
-            let portfolioValue = 0;
-            let gainLoss = 0;
-            let invested = 0;
-            for (const inv of investments) {
-                portfolioValue += inv.current_value;
-                gainLoss += inv.gain_loss;
-                invested += inv.total_invested;
-            }
-            return {
-                totalPortfolioValue: portfolioValue,
-                totalGainLoss: gainLoss,
-                totalGainLossPercentage:
-                    invested > 0 ? (gainLoss / invested) * 100 : 0,
-            };
-        }, [investments]);
+    const portfolioValue = useMemo(
+        () =>
+            investments.reduce((sum, inv) => sum + (inv.current_value || 0), 0),
+        [investments]
+    );
+
+    const { totalGainLoss, totalGainLossPercentage } = useMemo(() => {
+        let gainLoss = 0;
+        let invested = 0;
+        for (const inv of investments) {
+            gainLoss += inv.gain_loss;
+            invested += inv.total_invested;
+        }
+        return {
+            totalGainLoss: gainLoss,
+            totalGainLossPercentage:
+                invested > 0 ? (gainLoss / invested) * 100 : 0,
+        };
+    }, [investments]);
 
     if (loading) {
         return (
@@ -341,7 +338,7 @@ function Investments() {
                                         Total Portfolio Value
                                     </dt>
                                     <dd className='text-lg font-medium tabular-nums'>
-                                        {formatCurrency(totalPortfolioValue)}
+                                        {formatCurrency(portfolioValue)}
                                     </dd>
                                 </dl>
                             </div>

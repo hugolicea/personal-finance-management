@@ -1,13 +1,13 @@
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import type { RestoreResult } from '../hooks/queries/useBackupMutations';
 import {
-    clearRestoreResult,
-    downloadBackup,
-    restoreBackup,
-} from '../store/slices/backupSlice';
+    useDownloadBackup,
+    useRestoreBackup,
+} from '../hooks/queries/useBackupMutations';
+import { useAppSelector } from '../hooks/redux';
 
-// Hoisted to module level — never recreated on render (rendering-hoist-jsx)
+// Hoisted to module level ï¿½ never recreated on render (rendering-hoist-jsx)
 // Regular models: governed by the "All" toggle, available to every user.
 const REGULAR_MODEL_KEYS = [
     'categories',
@@ -40,9 +40,13 @@ const MODEL_LABELS: Record<BackupModel, string> = {
 };
 
 function DatabaseBackup() {
-    const dispatch = useAppDispatch();
-    const { downloadLoading, restoreLoading, error, restoreResult } =
-        useAppSelector((state) => state.backup);
+    const downloadMutation = useDownloadBackup();
+    const restoreMutation = useRestoreBackup();
+    const restoreResult: RestoreResult | null = restoreMutation.data ?? null;
+    const error =
+        downloadMutation.error?.message ??
+        restoreMutation.error?.message ??
+        null;
     const isStaff = useAppSelector(
         (state) => state.auth.user?.is_staff ?? false
     );
@@ -51,7 +55,7 @@ function DatabaseBackup() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [confirmReplace, setConfirmReplace] = useState(false);
     const [confirmError, setConfirmError] = useState<string | null>(null);
-    // Lazy init — Set is non-primitive (rerender-lazy-state-init)
+    // Lazy init ï¿½ Set is non-primitive (rerender-lazy-state-init)
     // Staff-only models ('users') are excluded from the default selection.
     const [selectedModels, setSelectedModels] = useState<Set<BackupModel>>(
         () => new Set(REGULAR_MODEL_KEYS)
@@ -74,7 +78,7 @@ function DatabaseBackup() {
     }, [someRegularSelected]);
 
     const handleToggleAll = useCallback(() => {
-        // Only toggles regular (non-staff) models — never auto-selects 'users'.
+        // Only toggles regular (non-staff) models ï¿½ never auto-selects 'users'.
         setSelectedModels((prev) => {
             const next = new Set(prev);
             if (allRegularSelected) {
@@ -99,18 +103,18 @@ function DatabaseBackup() {
     }, []);
 
     const handleDownload = useCallback(() => {
-        // Always send explicit list — never rely on backend "all" default
+        // Always send explicit list ï¿½ never rely on backend "all" default
         // which would include users and cause 403 for non-staff.
-        dispatch(downloadBackup(Array.from(selectedModels)));
-    }, [dispatch, selectedModels]);
+        downloadMutation.mutate(Array.from(selectedModels));
+    }, [downloadMutation, selectedModels]);
 
     const handleFileSelect = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
             const file = e.target.files?.[0] ?? null;
             setSelectedFile(file);
-            dispatch(clearRestoreResult());
+            restoreMutation.reset();
         },
-        [dispatch]
+        [restoreMutation]
     );
 
     const handleReplaceExistingChange = useCallback(
@@ -139,11 +143,22 @@ function DatabaseBackup() {
             return;
         }
         setConfirmError(null);
-        await dispatch(restoreBackup({ file: selectedFile, replaceExisting }));
-        setSelectedFile(null);
-        setConfirmReplace(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    }, [confirmReplace, dispatch, replaceExisting, selectedFile]);
+        try {
+            await restoreMutation.mutateAsync({
+                file: selectedFile,
+                replaceExisting,
+            });
+            setSelectedFile(null);
+            setConfirmReplace(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setConfirmError(err.message);
+                return;
+            }
+            setConfirmError('Failed to restore backup');
+        }
+    }, [confirmReplace, replaceExisting, restoreMutation, selectedFile]);
 
     return (
         <div className='max-w-2xl mx-auto space-y-8'>
@@ -171,7 +186,7 @@ function DatabaseBackup() {
                         Include in backup
                     </legend>
                     <div className='rounded-md border border-base-300 divide-y divide-base-200'>
-                        {/* "All" master toggle — controls regular models only */}
+                        {/* "All" master toggle ï¿½ controls regular models only */}
                         <label className='flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-t-md'>
                             <input
                                 ref={allCheckboxRef}
@@ -212,7 +227,7 @@ function DatabaseBackup() {
                             </label>
                         ))}
 
-                        {/* Staff-only model checkboxes — only rendered for staff users */}
+                        {/* Staff-only model checkboxes ï¿½ only rendered for staff users */}
                         {isStaff &&
                             STAFF_MODEL_KEYS.map((model) => (
                                 <label
@@ -240,10 +255,12 @@ function DatabaseBackup() {
 
                 <button
                     onClick={handleDownload}
-                    disabled={downloadLoading || selectedModels.size === 0}
+                    disabled={
+                        downloadMutation.isPending || selectedModels.size === 0
+                    }
                     className='inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed'
                 >
-                    {downloadLoading ? (
+                    {downloadMutation.isPending ? (
                         <svg
                             aria-hidden='true'
                             className='animate-spin h-4 w-4'
@@ -265,7 +282,7 @@ function DatabaseBackup() {
                             />
                         </svg>
                     ) : (
-                        <span aria-hidden='true'>??</span>
+                        <span aria-hidden='true'>ðŸ’¾</span>
                     )}
                     Download Backup
                 </button>
@@ -338,10 +355,10 @@ function DatabaseBackup() {
 
                 <button
                     onClick={handleRestore}
-                    disabled={restoreLoading || !selectedFile}
+                    disabled={restoreMutation.isPending || !selectedFile}
                     className='btn btn-primary'
                 >
-                    {restoreLoading ? (
+                    {restoreMutation.isPending ? (
                         <svg
                             aria-hidden='true'
                             className='animate-spin h-4 w-4'
@@ -363,7 +380,7 @@ function DatabaseBackup() {
                             />
                         </svg>
                     ) : (
-                        <span aria-hidden='true'>??</span>
+                        <span aria-hidden='true'>ðŸ”„</span>
                     )}
                     Restore Backup
                 </button>

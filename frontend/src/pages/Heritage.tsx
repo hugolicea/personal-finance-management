@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -17,16 +17,17 @@ import EditDeleteButtons from '../components/EditDeleteButtons';
 import HeritageForm from '../components/HeritageForm';
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { deleteHeritage, fetchHeritages } from '../store/slices/heritagesSlice';
+import {
+    useDeleteHeritage,
+    useHeritagesQuery,
+} from '../hooks/queries/useHeritagesQuery';
 import type { Heritage } from '../types/heritage';
 import { formatCurrency } from '../utils/formatters';
 
 function Heritage() {
-    const dispatch = useAppDispatch();
-    const { heritages, loading, deleting } = useAppSelector(
-        (state) => state.heritages
-    );
+    const { data: heritages = [], isLoading: loading } = useHeritagesQuery();
+    const deleteMutation = useDeleteHeritage();
+    const deleting = deleteMutation.isPending;
 
     const [showHeritageModal, setShowHeritageModal] = useState(false);
     const [editingHeritage, setEditingHeritage] = useState<Heritage | null>(
@@ -43,10 +44,6 @@ function Heritage() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState('');
 
-    useEffect(() => {
-        dispatch(fetchHeritages());
-    }, [dispatch]);
-
     const handleEditHeritage = useCallback((heritage: Heritage) => {
         setEditingHeritage(heritage);
         setShowHeritageModal(true);
@@ -59,11 +56,11 @@ function Heritage() {
 
     const confirmDeleteHeritage = useCallback(async () => {
         if (deletingHeritage) {
-            await dispatch(deleteHeritage(deletingHeritage.id));
+            await deleteMutation.mutateAsync(deletingHeritage.id);
             setShowDeleteHeritageDialog(false);
             setDeletingHeritage(null);
         }
-    }, [deletingHeritage, dispatch]);
+    }, [deleteMutation, deletingHeritage]);
 
     const handleOpenModal = useCallback(() => setShowHeritageModal(true), []);
 

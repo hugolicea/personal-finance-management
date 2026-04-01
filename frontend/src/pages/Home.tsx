@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useMemo, useState } from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import CategoryForm from '../components/CategoryForm';
@@ -9,39 +9,41 @@ import Modal from '../components/Modal';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
 import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
-    deleteCategory,
-    fetchCategories,
-} from '../store/slices/categoriesSlice';
-import { fetchHeritages } from '../store/slices/heritagesSlice';
-import { fetchInvestments } from '../store/slices/investmentsSlice';
-import { fetchRetirementAccounts } from '../store/slices/retirementAccountsSlice';
+    useCategoriesQuery,
+    useDeleteCategory,
+} from '../hooks/queries/useCategoriesQuery';
+import { useHeritagesQuery } from '../hooks/queries/useHeritagesQuery';
+import { useInvestmentsQuery } from '../hooks/queries/useInvestmentsQuery';
+import { useRetirementAccountsQuery } from '../hooks/queries/useRetirementAccountsQuery';
 import {
-    deleteTransaction,
-    fetchTransactions,
-} from '../store/slices/transactionsSlice';
+    useDeleteTransaction,
+    useTransactionsQuery,
+} from '../hooks/queries/useTransactionsQuery';
 import type { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
 import { formatDateForDisplay } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function Home() {
-    const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
+    const { data: categories = [], isLoading: categoriesLoading } =
+        useCategoriesQuery();
+    const deleteCategoryMutation = useDeleteCategory();
+    const { data: transactionData, isLoading: transactionsLoading } =
+        useTransactionsQuery();
+    const transactions = useMemo(
+        () => transactionData?.results ?? [],
+        [transactionData]
     );
-    const { transactions, loading: transactionsLoading } = useAppSelector(
-        (state) => state.transactions
-    );
-    const { investments, loading: investmentsLoading } = useAppSelector(
-        (state) => state.investments
-    );
-    const { heritages, loading: heritagesLoading } = useAppSelector(
-        (state) => state.heritages
-    );
-    const { retirementAccounts, loading: retirementAccountsLoading } =
-        useAppSelector((state) => state.retirementAccounts);
+    const deleteTransactionMutation = useDeleteTransaction();
+    const { data: investments = [], isLoading: investmentsLoading } =
+        useInvestmentsQuery();
+    const { data: heritages = [], isLoading: heritagesLoading } =
+        useHeritagesQuery();
+    const {
+        data: retirementAccounts = [],
+        isLoading: retirementAccountsLoading,
+    } = useRetirementAccountsQuery();
 
     const isLoading =
         categoriesLoading ||
@@ -75,14 +77,6 @@ function Home() {
     const [transactionDeleteError, setTransactionDeleteError] = useState<
         string | null
     >(null);
-
-    useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchTransactions({}));
-        dispatch(fetchInvestments());
-        dispatch(fetchHeritages());
-        dispatch(fetchRetirementAccounts());
-    }, [dispatch]);
 
     // Filter transactions based on selected period
     const filteredTransactions = useMemo(
@@ -131,8 +125,7 @@ function Home() {
     const confirmDeleteCategory = useCallback(async () => {
         if (deletingCategory) {
             try {
-                await dispatch(deleteCategory(deletingCategory.id)).unwrap();
-                dispatch(fetchCategories());
+                await deleteCategoryMutation.mutateAsync(deletingCategory.id);
                 setShowDeleteCategoryDialog(false);
                 setDeletingCategory(null);
                 setCategoryDeleteError(null);
@@ -143,15 +136,14 @@ function Home() {
                 );
             }
         }
-    }, [deletingCategory, dispatch]);
+    }, [deletingCategory, deleteCategoryMutation]);
 
     const confirmDeleteTransaction = useCallback(async () => {
         if (deletingTransaction) {
             try {
-                await dispatch(
-                    deleteTransaction(deletingTransaction.id)
-                ).unwrap();
-                dispatch(fetchTransactions({}));
+                await deleteTransactionMutation.mutateAsync(
+                    deletingTransaction.id
+                );
                 setShowDeleteTransactionDialog(false);
                 setDeletingTransaction(null);
                 setTransactionDeleteError(null);
@@ -162,7 +154,7 @@ function Home() {
                 );
             }
         }
-    }, [deletingTransaction, dispatch]);
+    }, [deletingTransaction, deleteTransactionMutation]);
 
     const handleCloseCategoryDeleteModal = useCallback(() => {
         setShowDeleteCategoryDialog(false);
@@ -487,6 +479,7 @@ function Home() {
                 }
                 confirmLabel='Delete'
                 cancelLabel='Cancel'
+                isConfirming={deleteCategoryMutation.isPending}
                 isDanger
             />
 

@@ -1,14 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import {
-    fetchSpendingSummary,
-    selectBudgetProgressError,
-    selectBudgetProgressLoading,
-    selectSpendingSummary,
-} from '../store/slices/budgetProgressSlice';
+import { useSpendingSummaryQuery } from '../hooks/queries/useSpendingSummaryQuery';
 import type { SpendingSummaryItem } from '../types/categories';
 import { formatCurrency } from '../utils/formatters';
 
@@ -57,16 +51,16 @@ function getProgressColors(percentage: number) {
 
 function BudgetProgressSkeleton() {
     return (
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
             {Array.from({ length: 8 }, (_, index) => (
                 <div
                     key={index}
-                    className='card bg-base-100 shadow-sm border border-base-200 p-5 flex flex-col gap-3'
+                    className='card bg-base-100 shadow-sm border border-base-200 p-3 flex flex-col gap-2'
                 >
                     <div className='h-6 bg-base-300 rounded-md motion-safe:animate-pulse' />
-                    <div className='h-8 bg-base-300 rounded-md motion-safe:animate-pulse' />
+                    <div className='h-6 bg-base-300 rounded-md motion-safe:animate-pulse' />
                     <div className='h-4 bg-base-300 rounded-md motion-safe:animate-pulse w-2/3' />
-                    <div className='h-2.5 bg-base-300 rounded-full motion-safe:animate-pulse mt-2' />
+                    <div className='h-2 bg-base-300 rounded-full motion-safe:animate-pulse mt-2' />
                     <div className='h-4 bg-base-300 rounded-md motion-safe:animate-pulse mt-2' />
                 </div>
             ))}
@@ -89,12 +83,12 @@ function BudgetCard({ category }: { category: SpendingSummaryItem }) {
 
     return (
         <article
-            className={`card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-300 p-5 flex flex-col gap-1 ${
+            className={`card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-300 p-3 flex flex-col gap-1 ${
                 isOverBudget ? 'border-l-4 border-l-error' : ''
             }`}
         >
             <div className='flex justify-between items-start mb-1'>
-                <h3 className='text-lg font-semibold text-base-content truncate pr-2'>
+                <h3 className='text-sm font-semibold text-base-content truncate pr-2'>
                     {category.name}
                 </h3>
                 {isOverBudget ? (
@@ -104,15 +98,15 @@ function BudgetCard({ category }: { category: SpendingSummaryItem }) {
                 ) : null}
             </div>
 
-            <div className='flex items-baseline justify-between mb-3'>
+            <div className='flex items-baseline justify-between mb-2'>
                 <p
-                    className={`text-3xl font-bold tabular-nums tracking-tight ${
+                    className={`text-xl font-bold tabular-nums ${
                         isOverBudget ? 'text-error' : 'text-base-content'
                     }`}
                 >
                     {formatCurrency(spent)}
                 </p>
-                <p className='text-sm font-medium text-base-content/60 tabular-nums'>
+                <p className='text-xs font-medium text-base-content/60 tabular-nums'>
                     of {formatCurrency(budget)}
                 </p>
             </div>
@@ -123,7 +117,7 @@ function BudgetCard({ category }: { category: SpendingSummaryItem }) {
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label={`${category.name} budget usage`}
-                className={`w-full h-2.5 rounded-full mt-auto ${progressTrackClass}`}
+                className={`w-full h-2 rounded-full mt-auto ${progressTrackClass}`}
             >
                 {hasBudget ? (
                     <div
@@ -162,11 +156,6 @@ function BudgetCard({ category }: { category: SpendingSummaryItem }) {
 }
 
 function BudgetProgress() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector(selectSpendingSummary);
-    const isLoading = useAppSelector(selectBudgetProgressLoading);
-    const error = useAppSelector(selectBudgetProgressError);
-
     const [selectedYear, setSelectedYear] = useState(() =>
         new Date().getFullYear()
     );
@@ -178,6 +167,15 @@ function BudgetProgress() {
         2,
         '0'
     )}`;
+    const {
+        data,
+        isLoading,
+        error: queryError,
+    } = useSpendingSummaryQuery(selectedMonthStr);
+    const categories = data?.categories ?? [];
+    const error = queryError
+        ? queryError.message ?? 'Failed to fetch spending summary'
+        : null;
 
     const isCurrentMonth =
         selectedYear === new Date().getFullYear() &&
@@ -200,10 +198,6 @@ function BudgetProgress() {
             setSelectedMonth((m) => m + 1);
         }
     }
-
-    useEffect(() => {
-        dispatch(fetchSpendingSummary(selectedMonthStr));
-    }, [dispatch, selectedMonthStr]);
 
     return (
         <div className='space-y-6'>
@@ -266,7 +260,7 @@ function BudgetProgress() {
             ) : null}
 
             {!isLoading && !error && categories.length > 0 ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
                     {categories.map((category) => (
                         <BudgetCard key={category.id} category={category} />
                     ))}

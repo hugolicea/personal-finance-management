@@ -1,3 +1,4 @@
+import { useIsFetching } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -15,9 +16,7 @@ function App() {
     const location = useLocation();
     const isAuthPage =
         location.pathname === '/login' || location.pathname === '/register';
-    const { isLoading, loadingMessage } = useSelector(
-        (state: RootState) => state.loading
-    );
+    const isFetching = useIsFetching() > 0;
     const { authChecked } = useSelector((state: RootState) => state.auth);
 
     // Verify cookie-based session on cold load — skip on auth pages to
@@ -62,9 +61,7 @@ function App() {
     // Render protected pages with MainLayout
     return (
         <ErrorBoundary>
-            {isLoading && (
-                <LoadingSpinner fullScreen message={loadingMessage} />
-            )}
+            {isFetching && <LoadingSpinner fullScreen message='Loading...' />}
             <MainLayout />
         </ErrorBoundary>
     );

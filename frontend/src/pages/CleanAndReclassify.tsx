@@ -1,24 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
 import RuleConditionBuilder from '../components/RuleConditionBuilder';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchCategories } from '../store/slices/categoriesSlice';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
 import {
-    bulkExecuteReclassificationRules,
-    createCategoryDeletionRule,
-    createReclassificationRule,
-    deleteCategoryDeletionRule,
-    deleteReclassificationRule,
-    fetchCategoryDeletionRules,
-    fetchReclassificationRules,
-    previewReclassificationRule,
-} from '../store/slices/cleanAndReclassifySlice';
-import {
-    bulkDeleteTransactions,
-    fetchTransactions,
-} from '../store/slices/transactionsSlice';
+    useBulkExecuteReclassificationRules,
+    useCategoryDeletionRulesQuery,
+    useCreateCategoryDeletionRule,
+    useCreateReclassificationRule,
+    useDeleteCategoryDeletionRule,
+    useDeleteReclassificationRule,
+    usePreviewReclassificationRule,
+    useReclassificationRulesQuery,
+} from '../hooks/queries/useCleanAndReclassifyQuery';
+import { useBulkDeleteTransactions } from '../hooks/queries/useTransactionsQuery';
 import type { ReclassificationConditions } from '../types/cleanAndReclassify';
 
 interface PreviewTransaction {
@@ -39,13 +35,20 @@ interface PreviewData {
 }
 
 function CleanAndReclassify() {
-    const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
-    );
-    const { reclassificationRules, categoryDeletionRules } = useAppSelector(
-        (state) => state.cleanAndReclassify
-    );
+    const { data: categories = [], isLoading: categoriesLoading } =
+        useCategoriesQuery();
+    const { data: reclassificationRules = [] } =
+        useReclassificationRulesQuery();
+    const { data: categoryDeletionRules = [] } =
+        useCategoryDeletionRulesQuery();
+
+    const createRuleMutation = useCreateReclassificationRule();
+    const deleteRuleMutation = useDeleteReclassificationRule();
+    const previewMutation = usePreviewReclassificationRule();
+    const bulkExecuteMutation = useBulkExecuteReclassificationRules();
+    const bulkDeleteMutation = useBulkDeleteTransactions();
+    const createDeletionRuleMutation = useCreateCategoryDeletionRule();
+    const deleteDeletionRuleMutation = useDeleteCategoryDeletionRule();
 
     // UI state
     const [selectedFromCategory, setSelectedFromCategory] = useState<
@@ -67,12 +70,6 @@ function CleanAndReclassify() {
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [ruleFormError, setRuleFormError] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
-
-    useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchReclassificationRules());
-        dispatch(fetchCategoryDeletionRules());
-    }, [dispatch]);
 
     const availableCategories = useMemo(
         () => categories.filter((cat) => cat.name),
@@ -100,19 +97,15 @@ function CleanAndReclassify() {
         }
 
         try {
-            await dispatch(
-                createReclassificationRule({
-                    from_category: selectedFromCategory
-                        ? Number(selectedFromCategory)
-                        : null,
-                    to_category: Number(selectedToCategory),
-                    conditions:
-                        Object.keys(conditions).length > 0
-                            ? conditions
-                            : undefined,
-                    rule_name: ruleName.trim() || undefined,
-                })
-            ).unwrap();
+            await createRuleMutation.mutateAsync({
+                from_category: selectedFromCategory
+                    ? Number(selectedFromCategory)
+                    : null,
+                to_category: Number(selectedToCategory),
+                conditions:
+                    Object.keys(conditions).length > 0 ? conditions : undefined,
+                rule_name: ruleName.trim() || undefined,
+            });
 
             setSelectedFromCategory('');
             setSelectedToCategory('');
@@ -125,7 +118,7 @@ function CleanAndReclassify() {
             );
         }
     }, [
-        dispatch,
+        createRuleMutation,
         selectedFromCategory,
         selectedToCategory,
         conditions,
@@ -135,7 +128,7 @@ function CleanAndReclassify() {
     const handleRemoveReclassificationRule = useCallback(
         async (ruleId: number) => {
             try {
-                await dispatch(deleteReclassificationRule(ruleId)).unwrap();
+                await deleteRuleMutation.mutateAsync(ruleId);
             } catch (error) {
                 console.error('Failed to delete reclassification rule:', error);
                 setActionError(
@@ -143,7 +136,7 @@ function CleanAndReclassify() {
                 );
             }
         },
-        [dispatch]
+        [deleteRuleMutation]
     );
 
     const handlePreviewRule = useCallback(
@@ -152,9 +145,7 @@ function CleanAndReclassify() {
             setIsLoadingPreview(true);
             setShowPreviewModal(true);
             try {
-                const result = await dispatch(
-                    previewReclassificationRule(ruleId)
-                ).unwrap();
+                const result = await previewMutation.mutateAsync(ruleId);
                 setPreviewData(result);
             } catch (error) {
                 console.error('Failed to preview rule:', error);
@@ -164,7 +155,7 @@ function CleanAndReclassify() {
                 setIsLoadingPreview(false);
             }
         },
-        [dispatch]
+        [previewMutation]
     );
 
     const handleToggleDeleteCategory = useCallback(
@@ -175,13 +166,13 @@ function CleanAndReclassify() {
 
             try {
                 if (existingRule) {
-                    await dispatch(
-                        deleteCategoryDeletionRule(existingRule.id)
-                    ).unwrap();
+                    await deleteDeletionRuleMutation.mutateAsync(
+                        existingRule.id
+                    );
                 } else {
-                    await dispatch(
-                        createCategoryDeletionRule({ category: categoryId })
-                    ).unwrap();
+                    await createDeletionRuleMutation.mutateAsync({
+                        category: categoryId,
+                    });
                 }
             } catch (error) {
                 console.error('Failed to update deletion rule:', error);
@@ -190,7 +181,11 @@ function CleanAndReclassify() {
                 );
             }
         },
-        [dispatch, categoryDeletionRules]
+        [
+            categoryDeletionRules,
+            createDeletionRuleMutation,
+            deleteDeletionRuleMutation,
+        ]
     );
 
     const handleExecuteOperations = useCallback(async () => {
@@ -205,13 +200,11 @@ function CleanAndReclassify() {
         if (reclassificationRules.length > 0) {
             try {
                 const ruleIds = reclassificationRules.map((rule) => rule.id);
-                const result = await dispatch(
-                    bulkExecuteReclassificationRules(ruleIds)
-                ).unwrap();
+                const result = await bulkExecuteMutation.mutateAsync(ruleIds);
                 totalReclassified = result.total_transactions_updated;
             } catch (error) {
                 console.error('Failed to apply reclassification rules:', error);
-                messages.push('? Failed to apply reclassification rules.');
+                messages.push('❌ Failed to apply reclassification rules.');
             }
         }
 
@@ -221,30 +214,23 @@ function CleanAndReclassify() {
                 const categoryIds = categoryDeletionRules.map(
                     (rule) => rule.category
                 );
-                const result = await dispatch(
-                    bulkDeleteTransactions({ category_ids: categoryIds })
-                ).unwrap();
+                const result = await bulkDeleteMutation.mutateAsync({
+                    category_ids: categoryIds,
+                });
                 totalDeleted = result.transactions_deleted;
             } catch (error) {
                 console.error('Failed to delete transactions:', error);
-                messages.push('? Failed to delete transactions.');
+                messages.push('❌ Failed to delete transactions.');
             }
-        }
-
-        // Refresh transactions (non-critical)
-        try {
-            await dispatch(fetchTransactions({}));
-        } catch {
-            // Silent � refresh failure doesn't affect reported results
         }
 
         if (totalReclassified > 0) {
             messages.unshift(
-                `? ${totalReclassified} transaction(s) reclassified`
+                `✅ ${totalReclassified} transaction(s) reclassified`
             );
         }
         if (totalDeleted > 0) {
-            messages.unshift(`??? ${totalDeleted} transaction(s) deleted`);
+            messages.unshift(`🗑️ ${totalDeleted} transaction(s) deleted`);
         }
         if (messages.length === 0) {
             messages.push(
@@ -255,7 +241,12 @@ function CleanAndReclassify() {
         setSuccessMessage(messages);
         setShowSuccessModal(true);
         setIsProcessing(false);
-    }, [dispatch, reclassificationRules, categoryDeletionRules]);
+    }, [
+        bulkDeleteMutation,
+        bulkExecuteMutation,
+        reclassificationRules,
+        categoryDeletionRules,
+    ]);
 
     const hasOperations =
         reclassificationRules.length > 0 || categoryDeletionRules.length > 0;
@@ -281,7 +272,7 @@ function CleanAndReclassify() {
         <div className='space-y-6'>
             <div className='mb-6'>
                 <h1 className='text-2xl font-bold mb-4'>
-                    Clean and Recalssify
+                    Clean and Reclassify
                 </h1>
 
                 <p className='text-base-content/70'>
@@ -312,7 +303,7 @@ function CleanAndReclassify() {
                 <div className='card bg-base-100 shadow-sm p-6'>
                     <h2 className='text-xl font-semibold text-base-content mb-4 flex items-center'>
                         <span className='text-2xl mr-2' aria-hidden='true'>
-                            ??
+                            🔄
                         </span>
                         Reclassification Rules
                     </h2>
@@ -410,7 +401,7 @@ function CleanAndReclassify() {
                             disabled={!selectedToCategory}
                             className='w-full bg-primary hover:bg-primary/90 text-primary-content px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                         >
-                            <span aria-hidden='true'>?</span> Add Rule
+                            <span aria-hidden='true'>➕</span> Add Rule
                         </button>
                         {ruleFormError && (
                             <p role='alert' className='text-sm text-error mt-2'>
@@ -569,7 +560,7 @@ function CleanAndReclassify() {
                                                         title='Preview matching transactions'
                                                     >
                                                         <span aria-hidden='true'>
-                                                            ???
+                                                            👁️
                                                         </span>{' '}
                                                         Preview
                                                     </button>
@@ -587,7 +578,7 @@ function CleanAndReclassify() {
                                                         title='Delete rule'
                                                     >
                                                         <span aria-hidden='true'>
-                                                            ???
+                                                            🗑️
                                                         </span>
                                                     </button>
                                                 </div>
@@ -604,7 +595,7 @@ function CleanAndReclassify() {
                 <div className='card bg-base-100 shadow-sm p-6'>
                     <h2 className='text-xl font-semibold text-base-content mb-4 flex items-center'>
                         <span className='text-2xl mr-2' aria-hidden='true'>
-                            ???
+                            🗑️
                         </span>
                         Delete Transactions
                     </h2>
@@ -644,7 +635,7 @@ function CleanAndReclassify() {
                     {categoryDeletionRules.length > 0 && (
                         <div className='mt-4 p-3 bg-error/10 border border-error/30 rounded-md'>
                             <p className='text-sm text-error'>
-                                ?? {categoryDeletionRules.length} category(ies)
+                                🗑️ {categoryDeletionRules.length} category(ies)
                                 selected for deletion
                             </p>
                         </div>
@@ -656,19 +647,19 @@ function CleanAndReclassify() {
             {hasOperations && (
                 <div className='mt-8 bg-gradient-to-r from-primary/10 to-error/10 shadow-lg rounded-lg p-6 border-2 border-base-300'>
                     <h3 className='text-lg font-semibold text-base-content mb-3'>
-                        ?? Operations Summary
+                        📋 Operations Summary
                     </h3>
                     <div className='space-y-2 text-sm opacity-70 mb-4'>
                         {reclassificationRules.length > 0 && (
                             <p>
-                                �{' '}
+                                🔄{' '}
                                 <strong>{reclassificationRules.length}</strong>{' '}
                                 reclassification rule(s) will be applied
                             </p>
                         )}
                         {categoryDeletionRules.length > 0 && (
                             <p>
-                                � Transactions from{' '}
+                                🗑️ Transactions from{' '}
                                 <strong>{categoryDeletionRules.length}</strong>{' '}
                                 category(ies) will be deleted
                             </p>
@@ -678,7 +669,7 @@ function CleanAndReclassify() {
                     <div className='bg-warning/10 border-l-4 border-warning p-4 mb-4'>
                         <div className='flex'>
                             <div className='flex-shrink-0'>
-                                <span className='text-xl'>??</span>
+                                <span className='text-xl'>⚠️</span>
                             </div>
                             <div className='ml-3'>
                                 <p className='text-sm text-warning-content'>
@@ -721,7 +712,7 @@ function CleanAndReclassify() {
                             </span>
                         ) : (
                             <>
-                                <span aria-hidden='true'>??</span> Execute Clean
+                                <span aria-hidden='true'>🚀</span> Execute Clean
                                 and Reclassify
                             </>
                         )}
@@ -732,7 +723,7 @@ function CleanAndReclassify() {
             {!hasOperations && (
                 <div className='mt-8 bg-base-200 rounded-lg p-8 text-center'>
                     <p className='text-base-content/60 text-lg'>
-                        ?? Add reclassification rules or select categories to
+                        ℹ️ Add reclassification rules or select categories to
                         delete to get started
                     </p>
                 </div>
@@ -757,7 +748,7 @@ function CleanAndReclassify() {
                                 <ul className='list-disc list-inside ml-2 text-sm'>
                                     {reclassificationRules.map((rule) => (
                                         <li key={rule.id}>
-                                            {rule.from_category_name} ?{' '}
+                                            {rule.from_category_name} →{' '}
                                             {rule.to_category_name}
                                         </li>
                                     ))}
@@ -845,7 +836,7 @@ function CleanAndReclassify() {
                                     <strong>
                                         {previewData.from_category_name}
                                     </strong>{' '}
-                                    ? To:{' '}
+                                    → To:{' '}
                                     <strong>
                                         {previewData.to_category_name}
                                     </strong>

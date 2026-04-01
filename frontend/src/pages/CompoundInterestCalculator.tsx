@@ -223,11 +223,11 @@ function CompoundInterestCalculator() {
                     className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
-                    ? Back
+                    ← Back
                 </button>
                 <div>
                     <h1 className='text-2xl font-bold text-base-content'>
-                        ?? Compound Interest Calculator
+                        📈 Compound Interest Calculator
                     </h1>
                     <p className='mt-0.5 text-sm text-base-content/60'>
                         See how your money grows with the power of compounding.

@@ -3,11 +3,10 @@
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch } from '../hooks/redux';
 import {
-    createRetirementAccount,
-    updateRetirementAccount,
-} from '../store/slices/retirementAccountsSlice';
+    useCreateRetirementAccount,
+    useUpdateRetirementAccount,
+} from '../hooks/queries/useRetirementAccountsQuery';
 import FormAutoSave from './FormAutoSave';
 
 interface RetirementAccountFormProps {
@@ -32,7 +31,8 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
     retirementAccount,
     onClose,
 }) => {
-    const dispatch = useAppDispatch();
+    const createMutation = useCreateRetirementAccount();
+    const updateMutation = useUpdateRetirementAccount();
 
     const initialValues = {
         name: retirementAccount?.name || '',
@@ -102,14 +102,12 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
     const handleSubmit = async (values: typeof initialValues) => {
         try {
             if (retirementAccount) {
-                await dispatch(
-                    updateRetirementAccount({
-                        id: retirementAccount.id,
-                        data: values,
-                    })
-                );
+                await updateMutation.mutateAsync({
+                    id: retirementAccount.id,
+                    data: values,
+                });
             } else {
-                await dispatch(createRetirementAccount(values));
+                await createMutation.mutateAsync(values);
             }
             onClose();
         } catch (error) {

@@ -1,11 +1,6 @@
 ﻿import React, { useRef, useState } from 'react';
 
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchCategories } from '../store/slices/categoriesSlice';
-import {
-    fetchTransactions,
-    uploadBankStatement,
-} from '../store/slices/transactionsSlice';
+import { useUploadBankStatement } from '../hooks/queries/useTransactionsQuery';
 import Modal from './Modal';
 
 interface TransactionResult {
@@ -33,8 +28,9 @@ interface UploadResult {
 const BankStatementUpload: React.FC<{ accountId?: number }> = ({
     accountId,
 }) => {
-    const dispatch = useAppDispatch();
-    const { loading, error } = useAppSelector((state) => state.transactions);
+    const uploadBankStatementMutation = useUploadBankStatement();
+    const loading = uploadBankStatementMutation.isPending;
+    const error = uploadBankStatementMutation.error?.message;
     const [showModal, setShowModal] = useState(false);
     const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
     const [dragActive, setDragActive] = useState(false);
@@ -47,15 +43,12 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
         }
 
         try {
-            const result = await dispatch(
-                uploadBankStatement({ file, accountId })
-            ).unwrap();
+            const result = await uploadBankStatementMutation.mutateAsync({
+                file,
+                accountId,
+            });
             setUploadResult(result);
             setShowModal(true);
-
-            // Refresh transactions and categories list
-            dispatch(fetchTransactions({}));
-            dispatch(fetchCategories());
         } catch (error) {
             console.error('Upload failed:', error);
             alert('Failed to upload file. Please try again.');

@@ -1,33 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteButtons from '../components/EditDeleteButtons';
 import Modal from '../components/Modal';
 import RetirementAccountForm from '../components/RetirementAccountForm';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import type { RetirementAccount } from '../hooks/queries/useRetirementAccountsQuery';
 import {
-    deleteRetirementAccount,
-    fetchRetirementAccounts,
-} from '../store/slices/retirementAccountsSlice';
+    useDeleteRetirementAccount,
+    useRetirementAccountsQuery,
+} from '../hooks/queries/useRetirementAccountsQuery';
 import { formatCurrency } from '../utils/formatters';
-
-interface RetirementAccount {
-    id: number;
-    name: string;
-    account_type: string;
-    provider: string;
-    account_number: string | null;
-    current_balance: number;
-    monthly_contribution: number;
-    employer_match_percentage: number;
-    employer_match_limit: number;
-    risk_level: string;
-    target_retirement_age: number;
-    notes: string | null;
-    annual_contribution: number;
-    employer_match_amount: number;
-    total_annual_contribution: number;
-}
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
     traditional_401k: 'Traditional 401(k)',
@@ -49,10 +31,10 @@ const RISK_LEVEL_LABELS: Record<string, string> = {
 };
 
 function Retirement() {
-    const dispatch = useAppDispatch();
-    const { retirementAccounts, loading, deleting } = useAppSelector(
-        (state) => state.retirementAccounts
-    );
+    const { data: retirementAccounts = [], isLoading: loading } =
+        useRetirementAccountsQuery();
+    const deleteMutation = useDeleteRetirementAccount();
+    const deleting = deleteMutation.isPending;
 
     const [showRetirementAccountModal, setShowRetirementAccountModal] =
         useState(false);
@@ -64,10 +46,6 @@ function Retirement() {
     ] = useState(false);
     const [deletingRetirementAccount, setDeletingRetirementAccount] =
         useState<RetirementAccount | null>(null);
-
-    useEffect(() => {
-        dispatch(fetchRetirementAccounts());
-    }, [dispatch]);
 
     const handleEditRetirementAccount = useCallback(
         (retirementAccount: RetirementAccount) => {
@@ -87,13 +65,11 @@ function Retirement() {
 
     const confirmDeleteRetirementAccount = useCallback(async () => {
         if (deletingRetirementAccount) {
-            await dispatch(
-                deleteRetirementAccount(deletingRetirementAccount.id)
-            );
+            await deleteMutation.mutateAsync(deletingRetirementAccount.id);
             setShowDeleteRetirementAccountDialog(false);
             setDeletingRetirementAccount(null);
         }
-    }, [deletingRetirementAccount, dispatch]);
+    }, [deletingRetirementAccount, deleteMutation]);
 
     const closeModal = useCallback(() => {
         setShowRetirementAccountModal(false);

@@ -1,11 +1,11 @@
 ﻿import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch } from '../hooks/redux';
 import {
-    createInvestment,
-    updateInvestment,
-} from '../store/slices/investmentsSlice';
+    InvestmentPayload,
+    useCreateInvestment,
+    useUpdateInvestment,
+} from '../hooks/queries/useInvestmentsQuery';
 import { Investment } from '../types/investments';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 import FormAutoSave from './FormAutoSave';
@@ -95,7 +95,8 @@ const validationSchema = Yup.object({
 });
 
 function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
-    const dispatch = useAppDispatch();
+    const createMutation = useCreateInvestment();
+    const updateMutation = useUpdateInvestment();
 
     const initialValues = {
         symbol: investment?.symbol || '',
@@ -116,20 +117,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
 
     const handleSubmit = async (values: typeof initialValues) => {
         try {
-            const data: {
-                symbol: string;
-                name: string;
-                investment_type: string;
-                quantity: number;
-                purchase_price: number;
-                current_price?: number;
-                purchase_date: string;
-                notes?: string;
-                principal_amount?: number;
-                interest_rate?: number;
-                compounding_frequency?: string;
-                term_years?: number;
-            } = {
+            const data: InvestmentPayload = {
                 symbol: values.symbol,
                 name: values.name,
                 investment_type: values.investment_type,
@@ -169,14 +157,12 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
             };
 
             if (investment) {
-                await dispatch(
-                    updateInvestment({
-                        id: investment.id,
-                        data,
-                    })
-                );
+                await updateMutation.mutateAsync({
+                    id: investment.id,
+                    data,
+                });
             } else {
-                await dispatch(createInvestment(data));
+                await createMutation.mutateAsync(data);
             }
             onClose();
         } catch (error) {

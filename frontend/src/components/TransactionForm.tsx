@@ -3,12 +3,11 @@
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchCategories } from '../store/slices/categoriesSlice';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
 import {
-    createTransaction,
-    updateTransaction,
-} from '../store/slices/transactionsSlice';
+    useCreateTransaction,
+    useUpdateTransaction,
+} from '../hooks/queries/useTransactionsQuery';
 import type { Transaction } from '../types/transactions';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 import CategorySelect from './CategorySelect';
@@ -35,16 +34,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     accountId,
     onDirtyChange,
 }) => {
-    const dispatch = useAppDispatch();
-    const { categories, loading: categoriesLoading } = useAppSelector(
-        (state) => state.categories
-    );
-
-    React.useEffect(() => {
-        if (categories.length === 0) {
-            dispatch(fetchCategories());
-        }
-    }, [dispatch, categories.length]);
+    const { data: categories = [], isLoading: categoriesLoading } =
+        useCategoriesQuery();
+    const createTransactionMutation = useCreateTransaction();
+    const updateTransactionMutation = useUpdateTransaction();
 
     const initialValues: TransactionFormValues = {
         amount: transaction?.amount ? String(Math.abs(transaction.amount)) : '',
@@ -93,20 +86,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
 
             if (transaction) {
                 // Update existing transaction - don't include transaction_type
-                await dispatch(
-                    updateTransaction({
-                        id: transaction.id!,
-                        ...baseData,
-                    })
-                ).unwrap();
+                await updateTransactionMutation.mutateAsync({
+                    id: transaction.id!,
+                    ...baseData,
+                });
             } else {
                 // Create new transaction
-                await dispatch(
-                    createTransaction({
-                        ...baseData,
-                        account: accountId!,
-                    })
-                ).unwrap();
+                await createTransactionMutation.mutateAsync({
+                    ...baseData,
+                    account: accountId!,
+                });
             }
             onClose();
         } catch (error) {
