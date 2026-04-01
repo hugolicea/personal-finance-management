@@ -191,8 +191,8 @@ function Home() {
                 {isLoading ? (
                     <div className='flex items-center justify-center min-h-screen'>
                         <div className='text-center'>
-                            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4'></div>
-                            <p className='text-gray-600'>
+                            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4'></div>
+                            <p className='text-base-content/70'>
                                 Loading dashboard...
                             </p>
                         </div>
@@ -205,7 +205,7 @@ function Home() {
                                     <h1 className='text-2xl font-bold text-base-content'>
                                         Dashboard
                                     </h1>
-                                    <p className='text-sm text-gray-600 mt-6'>
+                                    <p className='text-sm text-base-content/70 mt-6'>
                                         {filteredTransactions.length}{' '}
                                         transaction
                                         {filteredTransactions.length !== 1
@@ -224,7 +224,7 @@ function Home() {
                                 </div>
                                 <div className='flex flex-wrap items-center gap-4 mt-12'>
                                     <div>
-                                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                        <label className='block text-sm font-medium text-base-content/80 mb-1'>
                                             Year
                                         </label>
                                         <select
@@ -234,7 +234,7 @@ function Home() {
                                                     parseInt(e.target.value)
                                                 )
                                             }
-                                            className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500'
+                                            className='px-3 py-2 border border-base-300 bg-base-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary'
                                         >
                                             {Array.from(
                                                 { length: 5 },
@@ -256,7 +256,7 @@ function Home() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                        <label className='block text-sm font-medium text-base-content/80 mb-1'>
                                             Month
                                         </label>
                                         <select
@@ -267,7 +267,7 @@ function Home() {
                                                 )
                                             }
                                             disabled={filterByYear}
-                                            className='px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                                            className='px-3 py-2 border border-base-300 bg-base-100 rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-base-200 disabled:cursor-not-allowed'
                                         >
                                             <option value={1}>January</option>
                                             <option value={2}>February</option>
@@ -284,7 +284,7 @@ function Home() {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className='block text-sm font-medium text-gray-700 mb-1'>
+                                        <label className='block text-sm font-medium text-base-content/80 mb-1'>
                                             Filter
                                         </label>
                                         <div className='flex items-center space-x-2'>
@@ -294,8 +294,8 @@ function Home() {
                                                 }
                                                 className={`px-3 py-2 text-sm rounded-md border ${
                                                     !filterByYear
-                                                        ? 'bg-red-600 text-white border-red-600'
-                                                        : 'bg-white text-gray-700 border-gray-300'
+                                                        ? 'bg-primary text-primary-content border-primary'
+                                                        : 'bg-base-100 text-base-content/80 border-base-300'
                                                 }`}
                                             >
                                                 Month
@@ -306,8 +306,8 @@ function Home() {
                                                 }
                                                 className={`px-3 py-2 text-sm rounded-md border ${
                                                     filterByYear
-                                                        ? 'bg-red-600 text-white border-red-600'
-                                                        : 'bg-white text-gray-700 border-gray-300'
+                                                        ? 'bg-primary text-primary-content border-primary'
+                                                        : 'bg-base-100 text-base-content/80 border-base-300'
                                                 }`}
                                             >
                                                 Year
@@ -325,7 +325,7 @@ function Home() {
                         </div>
 
                         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <h3 className='text-lg leading-6 font-medium text-base-content mb-4'>
                                         Spending by Category
@@ -337,7 +337,7 @@ function Home() {
                                 </div>
                             </div>
 
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <div className='flex items-center justify-between mb-4'>
                                         <h3 className='text-lg leading-6 font-medium text-base-content'>
@@ -346,12 +346,12 @@ function Home() {
                                     </div>
                                     <div className='space-y-3'>
                                         {transactionsLoading ? (
-                                            <p className='text-gray-500 text-center py-4'>
+                                            <p className='text-base-content/60 text-center py-4'>
                                                 Loading...
                                             </p>
                                         ) : filteredTransactions.length ===
                                           0 ? (
-                                            <p className='text-gray-500 text-center py-4'>
+                                            <p className='text-base-content/60 text-center py-4'>
                                                 No transactions for this period
                                             </p>
                                         ) : (
@@ -359,15 +359,15 @@ function Home() {
                                                 (transaction) => (
                                                     <div
                                                         key={transaction.id}
-                                                        className='flex items-center justify-between p-3 bg-gray-50 rounded-lg'
+                                                        className='flex items-center justify-between p-3 bg-base-200 rounded-lg'
                                                     >
                                                         <div className='flex-1'>
-                                                            <p className='text-sm font-medium text-gray-900'>
+                                                            <p className='text-sm font-medium text-base-content'>
                                                                 {
                                                                     transaction.description
                                                                 }
                                                             </p>
-                                                            <p className='text-xs text-gray-500'>
+                                                            <p className='text-xs text-base-content/60'>
                                                                 {formatDateForDisplay(
                                                                     transaction.date
                                                                 )}
@@ -381,8 +381,8 @@ function Home() {
                                                                             transaction.amount
                                                                         )
                                                                     ) < 0
-                                                                        ? 'text-red-600'
-                                                                        : 'text-green-600'
+                                                                        ? 'text-error'
+                                                                        : 'text-success'
                                                                 }`}
                                                             >
                                                                 {formatCurrency(
@@ -404,7 +404,7 @@ function Home() {
                         </div>
 
                         <div className='mb-6'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <h3 className='text-lg leading-6 font-medium text-base-content mb-4'>
                                         Annual Spending Trends
@@ -418,7 +418,7 @@ function Home() {
                         </div>
 
                         <div className='mb-6'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <h3 className='text-lg leading-6 font-medium text-base-content mb-4'>
                                         Investments Overview
@@ -431,7 +431,7 @@ function Home() {
                         </div>
 
                         <div className='mb-6'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <h3 className='text-lg leading-6 font-medium text-base-content mb-4'>
                                         Heritage Overview
@@ -442,7 +442,7 @@ function Home() {
                         </div>
 
                         <div className='mb-6'>
-                            <div className='bg-white overflow-hidden shadow rounded-lg'>
+                            <div className='bg-base-100 overflow-hidden shadow rounded-lg'>
                                 <div className='p-6'>
                                     <h3 className='text-lg leading-6 font-medium text-base-content mb-4'>
                                         Retirement Overview
@@ -479,7 +479,7 @@ function Home() {
                         <strong>{deletingCategory?.name}</strong>"? This action
                         cannot be undone.
                         {categoryDeleteError && (
-                            <p className='mt-2 text-sm text-red-600'>
+                            <p className='mt-2 text-sm text-error'>
                                 {categoryDeleteError}
                             </p>
                         )}
@@ -501,7 +501,7 @@ function Home() {
                         <strong>{deletingTransaction?.description}</strong>"?
                         This action cannot be undone.
                         {transactionDeleteError && (
-                            <p className='mt-2 text-sm text-red-600'>
+                            <p className='mt-2 text-sm text-error'>
                                 {transactionDeleteError}
                             </p>
                         )}

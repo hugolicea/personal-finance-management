@@ -304,7 +304,7 @@ function Balance() {
                                 <div className='text-sm font-semibold text-error tabular-nums'>
                                     {formatCurrency(spent)}
                                 </div>
-                                <div className='text-xs text-gray-400 mt-0.5'>
+                                <div className='text-xs text-base-content/50 mt-0.5'>
                                     No budget set
                                 </div>
                             </div>
@@ -315,15 +315,15 @@ function Balance() {
                     const isOver = spent > budget;
                     const isWarn = !isOver && pct >= 75;
                     const barColor = isOver
-                        ? 'bg-red-500'
+                        ? 'bg-error'
                         : isWarn
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500';
+                          ? 'bg-warning'
+                          : 'bg-success';
                     const trackColor = isOver
-                        ? 'bg-red-100'
+                        ? 'bg-error/20'
                         : isWarn
-                          ? 'bg-yellow-100'
-                          : 'bg-green-100';
+                          ? 'bg-warning/20'
+                          : 'bg-success/20';
 
                     return (
                         <div className='min-w-[160px]'>
@@ -331,7 +331,7 @@ function Balance() {
                                 <span className='font-semibold text-error tabular-nums'>
                                     {formatCurrency(spent)}
                                 </span>
-                                <span className='text-gray-400 tabular-nums'>
+                                <span className='text-base-content/50 tabular-nums'>
                                     of {formatCurrency(budget)}
                                 </span>
                             </div>
@@ -355,7 +355,7 @@ function Balance() {
                                 className={`text-xs mt-1 tabular-nums ${
                                     isOver
                                         ? 'text-error font-semibold'
-                                        : 'text-gray-400'
+                                        : 'text-base-content/50'
                                 }`}
                             >
                                 {isOver
@@ -603,12 +603,12 @@ function Balance() {
                 <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
                     {/* Spends Table */}
                     <div className='card bg-base-100 shadow-sm overflow-hidden'>
-                        <div className='px-6 py-4 bg-red-50 border-b border-red-200'>
+                        <div className='px-6 py-4 bg-error/10 border-b border-error/30'>
                             <div className='flex items-center justify-between'>
                                 <div className='flex items-center'>
                                     <span
                                         aria-hidden='true'
-                                        className='text-lg font-medium text-red-900'
+                                        className='text-lg font-medium text-error'
                                     >
                                         💸
                                     </span>
@@ -620,7 +620,7 @@ function Balance() {
                                     <div className='text-lg font-semibold text-error tabular-nums'>
                                         {formatCurrency(spendTotalAmount)}
                                     </div>
-                                    <div className='text-xs text-gray-400 mt-0.5 tabular-nums'>
+                                    <div className='text-xs text-base-content/50 mt-0.5 tabular-nums'>
                                         of {formatCurrency(spendTotalBudget)}{' '}
                                         budget
                                     </div>
@@ -671,7 +671,7 @@ function Balance() {
                                                                       ? 'descending'
                                                                       : 'none'
                                                             }
-                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-base-200'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -707,7 +707,7 @@ function Balance() {
                                                     .map((cell) => (
                                                         <td
                                                             key={cell.id}
-                                                            className='px-4 py-2 text-sm text-gray-900'
+                                                            className='px-4 py-2 text-sm text-base-content'
                                                         >
                                                             {flexRender(
                                                                 cell.column
@@ -728,12 +728,12 @@ function Balance() {
 
                     {/* Incomes Table */}
                     <div className='card bg-base-100 shadow-sm overflow-hidden'>
-                        <div className='px-6 py-4 bg-green-50 border-b border-green-200'>
+                        <div className='px-6 py-4 bg-success/10 border-b border-success/30'>
                             <div className='flex items-center justify-between'>
                                 <div className='flex items-center'>
                                     <span
                                         aria-hidden='true'
-                                        className='text-lg font-medium text-green-700'
+                                        className='text-lg font-medium text-success'
                                     >
                                         💰
                                     </span>
@@ -742,7 +742,7 @@ function Balance() {
                                     </h3>
                                 </div>
                                 <div className='text-right'>
-                                    <div className='text-sm text-gray-600'>
+                                    <div className='text-sm text-base-content/70'>
                                         Total
                                     </div>
                                     <div className='text-lg font-semibold text-success tabular-nums'>
@@ -795,7 +795,7 @@ function Balance() {
                                                                       ? 'descending'
                                                                       : 'none'
                                                             }
-                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-base-200'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -831,7 +831,7 @@ function Balance() {
                                                     .map((cell) => (
                                                         <td
                                                             key={cell.id}
-                                                            className='px-4 py-2 text-sm text-gray-900'
+                                                            className='px-4 py-2 text-sm text-base-content'
                                                         >
                                                             {flexRender(
                                                                 cell.column
@@ -878,7 +878,7 @@ function Balance() {
                                                       ? 'descending'
                                                       : 'none'
                                             }
-                                            className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-gray-100'
+                                            className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-base-200'
                                         >
                                             <div className='flex items-center gap-1'>
                                                 {
@@ -900,7 +900,7 @@ function Balance() {
                                 <tr>
                                     <td
                                         colSpan={4}
-                                        className='px-4 py-12 text-center text-gray-400'
+                                        className='px-4 py-12 text-center text-base-content/50'
                                     >
                                         No transactions found.
                                     </td>

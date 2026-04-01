@@ -75,10 +75,21 @@ class BankAccountViewSet(viewsets.ModelViewSet):
     ordering = ["name"]
 
     def get_queryset(self):
-        now = timezone.now()
+        month_param = self.request.query_params.get("month", "")
+        if month_param and len(month_param) == 7 and month_param[4] == "-":
+            try:
+                year = int(month_param[:4])
+                month = int(month_param[5:])
+            except ValueError:
+                now = timezone.now()
+                year, month = now.year, now.month
+        else:
+            now = timezone.now()
+            year, month = now.year, now.month
+
         month_filter = Q(
-            transactions__date__year=now.year,
-            transactions__date__month=now.month,
+            transactions__date__year=year,
+            transactions__date__month=month,
         )
         return (
             BankAccount.objects.filter(user=self.request.user)
@@ -188,7 +199,7 @@ def balance_by_period(request, period):
             status=400,
         )
 
-    now = datetime.now().date()
+    now = timezone.localdate()
     if period == "week":
         start = now - timedelta(days=7)
     elif period == "month":
@@ -371,12 +382,23 @@ def category_spending_by_period(request, period):
 @permission_classes([IsAuthenticated])
 def spending_summary(request):
     """Get current month spending grouped by spend category."""
-    now = timezone.now()
-    start = now.date().replace(day=1)
-    if now.month == 12:
-        end = now.date().replace(year=now.year + 1, month=1, day=1) - timedelta(days=1)
+    month_param = request.query_params.get("month", "")
+    if month_param and len(month_param) == 7 and month_param[4] == "-":
+        try:
+            year = int(month_param[:4])
+            month_num = int(month_param[5:])
+        except ValueError:
+            now = timezone.now()
+            year, month_num = now.year, now.month
     else:
-        end = now.date().replace(month=now.month + 1, day=1) - timedelta(days=1)
+        now = timezone.now()
+        year, month_num = now.year, now.month
+
+    start = datetime(year, month_num, 1).date()
+    if month_num == 12:
+        end = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+    else:
+        end = datetime(year, month_num + 1, 1).date() - timedelta(days=1)
 
     spending_dict = _get_spending_by_category(request.user, start, end)
 
@@ -405,7 +427,7 @@ def spending_summary(request):
 
     return JsonResponse(
         {
-            "month": f"{timezone.now().year:04d}-{timezone.now().month:02d}",
+            "month": f"{year:04d}-{month_num:02d}",
             "categories": result,
         }
     )

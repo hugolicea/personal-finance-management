@@ -10,6 +10,7 @@ import {
     selectSpendingSummary,
 } from '../store/slices/budgetProgressSlice';
 import type { SpendingSummaryItem } from '../types/categories';
+import { getCurrentMonthStr } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
 
 function formatMonthLabel(month: string): string {
@@ -168,9 +169,7 @@ function BudgetProgress() {
     const error = useAppSelector(selectBudgetProgressError);
 
     useEffect(() => {
-        const currentMonthStr = `${new Date().getFullYear()}-${String(
-            new Date().getMonth() + 1
-        ).padStart(2, '0')}`;
+        const currentMonthStr = getCurrentMonthStr();
         if (categories.length === 0 || month !== currentMonthStr) {
             dispatch(fetchSpendingSummary());
         }

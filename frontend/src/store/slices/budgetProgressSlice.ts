@@ -11,6 +11,7 @@ import type {
     SpendingSummaryResponse,
 } from '../../types/categories';
 import apiClient from '../../utils/apiClient';
+import { getCurrentMonthStr } from '../../utils/dateHelpers';
 
 interface BudgetProgressState {
     month: string;
@@ -32,7 +33,10 @@ export const fetchSpendingSummary = createAsyncThunk<
     { rejectValue: string }
 >('budgetProgress/fetchSpendingSummary', async (_, { rejectWithValue }) => {
     try {
-        const response = await apiClient.get('/api/v1/spending-summary/');
+        const month = getCurrentMonthStr();
+        const response = await apiClient.get(
+            `/api/v1/spending-summary/?month=${month}`
+        );
         return response.data;
     } catch (err: unknown) {
         if (isAxiosError(err)) {

@@ -32,11 +32,11 @@ class ErrorBoundary extends Component<Props, State> {
             }
 
             return (
-                <div className='min-h-screen flex items-center justify-center bg-gray-100'>
+                <div className='min-h-screen flex items-center justify-center bg-base-200'>
                     <div className='max-w-md w-full bg-base-100 shadow-lg rounded-lg p-6'>
-                        <div className='flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full'>
+                        <div className='flex items-center justify-center w-12 h-12 mx-auto bg-error/20 rounded-full'>
                             <svg
-                                className='w-6 h-6 text-red-600'
+                                className='w-6 h-6 text-error'
                                 fill='none'
                                 strokeLinecap='round'
                                 strokeLinejoin='round'
@@ -47,17 +47,17 @@ class ErrorBoundary extends Component<Props, State> {
                                 <path d='M6 18L18 6M6 6l12 12'></path>
                             </svg>
                         </div>
-                        <h3 className='mt-4 text-lg font-medium text-gray-900 text-center'>
+                        <h3 className='mt-4 text-lg font-medium text-base-content text-center'>
                             Something went wrong
                         </h3>
-                        <p className='mt-2 text-sm text-gray-600 text-center'>
+                        <p className='mt-2 text-sm text-base-content/70 text-center'>
                             {this.state.error?.message ||
                                 'An unexpected error occurred'}
                         </p>
                         <div className='mt-6'>
                             <button
                                 onClick={() => window.location.reload()}
-                                className='w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                                className='btn btn-primary w-full px-4 py-2'
                             >
                                 Reload Page
                             </button>

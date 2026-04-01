@@ -82,3 +82,8 @@ export function getTodayDate(): string {
 
     return `${year}-${month}-${day}`;
 }
+
+export function getCurrentMonthStr(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}

@@ -107,10 +107,10 @@ function RuleConditionBuilder({
     return (
         <div className='space-y-4 border-t border-base-300 pt-4 mt-4'>
             <div className='flex items-center justify-between'>
-                <h3 className='text-sm font-medium text-gray-700'>
+                <h3 className='text-sm font-medium text-base-content/80'>
                     🎯 Advanced Conditions
                     {hasConditions && (
-                        <span className='ml-2 text-xs text-blue-600 font-normal'>
+                        <span className='ml-2 text-xs text-primary font-normal'>
                             (Active)
                         </span>
                     )}
@@ -119,7 +119,7 @@ function RuleConditionBuilder({
 
             {/* Description Contains */}
             <div>
-                <label className='block text-xs font-medium text-gray-600 mb-1'>
+                <label className='block text-xs font-medium text-base-content/70 mb-1'>
                     Description Contains (any of these)
                 </label>
                 <div className='flex gap-2 mb-2'>
@@ -141,7 +141,7 @@ function RuleConditionBuilder({
                     <button
                         type='button'
                         onClick={handleAddDescriptionContains}
-                        className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors'
+                        className='btn btn-primary btn-sm'
                     >
                         Add
                     </button>
@@ -153,7 +153,7 @@ function RuleConditionBuilder({
                                 (text, index) => (
                                     <span
                                         key={index}
-                                        className='inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded'
+                                        className='inline-flex items-center px-2 py-1 text-xs bg-success/20 text-success rounded'
                                     >
                                         {text}
                                         <button
@@ -163,7 +163,7 @@ function RuleConditionBuilder({
                                                     index
                                                 )
                                             }
-                                            className='ml-1 text-green-600 hover:text-green-800'
+                                            className='ml-1 text-success hover:text-success/80'
                                         >
                                             ×
                                         </button>
@@ -176,7 +176,7 @@ function RuleConditionBuilder({
 
             {/* Description NOT Contains */}
             <div>
-                <label className='block text-xs font-medium text-gray-600 mb-1'>
+                <label className='block text-xs font-medium text-base-content/70 mb-1'>
                     Description Does NOT Contain
                 </label>
                 <div className='flex gap-2 mb-2'>
@@ -198,7 +198,7 @@ function RuleConditionBuilder({
                     <button
                         type='button'
                         onClick={handleAddDescriptionNotContains}
-                        className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors'
+                        className='btn btn-primary btn-sm'
                     >
                         Add
                     </button>
@@ -210,7 +210,7 @@ function RuleConditionBuilder({
                                 (text, index) => (
                                     <span
                                         key={index}
-                                        className='inline-flex items-center px-2 py-1 text-xs bg-red-100 text-red-800 rounded'
+                                        className='inline-flex items-center px-2 py-1 text-xs bg-error/20 text-error rounded'
                                     >
                                         {text}
                                         <button
@@ -220,7 +220,7 @@ function RuleConditionBuilder({
                                                     index
                                                 )
                                             }
-                                            className='ml-1 text-red-600 hover:text-red-800'
+                                            className='ml-1 text-error hover:text-error/80'
                                         >
                                             ×
                                         </button>
@@ -234,7 +234,7 @@ function RuleConditionBuilder({
             {/* Amount Range */}
             <div className='grid grid-cols-2 gap-2'>
                 <div>
-                    <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    <label className='block text-xs font-medium text-base-content/70 mb-1'>
                         Amount Min
                     </label>
                     <input
@@ -249,7 +249,7 @@ function RuleConditionBuilder({
                     />
                 </div>
                 <div>
-                    <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    <label className='block text-xs font-medium text-base-content/70 mb-1'>
                         Amount Max
                     </label>
                     <input
@@ -268,7 +268,7 @@ function RuleConditionBuilder({
             {/* Date Range */}
             <div className='grid grid-cols-2 gap-2'>
                 <div>
-                    <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    <label className='block text-xs font-medium text-base-content/70 mb-1'>
                         Date From
                     </label>
                     <input
@@ -281,7 +281,7 @@ function RuleConditionBuilder({
                     />
                 </div>
                 <div>
-                    <label className='block text-xs font-medium text-gray-600 mb-1'>
+                    <label className='block text-xs font-medium text-base-content/70 mb-1'>
                         Date To
                     </label>
                     <input
@@ -297,7 +297,7 @@ function RuleConditionBuilder({
 
             {/* Transaction Type */}
             <div>
-                <label className='block text-xs font-medium text-gray-600 mb-1'>
+                <label className='block text-xs font-medium text-base-content/70 mb-1'>
                     Transaction Type
                 </label>
                 <select

@@ -11,12 +11,12 @@ import {
     YAxis,
 } from 'recharts';
 
+import { CHART_COLORS } from '../utils/chartColors';
 import {
     aggregateData,
     formatDateLabel,
     getAggregationLevel,
 } from '../utils/dataAggregation';
-import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
 import ChartEmptyState from './ChartEmptyState';
 
@@ -171,7 +171,7 @@ function RetirementChart({
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Account Types Pie Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Retirement Accounts by Type
                     </h4>
                     <ResponsiveContainer
@@ -219,7 +219,7 @@ function RetirementChart({
 
                 {/* Top Accounts Bar Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Retirement Balance Over Time
                     </h4>
                     <ResponsiveContainer
@@ -271,7 +271,7 @@ function RetirementChart({
 
             {/* Additional Info */}
             <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                <h4 className='text-lg font-medium text-base-content mb-4'>
                     Retirement Planning Summary
                 </h4>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>

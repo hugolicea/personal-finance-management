@@ -1,4 +1,4 @@
-﻿import { ChangeEvent, useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     CartesianGrid,
@@ -223,20 +223,20 @@ function CompoundInterestCalculator() {
                     className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
-                    ← Back
+                    ? Back
                 </button>
                 <div>
                     <h1 className='text-2xl font-bold text-base-content'>
-                        📈 Compound Interest Calculator
+                        ?? Compound Interest Calculator
                     </h1>
-                    <p className='mt-0.5 text-sm text-gray-500'>
+                    <p className='mt-0.5 text-sm text-base-content/60'>
                         See how your money grows with the power of compounding.
                     </p>
                 </div>
             </div>
 
             <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
-                {/* ── Form ── */}
+                {/* -- Form -- */}
                 <div className='overflow-hidden rounded-xl shadow-sm border border-base-300'>
                     {/* Step 1 */}
                     <StepHeader step={1} title='Initial Investment' />
@@ -365,7 +365,7 @@ function CompoundInterestCalculator() {
                     </div>
                 </div>
 
-                {/* ── Results ── */}
+                {/* -- Results -- */}
                 <div>
                     {results ? (
                         <div className='rounded-xl overflow-hidden shadow-sm border border-base-300 bg-teal-700'>
@@ -500,38 +500,38 @@ function CompoundInterestCalculator() {
                                         <table className='min-table table-zebra w-full'>
                                             <thead className='sticky top-0 bg-base-100'>
                                                 <tr>
-                                                    <th className='px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                                    <th className='px-4 py-2 text-left text-xs font-medium text-base-content/60 uppercase tracking-wide'>
                                                         Year
                                                     </th>
-                                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                                    <th className='px-4 py-2 text-right text-xs font-medium text-base-content/60 uppercase tracking-wide'>
                                                         Contributed
                                                     </th>
-                                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                                    <th className='px-4 py-2 text-right text-xs font-medium text-base-content/60 uppercase tracking-wide'>
                                                         Interest
                                                     </th>
-                                                    <th className='px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wide'>
+                                                    <th className='px-4 py-2 text-right text-xs font-medium text-base-content/60 uppercase tracking-wide'>
                                                         Balance
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody className='divide-y divide-gray-100'>
+                                            <tbody className='divide-y divide-base-200'>
                                                 {results.schedule.map((row) => (
                                                     <tr
                                                         key={row.year}
                                                         className=''
                                                     >
-                                                        <td className='px-4 py-2 text-gray-700'>
+                                                        <td className='px-4 py-2 text-base-content/80'>
                                                             {row.year}
                                                         </td>
-                                                        <td className='px-4 py-2 text-right text-gray-700'>
+                                                        <td className='px-4 py-2 text-right text-base-content/80'>
                                                             {fmt(
                                                                 row.contributions
                                                             )}
                                                         </td>
-                                                        <td className='px-4 py-2 text-right text-emerald-600 font-medium'>
+                                                        <td className='px-4 py-2 text-right text-success font-medium'>
                                                             {fmt(row.interest)}
                                                         </td>
-                                                        <td className='px-4 py-2 text-right font-semibold text-gray-900'>
+                                                        <td className='px-4 py-2 text-right font-semibold text-base-content'>
                                                             {fmt(row.balance)}
                                                         </td>
                                                     </tr>

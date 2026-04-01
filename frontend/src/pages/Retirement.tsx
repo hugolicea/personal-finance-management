@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteButtons from '../components/EditDeleteButtons';
@@ -286,37 +286,37 @@ function Retirement() {
                                     <tr>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Account
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Type
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Provider
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Balance
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Monthly Contribution
                                         </th>
                                         <th
                                             scope='col'
-                                            className='px-4 py-2 text-left text-sm font-semibold text-gray-900'
+                                            className='px-4 py-2 text-left text-sm font-semibold text-base-content'
                                         >
                                             Risk Level
                                         </th>
@@ -336,7 +336,7 @@ function Retirement() {
                                             <td className='whitespace-nowrap px-4 py-2 text-sm'>
                                                 <div className='flex items-center'>
                                                     <div className='flex-shrink-0 h-10 w-10'>
-                                                        <div className='h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center'>
+                                                        <div className='h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center'>
                                                             <svg
                                                                 className='h-5 w-5 text-primary'
                                                                 fill='none'
@@ -355,11 +355,11 @@ function Retirement() {
                                                         </div>
                                                     </div>
                                                     <div className='ml-4'>
-                                                        <div className='font-medium text-gray-900'>
+                                                        <div className='font-medium text-base-content'>
                                                             {account.name}
                                                         </div>
                                                         {account.account_number && (
-                                                            <div className='text-gray-500'>
+                                                            <div className='text-base-content/60'>
                                                                 ****
                                                                 {
                                                                     account.account_number
@@ -369,25 +369,25 @@ function Retirement() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-base-content/60'>
                                                 {ACCOUNT_TYPE_LABELS[
                                                     account.account_type
                                                 ] ?? account.account_type}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-base-content/60'>
                                                 {account.provider}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900 tabular-nums'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-base-content tabular-nums'>
                                                 {formatCurrency(
                                                     account.current_balance
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-900 tabular-nums'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-base-content tabular-nums'>
                                                 {formatCurrency(
                                                     account.monthly_contribution
                                                 )}
                                             </td>
-                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-gray-500'>
+                                            <td className='whitespace-nowrap px-4 py-2 text-sm text-base-content/60'>
                                                 {RISK_LEVEL_LABELS[
                                                     account.risk_level
                                                 ] ?? account.risk_level}
@@ -439,10 +439,10 @@ function Retirement() {
                 title='Delete Retirement Account'
                 message={
                     <>
-                        <p className='text-sm text-gray-500'>
+                        <p className='text-sm text-base-content/60'>
                             You are about to permanently delete the retirement
                             account{' '}
-                            <span className='font-semibold text-gray-700'>
+                            <span className='font-semibold text-base-content/80'>
                                 "{deletingRetirementAccount?.name}"
                             </span>
                             . This action cannot be undone.
@@ -455,7 +455,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Provider:
                                             </span>{' '}
-                                            <span className='text-gray-900'>
+                                            <span className='text-base-content'>
                                                 {
                                                     deletingRetirementAccount.provider
                                                 }
@@ -465,7 +465,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Type:
                                             </span>{' '}
-                                            <span className='text-gray-900 capitalize'>
+                                            <span className='text-base-content capitalize'>
                                                 {deletingRetirementAccount.account_type.replace(
                                                     /_/g,
                                                     ' '
@@ -476,7 +476,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Current Balance:
                                             </span>{' '}
-                                            <span className='text-gray-900 font-semibold tabular-nums'>
+                                            <span className='text-base-content font-semibold tabular-nums'>
                                                 {formatCurrency(
                                                     deletingRetirementAccount.current_balance
                                                 )}
@@ -486,7 +486,7 @@ function Retirement() {
                                             <span className='font-medium'>
                                                 Monthly Contribution:
                                             </span>{' '}
-                                            <span className='text-gray-900 tabular-nums'>
+                                            <span className='text-base-content tabular-nums'>
                                                 {formatCurrency(
                                                     deletingRetirementAccount.monthly_contribution
                                                 )}
@@ -498,7 +498,7 @@ function Retirement() {
                         )}
                         <div className='mt-3'>
                             <p className='text-sm text-error font-medium'>
-                                <span aria-hidden='true'>⚠️ </span>This will
+                                <span aria-hidden='true'>?? </span>This will
                                 permanently remove all data associated with this
                                 retirement account.
                             </p>

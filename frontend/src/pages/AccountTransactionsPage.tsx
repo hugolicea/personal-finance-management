@@ -203,7 +203,7 @@ function AccountTransactionsPage() {
                 {selectedTransactions.length > 0 && (
                     <button
                         onClick={() => setShowBulkDeleteDialog(true)}
-                        className='text-sm text-error hover:text-red-800'
+                        className='text-sm text-error hover:text-error/80'
                     >
                         Delete selected ({selectedTransactions.length})
                     </button>
@@ -257,13 +257,13 @@ function AccountTransactionsPage() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-3 text-gray-600'>
+                                    <td className='p-3 text-base-content/70'>
                                         {formatDateForDisplay(t.date)}
                                     </td>
-                                    <td className='p-3 text-gray-900'>
+                                    <td className='p-3 text-base-content'>
                                         {t.description}
                                     </td>
-                                    <td className='p-3 text-gray-600'>
+                                    <td className='p-3 text-base-content/70'>
                                         {getCategoryName(t.category)}
                                     </td>
                                     <td
@@ -309,7 +309,7 @@ function AccountTransactionsPage() {
                                 <p className='font-medium truncate'>
                                     {t.description}
                                 </p>
-                                <p className='text-sm text-gray-500'>
+                                <p className='text-sm text-base-content/60'>
                                     {formatDateForDisplay(t.date)} ·{' '}
                                     {getCategoryName(t.category)}
                                 </p>
@@ -328,7 +328,7 @@ function AccountTransactionsPage() {
                         </div>
                     ))}
                     {list.length === 0 && (
-                        <p className='p-6 text-center text-gray-400'>
+                        <p className='p-6 text-center text-base-content/50'>
                             No transactions found.
                         </p>
                     )}
@@ -363,7 +363,7 @@ function AccountTransactionsPage() {
                             </h1>
                         </div>
                         {account?.institution && (
-                            <p className='text-sm text-gray-500 ml-8'>
+                            <p className='text-sm text-base-content/60 ml-8'>
                                 {account.institution}
                             </p>
                         )}
@@ -385,19 +385,19 @@ function AccountTransactionsPage() {
             {/* Summary cards */}
             <div className='grid grid-cols-3 gap-4'>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
-                    <p className='text-sm text-gray-500'>Expenses</p>
+                    <p className='text-sm text-base-content/60'>Expenses</p>
                     <p className='text-xl font-bold text-error tabular-nums'>
                         {formatCurrency(-totalSpends)}
                     </p>
                 </div>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
-                    <p className='text-sm text-gray-500'>Income</p>
+                    <p className='text-sm text-base-content/60'>Income</p>
                     <p className='text-xl font-bold text-success tabular-nums'>
                         +{formatCurrency(totalIncomes)}
                     </p>
                 </div>
                 <div className='card bg-base-100 shadow-sm p-4 text-center'>
-                    <p className='text-sm text-gray-500'>Net</p>
+                    <p className='text-sm text-base-content/60'>Net</p>
                     <p
                         className={`text-xl font-bold tabular-nums ${
                             totalAmount >= 0 ? 'text-success' : 'text-error'
@@ -539,7 +539,7 @@ function AccountTransactionsPage() {
                                         )
                                     }
                                     disabled={filterByYear}
-                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed'
+                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-base-200 disabled:cursor-not-allowed'
                                 >
                                     {[
                                         'January',
@@ -636,7 +636,7 @@ function AccountTransactionsPage() {
             {/* Transaction lists */}
             {transactionsLoading ? (
                 <div className='flex justify-center items-center h-32'>
-                    <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600'></div>
+                    <div className='animate-spin rounded-full h-10 w-10 border-b-2 border-primary'></div>
                 </div>
             ) : (
                 <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>

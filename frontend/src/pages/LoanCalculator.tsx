@@ -1,4 +1,4 @@
-﻿import { ChangeEvent, useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Bar,
@@ -11,7 +11,7 @@ import {
     YAxis,
 } from 'recharts';
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
+// -- Shared helpers ------------------------------------------------------------
 
 function fmt(value: number): string {
     return value.toLocaleString('en-US', {
@@ -200,16 +200,16 @@ function AmortizationTable({
                             <tbody className='divide-y divide-base-300'>
                                 {schedule.map((row) => (
                                     <tr key={row.year} className=''>
-                                        <td className='px-4 py-2 text-gray-700'>
+                                        <td className='px-4 py-2 text-base-content/80'>
                                             {row.year}
                                         </td>
-                                        <td className='px-4 py-2 text-right text-emerald-600 font-medium'>
+                                        <td className='px-4 py-2 text-right text-success font-medium'>
                                             {fmt(row.principal)}
                                         </td>
-                                        <td className='px-4 py-2 text-right text-red-500'>
+                                        <td className='px-4 py-2 text-right text-error'>
                                             {fmt(row.interest)}
                                         </td>
-                                        <td className='px-4 py-2 text-right font-semibold text-gray-900'>
+                                        <td className='px-4 py-2 text-right font-semibold text-base-content'>
                                             {fmt(row.balance)}
                                         </td>
                                     </tr>
@@ -223,7 +223,7 @@ function AmortizationTable({
     );
 }
 
-// ── Mortgage Calculator ───────────────────────────────────────────────────────
+// -- Mortgage Calculator -------------------------------------------------------
 
 interface MortgageInputs {
     homePrice: string;
@@ -380,7 +380,7 @@ function MortgageCalculatorPanel() {
                 </FieldRow>
                 <FieldRow
                     label='Down Payment'
-                    description={`${downPct}% of home price — Loan: ${fmt(
+                    description={`${downPct}% of home price � Loan: ${fmt(
                         loanAmount
                     )}`}
                 >
@@ -503,57 +503,57 @@ function MortgageCalculatorPanel() {
                             <table className='min-table table-zebra w-full'>
                                 <tbody className='divide-y divide-base-300'>
                                     <tr>
-                                        <td className='px-4 py-2 text-gray-600'>
+                                        <td className='px-4 py-2 text-base-content/70'>
                                             Principal &amp; Interest
                                         </td>
-                                        <td className='px-4 py-2 text-right font-semibold text-gray-900'>
+                                        <td className='px-4 py-2 text-right font-semibold text-base-content'>
                                             {fmt(results.monthlyPI)}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='px-4 py-2 text-gray-600'>
+                                        <td className='px-4 py-2 text-base-content/70'>
                                             Property Tax
                                         </td>
-                                        <td className='px-4 py-2 text-right text-gray-700'>
+                                        <td className='px-4 py-2 text-right text-base-content/80'>
                                             {fmt(results.monthlyTax)}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td className='px-4 py-2 text-gray-600'>
+                                        <td className='px-4 py-2 text-base-content/70'>
                                             Home Insurance
                                         </td>
-                                        <td className='px-4 py-2 text-right text-gray-700'>
+                                        <td className='px-4 py-2 text-right text-base-content/80'>
                                             {fmt(results.monthlyInsurance)}
                                         </td>
                                     </tr>
                                     {results.monthlyPMI > 0 && (
                                         <tr>
-                                            <td className='px-4 py-2 text-gray-600'>
+                                            <td className='px-4 py-2 text-base-content/70'>
                                                 PMI
                                                 {results.ltv > 0.8
                                                     ? ' (auto)'
                                                     : ''}
                                             </td>
-                                            <td className='px-4 py-2 text-right text-gray-700'>
+                                            <td className='px-4 py-2 text-right text-base-content/80'>
                                                 {fmt(results.monthlyPMI)}
                                             </td>
                                         </tr>
                                     )}
                                     {results.monthlyHOA > 0 && (
                                         <tr>
-                                            <td className='px-4 py-2 text-gray-600'>
+                                            <td className='px-4 py-2 text-base-content/70'>
                                                 HOA Fees
                                             </td>
-                                            <td className='px-4 py-2 text-right text-gray-700'>
+                                            <td className='px-4 py-2 text-right text-base-content/80'>
                                                 {fmt(results.monthlyHOA)}
                                             </td>
                                         </tr>
                                     )}
                                     <tr className='bg-secondary/10'>
-                                        <td className='px-4 py-2 font-bold text-teal-800'>
+                                        <td className='px-4 py-2 font-bold text-secondary'>
                                             Total Monthly
                                         </td>
-                                        <td className='px-4 py-2 text-right font-bold text-teal-800'>
+                                        <td className='px-4 py-2 text-right font-bold text-secondary'>
                                             {fmt(results.totalMonthly)}
                                         </td>
                                     </tr>
@@ -610,7 +610,7 @@ function MortgageCalculatorPanel() {
     );
 }
 
-// ── Auto Loan Calculator ──────────────────────────────────────────────────────
+// -- Auto Loan Calculator ------------------------------------------------------
 
 interface AutoInputs {
     vehiclePrice: string;
@@ -918,13 +918,13 @@ function AutoLoanCalculatorPanel() {
     );
 }
 
-// ── Main tabbed component ─────────────────────────────────────────────────────
+// -- Main tabbed component -----------------------------------------------------
 
 type Tab = 'mortgage' | 'auto';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'mortgage', label: 'Mortgage', icon: '🏠' },
-    { id: 'auto', label: 'Auto Loan', icon: '🚗' },
+    { id: 'mortgage', label: 'Mortgage', icon: '??' },
+    { id: 'auto', label: 'Auto Loan', icon: '??' },
 ];
 
 function LoanCalculator() {
@@ -940,13 +940,13 @@ function LoanCalculator() {
                     className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
-                    ← Back
+                    ? Back
                 </button>
                 <div>
                     <h1 className='text-2xl font-bold text-base-content'>
-                        🏦 Loan Calculator
+                        ?? Loan Calculator
                     </h1>
-                    <p className='mt-0.5 text-sm text-gray-500'>
+                    <p className='mt-0.5 text-sm text-base-content/60'>
                         Estimate your monthly payment, total interest, and
                         amortization schedule.
                     </p>
@@ -963,7 +963,7 @@ function LoanCalculator() {
                             className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                                 tab === t.id
                                     ? 'border-teal-600 text-teal-700'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-base-300'
+                                    : 'border-transparent text-base-content/60 hover:text-base-content/80 hover:border-base-300'
                             }`}
                         >
                             <span role='img' aria-hidden='true'>

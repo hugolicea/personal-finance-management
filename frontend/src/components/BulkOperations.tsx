@@ -171,7 +171,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                     {fromCategoryId &&
                         toCategoryId &&
                         fromCategoryId === toCategoryId && (
-                            <p className='text-red-400 text-sm'>
+                            <p className='text-error/70 text-sm'>
                                 Cannot reclassify to the same category
                             </p>
                         )}
@@ -184,7 +184,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 setFromCategoryId('');
                                 setToCategoryId('');
                             }}
-                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700  rounded-md transition-colors'
+                            className='btn btn-neutral px-4 py-2 rounded-md transition-colors'
                         >
                             Cancel
                         </button>
@@ -195,7 +195,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 !toCategoryId ||
                                 fromCategoryId === toCategoryId
                             }
-                            className='px-4 py-2 bg-blue-600 hover:bg-blue-700  rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='btn btn-primary px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             Reclassify
                         </button>
@@ -262,14 +262,14 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                                 setIsDeleteModalOpen(false);
                                 setSelectedCategories([]);
                             }}
-                            className='px-4 py-2 bg-gray-600 hover:bg-gray-700  rounded-md transition-colors'
+                            className='btn btn-neutral px-4 py-2 rounded-md transition-colors'
                         >
                             Cancel
                         </button>
                         <button
                             type='submit'
                             disabled={selectedCategories.length === 0}
-                            className='px-4 py-2 bg-red-600 hover:bg-red-700  rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                            className='btn btn-error px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                             Delete Transactions
                         </button>

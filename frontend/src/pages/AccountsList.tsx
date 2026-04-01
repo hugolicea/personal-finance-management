@@ -68,7 +68,7 @@ function AccountsList() {
                     <h1 className='text-2xl font-bold text-base-content'>
                         Bank Accounts
                     </h1>
-                    <p className='text-gray-500 text-sm mt-1'>
+                    <p className='text-base-content/60 text-sm mt-1'>
                         {accounts.length} account
                         {accounts.length !== 1 ? 's' : ''}
                     </p>
@@ -85,8 +85,10 @@ function AccountsList() {
             {accounts.length === 0 ? (
                 <div className='text-center py-16 card bg-base-100 shadow-sm'>
                     <p className='text-5xl mb-4'>🏦</p>
-                    <p className='text-gray-500 text-lg'>No accounts yet.</p>
-                    <p className='text-gray-400 text-sm mt-1'>
+                    <p className='text-base-content/60 text-lg'>
+                        No accounts yet.
+                    </p>
+                    <p className='text-base-content/50 text-sm mt-1'>
                         Add a bank account to start tracking transactions.
                     </p>
                     <button
@@ -129,7 +131,7 @@ function AccountsList() {
                                             <h3 className='font-semibold text-sm leading-tight truncate max-w-[140px]'>
                                                 {account.name}
                                             </h3>
-                                            <p className='text-xs text-gray-500'>
+                                            <p className='text-xs text-base-content/60'>
                                                 {ACCOUNT_TYPE_LABELS[
                                                     account.account_type
                                                 ] ?? account.account_type}
@@ -147,19 +149,19 @@ function AccountsList() {
                                 </div>
 
                                 {account.institution && (
-                                    <p className='text-xs text-gray-500 mb-2'>
+                                    <p className='text-xs text-base-content/60 mb-2'>
                                         <span aria-hidden='true'>🏛️</span>{' '}
                                         {account.institution}
                                     </p>
                                 )}
 
                                 <div className='border-t pt-2 mt-2'>
-                                    <p className='text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide'>
+                                    <p className='text-xs text-base-content/50 mb-1 font-medium uppercase tracking-wide'>
                                         This month
                                     </p>
                                     <div className='flex justify-between items-center'>
                                         <div>
-                                            <p className='text-xs text-gray-500'>
+                                            <p className='text-xs text-base-content/60'>
                                                 Balance
                                             </p>
                                             <p
@@ -176,10 +178,10 @@ function AccountsList() {
                                             </p>
                                         </div>
                                         <div className='text-right'>
-                                            <p className='text-xs text-gray-500'>
+                                            <p className='text-xs text-base-content/60'>
                                                 Transactions
                                             </p>
-                                            <p className='font-semibold text-gray-700 text-sm'>
+                                            <p className='font-semibold text-base-content/80 text-sm'>
                                                 {account.current_month_count}
                                             </p>
                                         </div>
