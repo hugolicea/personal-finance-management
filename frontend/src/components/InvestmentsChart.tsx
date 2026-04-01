@@ -12,12 +12,12 @@ import {
 } from 'recharts';
 
 import { Investment } from '../types/investments';
+import { CHART_COLORS } from '../utils/chartColors';
 import {
     aggregateData,
     formatDateLabel,
     getAggregationLevel,
 } from '../utils/dataAggregation';
-import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
 import ChartEmptyState from './ChartEmptyState';
 
@@ -161,7 +161,7 @@ function InvestmentsChart({
 
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Portfolio by Type
                     </h4>
                     <ResponsiveContainer
@@ -208,7 +208,7 @@ function InvestmentsChart({
                 </div>
 
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Investment Value Over Time
                     </h4>
                     <ResponsiveContainer

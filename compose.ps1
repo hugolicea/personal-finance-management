@@ -146,10 +146,10 @@ switch ($Command) {
         docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput
     }
     "test" {
-        docker compose exec backend pytest
+        docker compose exec backend python -m pytest
     }
     "test-coverage" {
-        docker compose exec backend pytest --cov=budget --cov-report=html
+        docker compose exec backend python -m pytest --cov=budget --cov=core --cov=wealth --cov-report=html
     }
     "ps" {
         docker compose ps

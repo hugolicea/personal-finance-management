@@ -7,6 +7,7 @@ import { isAxiosError } from 'axios';
 
 import type { BankAccount } from '../../types/accounts';
 import apiClient from '../../utils/apiClient';
+import { getCurrentMonthStr } from '../../utils/dateHelpers';
 import type { RootState } from '../index';
 
 interface AccountsState {
@@ -29,9 +30,10 @@ export const fetchAccounts = createAsyncThunk(
     'accounts/fetchAccounts',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await apiClient.get(
-                '/api/v1/bank-accounts/?page_size=10000'
-            );
+            const month = getCurrentMonthStr();
+            const response = await apiClient.get('/api/v1/bank-accounts/', {
+                params: { page_size: 10000, month },
+            });
             return response.data.results || response.data;
         } catch (err: unknown) {
             if (isAxiosError(err)) {

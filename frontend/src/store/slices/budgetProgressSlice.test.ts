@@ -70,7 +70,7 @@ describe('fetchSpendingSummary thunk', () => {
                 () => new Promise(() => {})
             ); // never resolves
 
-            store.dispatch(fetchSpendingSummary());
+            store.dispatch(fetchSpendingSummary('2026-04'));
 
             const state = store.getState().budgetProgress;
             expect(state.loading).toBe(true);
@@ -81,14 +81,14 @@ describe('fetchSpendingSummary thunk', () => {
             mock.onGet('/api/v1/spending-summary/').replyOnce(500, {
                 detail: 'Server error',
             });
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
             expect(store.getState().budgetProgress.error).not.toBeNull();
 
             // Second request starts — error should clear immediately
             mock.onGet('/api/v1/spending-summary/').reply(
                 () => new Promise(() => {})
             );
-            store.dispatch(fetchSpendingSummary());
+            store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.error).toBeNull();
         });
@@ -98,7 +98,7 @@ describe('fetchSpendingSummary thunk', () => {
         it('sets month from the response', async () => {
             mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.month).toBe('2026-03');
         });
@@ -106,7 +106,7 @@ describe('fetchSpendingSummary thunk', () => {
         it('sets categories from the response', async () => {
             mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.categories).toEqual(
                 mockResponse.categories
@@ -116,7 +116,7 @@ describe('fetchSpendingSummary thunk', () => {
         it('sets loading to false', async () => {
             mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.loading).toBe(false);
         });
@@ -126,14 +126,14 @@ describe('fetchSpendingSummary thunk', () => {
             mock.onGet('/api/v1/spending-summary/').replyOnce(500, {
                 detail: 'oops',
             });
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             // Now succeed — rejected case sets error but fulfilled case does NOT clear it
             // explicitly in the slice; however, the pending case does. This test verifies
             // that the fulfilled handler leaves error in the state it was set to (null after
             // pending), i.e. the pending→fulfilled path yields null.
             mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.error).toBeNull();
         });
@@ -156,13 +156,13 @@ describe('fetchSpendingSummary thunk', () => {
                 200,
                 firstResponse
             );
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             mock.onGet('/api/v1/spending-summary/').replyOnce(
                 200,
                 mockResponse
             );
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             const state = store.getState().budgetProgress;
             expect(state.month).toBe('2026-03');
@@ -176,7 +176,7 @@ describe('fetchSpendingSummary thunk', () => {
                 categories: [],
             });
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.categories).toEqual([]);
         });
@@ -199,7 +199,7 @@ describe('fetchSpendingSummary thunk', () => {
                 responseWithNull
             );
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(
                 store.getState().budgetProgress.categories[0]!.percentage_used
@@ -213,7 +213,7 @@ describe('fetchSpendingSummary thunk', () => {
                 detail: 'Internal Server Error',
             });
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.loading).toBe(false);
         });
@@ -223,7 +223,7 @@ describe('fetchSpendingSummary thunk', () => {
                 detail: 'Bad request',
             });
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.error).toBe('Bad request');
         });
@@ -231,7 +231,7 @@ describe('fetchSpendingSummary thunk', () => {
         it('falls back to default message when detail is missing', async () => {
             mock.onGet('/api/v1/spending-summary/').reply(500, {});
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.error).toBe(
                 'Failed to fetch spending summary'
@@ -241,7 +241,7 @@ describe('fetchSpendingSummary thunk', () => {
         it('falls back to default message on network error', async () => {
             mock.onGet('/api/v1/spending-summary/').networkError();
 
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.error).toBe(
                 'Failed to fetch spending summary'
@@ -254,13 +254,13 @@ describe('fetchSpendingSummary thunk', () => {
                 200,
                 mockResponse
             );
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             // Then fail
             mock.onGet('/api/v1/spending-summary/').reply(500, {
                 detail: 'oops',
             });
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.categories).toEqual(
                 mockResponse.categories
@@ -272,12 +272,12 @@ describe('fetchSpendingSummary thunk', () => {
                 200,
                 mockResponse
             );
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             mock.onGet('/api/v1/spending-summary/').reply(500, {
                 detail: 'oops',
             });
-            await store.dispatch(fetchSpendingSummary());
+            await store.dispatch(fetchSpendingSummary('2026-04'));
 
             expect(store.getState().budgetProgress.month).toBe('2026-03');
         });
@@ -313,7 +313,7 @@ describe('initial state', () => {
 describe('selectSpendingSummary', () => {
     it('returns month and categories from state', async () => {
         mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         const result = selectSpendingSummary(
             store.getState() as Parameters<typeof selectSpendingSummary>[0]
@@ -350,7 +350,7 @@ describe('selectBudgetProgressLoading', () => {
             () => new Promise(() => {})
         );
 
-        store.dispatch(fetchSpendingSummary());
+        store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressLoading(
@@ -363,7 +363,7 @@ describe('selectBudgetProgressLoading', () => {
 
     it('returns false after a successful fetch', async () => {
         mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressLoading(
@@ -376,7 +376,7 @@ describe('selectBudgetProgressLoading', () => {
 
     it('returns false after a failed fetch', async () => {
         mock.onGet('/api/v1/spending-summary/').reply(500, {});
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressLoading(
@@ -401,7 +401,7 @@ describe('selectBudgetProgressError', () => {
 
     it('returns null after a successful fetch', async () => {
         mock.onGet('/api/v1/spending-summary/').reply(200, mockResponse);
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressError(
@@ -416,7 +416,7 @@ describe('selectBudgetProgressError', () => {
         mock.onGet('/api/v1/spending-summary/').reply(422, {
             detail: 'Unprocessable',
         });
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressError(
@@ -429,7 +429,7 @@ describe('selectBudgetProgressError', () => {
 
     it('returns the fallback message when no detail is provided', async () => {
         mock.onGet('/api/v1/spending-summary/').networkError();
-        await store.dispatch(fetchSpendingSummary());
+        await store.dispatch(fetchSpendingSummary('2026-04'));
 
         expect(
             selectBudgetProgressError(
@@ -502,7 +502,7 @@ describe('store reset on logout', () => {
             ],
         });
 
-        await rootStore.dispatch(fetchSpendingSummary());
+        await rootStore.dispatch(fetchSpendingSummary('2026-04'));
 
         // Confirm User A's data is present before logout
         const loadedState = rootStore.getState().budgetProgress;

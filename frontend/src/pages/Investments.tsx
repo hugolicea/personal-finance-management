@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -135,7 +135,9 @@ function Investments() {
                         {row.original.current_price ? (
                             formatCurrency(row.original.current_price)
                         ) : (
-                            <span className='text-gray-400'>Not set</span>
+                            <span className='text-base-content/50'>
+                                Not set
+                            </span>
                         )}
                     </div>
                 ),
@@ -157,7 +159,7 @@ function Investments() {
                         {row.original.due_date ? (
                             formatDateForDisplay(row.original.due_date)
                         ) : (
-                            <span className='text-gray-400'>N/A</span>
+                            <span className='text-base-content/50'>N/A</span>
                         )}
                     </div>
                 ),
@@ -442,7 +444,7 @@ function Investments() {
                             className='block w-full max-w-md px-3 py-2 border border-base-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm'
                         />
                     </div>
-                    <div className='text-sm text-gray-500 lg:hidden'>
+                    <div className='text-sm text-base-content/60 lg:hidden'>
                         <span className='inline-flex items-center'>
                             <svg
                                 className='w-4 h-4 mr-1'
@@ -475,7 +477,7 @@ function Investments() {
                                             <h3 className='text-lg font-semibold text-primary mb-2'>
                                                 {investment.symbol}
                                             </h3>
-                                            <p className='text-sm text-gray-600 mb-3'>
+                                            <p className='text-sm text-base-content/70 mb-3'>
                                                 {investment.name}
                                             </p>
                                             <div className='grid grid-cols-2 gap-4 text-sm'>
@@ -493,7 +495,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Quantity:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-mono'>
+                                                    <span className='ml-2 text-base-content font-mono'>
                                                         {investment.quantity.toFixed(
                                                             4
                                                         )}
@@ -503,7 +505,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Purchase Price:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 tabular-nums'>
+                                                    <span className='ml-2 text-base-content tabular-nums'>
                                                         {formatCurrency(
                                                             investment.purchase_price
                                                         )}
@@ -513,7 +515,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Current Price:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 tabular-nums'>
+                                                    <span className='ml-2 text-base-content tabular-nums'>
                                                         {investment.current_price
                                                             ? formatCurrency(
                                                                   investment.current_price
@@ -525,7 +527,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Total Invested:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold tabular-nums'>
+                                                    <span className='ml-2 text-base-content font-semibold tabular-nums'>
                                                         {formatCurrency(
                                                             investment.total_invested
                                                         )}
@@ -535,7 +537,7 @@ function Investments() {
                                                     <span className='font-medium'>
                                                         Current Value:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold text-success tabular-nums'>
+                                                    <span className='ml-2 text-base-content font-semibold text-success tabular-nums'>
                                                         {formatCurrency(
                                                             investment.current_value
                                                         )}
@@ -593,7 +595,7 @@ function Investments() {
                                                         investment
                                                     )
                                                 }
-                                                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
+                                                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-primary/10 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
                                             >
                                                 <svg
                                                     className='w-4 h-4 mr-1.5'
@@ -665,7 +667,7 @@ function Investments() {
                                                                       ? 'descending'
                                                                       : 'none'
                                                             }
-                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-base-200'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                         >
                                                             {header.isPlaceholder
@@ -681,8 +683,8 @@ function Investments() {
                                                                 <span aria-hidden='true'>
                                                                     {header.column.getIsSorted() ===
                                                                     'asc'
-                                                                        ? ' 🔼'
-                                                                        : ' 🔽'}
+                                                                        ? ' ??'
+                                                                        : ' ??'}
                                                                 </span>
                                                             )}
                                                         </th>
@@ -739,9 +741,9 @@ function Investments() {
                 title='Delete Investment'
                 message={
                     <>
-                        <p className='text-sm text-gray-500'>
+                        <p className='text-sm text-base-content/60'>
                             You are about to permanently delete the investment{' '}
-                            <span className='font-semibold text-gray-700'>
+                            <span className='font-semibold text-base-content/80'>
                                 "{deletingInvestment?.name}"
                             </span>
                             . This action cannot be undone.
@@ -754,7 +756,7 @@ function Investments() {
                                             <span className='font-medium'>
                                                 Symbol:
                                             </span>{' '}
-                                            <span className='text-gray-900'>
+                                            <span className='text-base-content'>
                                                 {deletingInvestment.symbol}
                                             </span>
                                         </div>
@@ -762,7 +764,7 @@ function Investments() {
                                             <span className='font-medium'>
                                                 Type:
                                             </span>{' '}
-                                            <span className='text-gray-900 capitalize'>
+                                            <span className='text-base-content capitalize'>
                                                 {deletingInvestment.investment_type.replace(
                                                     /_/g,
                                                     ' '
@@ -773,7 +775,7 @@ function Investments() {
                                             <span className='font-medium'>
                                                 Current Value:
                                             </span>{' '}
-                                            <span className='text-gray-900 font-semibold tabular-nums'>
+                                            <span className='text-base-content font-semibold tabular-nums'>
                                                 {formatCurrency(
                                                     deletingInvestment.current_value
                                                 )}
@@ -806,7 +808,7 @@ function Investments() {
                         )}
                         <div className='mt-3'>
                             <p className='text-sm text-error font-medium'>
-                                <span aria-hidden='true'>⚠️ </span>This will
+                                <span aria-hidden='true'>?? </span>This will
                                 permanently remove all data associated with this
                                 investment.
                             </p>

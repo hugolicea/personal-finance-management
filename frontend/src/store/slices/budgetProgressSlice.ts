@@ -28,11 +28,13 @@ const initialState: BudgetProgressState = {
 
 export const fetchSpendingSummary = createAsyncThunk<
     SpendingSummaryResponse,
-    void,
+    string,
     { rejectValue: string }
->('budgetProgress/fetchSpendingSummary', async (_, { rejectWithValue }) => {
+>('budgetProgress/fetchSpendingSummary', async (month, { rejectWithValue }) => {
     try {
-        const response = await apiClient.get('/api/v1/spending-summary/');
+        const response = await apiClient.get('/api/v1/spending-summary/', {
+            params: { month },
+        });
         return response.data;
     } catch (err: unknown) {
         if (isAxiosError(err)) {

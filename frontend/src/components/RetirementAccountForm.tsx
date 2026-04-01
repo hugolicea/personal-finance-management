@@ -132,7 +132,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                     {/* Account Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center'>
                                 <svg
                                     className='w-4 h-4 text-blue-600'
                                     fill='none'
@@ -156,10 +156,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='name'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Account Name{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='text'
@@ -182,7 +182,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='name-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -194,10 +194,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='account_type'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Account Type{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     as='select'
@@ -241,7 +241,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='account_type-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -253,10 +253,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='provider'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Provider{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='text'
@@ -279,7 +279,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='provider-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -291,7 +291,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='account_number'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Account Number
                                 </label>
@@ -314,14 +314,14 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                             : undefined
                                     }
                                 />
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     Optional - for your reference only
                                 </p>
                                 <ErrorMessage name='account_number'>
                                     {(msg) => (
                                         <span
                                             id='account_number-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -337,7 +337,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                         <div className='flex items-center mb-4'>
                             <div className='flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-green-600'
+                                    className='w-4 h-4 text-success'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -359,14 +359,14 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='current_balance'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Current Balance{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -395,7 +395,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='current_balance-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -407,14 +407,14 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='monthly_contribution'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Monthly Contribution{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -443,7 +443,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='monthly_contribution-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -455,10 +455,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='employer_match_percentage'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Employer Match %{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <Field
@@ -484,19 +484,19 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         }
                                     />
                                     <div className='absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             %
                                         </span>
                                     </div>
                                 </div>
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     e.g., 0.50 for 50% match
                                 </p>
                                 <ErrorMessage name='employer_match_percentage'>
                                     {(msg) => (
                                         <span
                                             id='employer_match_percentage-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -508,14 +508,14 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='employer_match_limit'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Employer Match Limit{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -540,14 +540,14 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                         }
                                     />
                                 </div>
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     Annual maximum employer match
                                 </p>
                                 <ErrorMessage name='employer_match_limit'>
                                     {(msg) => (
                                         <span
                                             id='employer_match_limit-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -585,10 +585,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='risk_level'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Risk Level{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     as='select'
@@ -623,7 +623,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='risk_level-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -635,10 +635,10 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                             <div>
                                 <label
                                     htmlFor='target_retirement_age'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Target Retirement Age{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='number'
@@ -665,7 +665,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                     {(msg) => (
                                         <span
                                             id='target_retirement_age-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -679,9 +679,9 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                     {/* Additional Notes Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-base-200 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-gray-600'
+                                    className='w-4 h-4 text-base-content/70'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -722,7 +722,7 @@ const RetirementAccountForm: React.FC<RetirementAccountFormProps> = ({
                                 {(msg) => (
                                     <span
                                         id='notes-error'
-                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        className='mt-2 text-sm text-error font-medium'
                                         role='alert'
                                     >
                                         {msg}

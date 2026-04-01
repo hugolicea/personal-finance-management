@@ -132,9 +132,9 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     {/* Property Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-success/20 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-green-600'
+                                    className='w-4 h-4 text-success'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -156,10 +156,10 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='name'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Property Name{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='text'
@@ -182,7 +182,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='name-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -194,10 +194,10 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='heritage_type'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Property Type{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     as='select'
@@ -235,7 +235,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='heritage_type-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -247,10 +247,10 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='purchase_date'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Purchase Date{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='date'
@@ -274,7 +274,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='purchase_date-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -286,10 +286,10 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='address'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Property Address{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     as='textarea'
@@ -313,7 +313,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='address-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -325,11 +325,11 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     </div>
 
                     {/* Property Details Section */}
-                    <div className='bg-blue-50 rounded-lg p-6 border border-blue-200'>
+                    <div className='bg-primary/10 rounded-lg p-6 border border-primary/30'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-blue-600'
+                                    className='w-4 h-4 text-primary'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -351,7 +351,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='area'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Area Size
                                 </label>
@@ -400,14 +400,14 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         </option>
                                     </Field>
                                 </div>
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     Optional - leave empty if not applicable
                                 </p>
                                 <ErrorMessage name='area'>
                                     {(msg) => (
                                         <span
                                             id='area-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -418,7 +418,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='area_unit-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -430,14 +430,14 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='monthly_rental_income'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Monthly Rental Income{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -462,14 +462,14 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         }
                                     />
                                 </div>
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     Set to 0 if property is not rented
                                 </p>
                                 <ErrorMessage name='monthly_rental_income'>
                                     {(msg) => (
                                         <span
                                             id='monthly_rental_income-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -481,11 +481,11 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     </div>
 
                     {/* Financial Information Section */}
-                    <div className='bg-green-50 rounded-lg p-6 border border-green-200'>
+                    <div className='bg-success/10 rounded-lg p-6 border border-success/30'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-success/20 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-green-600'
+                                    className='w-4 h-4 text-success'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -507,14 +507,14 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='purchase_price'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Purchase Price{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -543,7 +543,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='purchase_price-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -555,13 +555,13 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                             <div>
                                 <label
                                     htmlFor='current_value'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Current Market Value
                                 </label>
                                 <div className='relative'>
                                     <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                        <span className='text-gray-500 sm:text-sm font-medium'>
+                                        <span className='text-base-content/60 sm:text-sm font-medium'>
                                             $
                                         </span>
                                     </div>
@@ -586,7 +586,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                         }
                                     />
                                 </div>
-                                <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                     Optional - for tracking property
                                     appreciation
                                 </p>
@@ -594,7 +594,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                     {(msg) => (
                                         <span
                                             id='current_value-error'
-                                            className='mt-1 text-sm text-red-600 font-medium'
+                                            className='mt-1 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -608,9 +608,9 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                     {/* Additional Notes Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-base-200 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-gray-600'
+                                    className='w-4 h-4 text-base-content/70'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -651,7 +651,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                                 {(msg) => (
                                     <span
                                         id='notes-error'
-                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        className='mt-2 text-sm text-error font-medium'
                                         role='alert'
                                     >
                                         {msg}
@@ -686,7 +686,7 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
                         <button
                             type='submit'
                             disabled={isSubmitting}
-                            className='w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border-2 border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+                            className='btn btn-success w-full sm:w-auto px-6'
                         >
                             {isSubmitting ? (
                                 <>

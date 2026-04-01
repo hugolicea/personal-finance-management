@@ -199,9 +199,9 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                     {/* Investment Information Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-blue-600'
+                                    className='w-4 h-4 text-primary'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -223,10 +223,9 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                             <div>
                                 <label
                                     htmlFor='symbol'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
-                                    Symbol{' '}
-                                    <span className='text-red-500'>*</span>
+                                    Symbol <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='text'
@@ -249,7 +248,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     {(msg) => (
                                         <span
                                             id='symbol-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -261,10 +260,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='name'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Investment Name{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='text'
@@ -287,7 +286,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     {(msg) => (
                                         <span
                                             id='name-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -299,10 +298,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                             <div>
                                 <label
                                     htmlFor='investment_type'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Investment Type{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     as='select'
@@ -339,7 +338,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     {(msg) => (
                                         <span
                                             id='investment_type-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -352,10 +351,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 <div>
                                     <label
                                         htmlFor='quantity'
-                                        className='block text-sm font-semibold text-gray-800 mb-2'
+                                        className='block text-sm font-semibold text-base-content mb-2'
                                     >
                                         Quantity{' '}
-                                        <span className='text-red-500'>*</span>
+                                        <span className='text-error'>*</span>
                                     </label>
                                     <Field
                                         type='number'
@@ -379,7 +378,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         {(msg) => (
                                             <span
                                                 id='quantity-error'
-                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                className='mt-2 text-sm text-error font-medium'
                                                 role='alert'
                                             >
                                                 {msg}
@@ -392,11 +391,11 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                     </div>
 
                     {/* Financial Information Section */}
-                    <div className='bg-green-50 rounded-lg p-6 border border-green-200'>
+                    <div className='bg-success/10 rounded-lg p-6 border border-success/30'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-base-200 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-green-600'
+                                    className='w-4 h-4 text-success'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -419,14 +418,14 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 <div>
                                     <label
                                         htmlFor='purchase_price'
-                                        className='block text-sm font-semibold text-gray-800 mb-2'
+                                        className='block text-sm font-semibold text-base-content mb-2'
                                     >
                                         Purchase Price{' '}
-                                        <span className='text-red-500'>*</span>
+                                        <span className='text-error'>*</span>
                                     </label>
                                     <div className='relative'>
                                         <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                            <span className='text-gray-500 sm:text-sm font-medium'>
+                                            <span className='text-base-content/60 sm:text-sm font-medium'>
                                                 $
                                             </span>
                                         </div>
@@ -455,7 +454,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         {(msg) => (
                                             <span
                                                 id='purchase_price-error'
-                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                className='mt-2 text-sm text-error font-medium'
                                                 role='alert'
                                             >
                                                 {msg}
@@ -469,14 +468,14 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 <div>
                                     <label
                                         htmlFor='principal_amount'
-                                        className='block text-sm font-semibold text-gray-800 mb-2'
+                                        className='block text-sm font-semibold text-base-content mb-2'
                                     >
                                         Principal Amount{' '}
-                                        <span className='text-red-500'>*</span>
+                                        <span className='text-error'>*</span>
                                     </label>
                                     <div className='relative'>
                                         <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                            <span className='text-gray-500 sm:text-sm font-medium'>
+                                            <span className='text-base-content/60 sm:text-sm font-medium'>
                                                 $
                                             </span>
                                         </div>
@@ -505,7 +504,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         {(msg) => (
                                             <span
                                                 id='principal_amount-error'
-                                                className='mt-2 text-sm text-red-600 font-medium'
+                                                className='mt-2 text-sm text-error font-medium'
                                                 role='alert'
                                             >
                                                 {msg}
@@ -519,13 +518,13 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 <div>
                                     <label
                                         htmlFor='current_price'
-                                        className='block text-sm font-semibold text-gray-800 mb-2'
+                                        className='block text-sm font-semibold text-base-content mb-2'
                                     >
                                         Current Price
                                     </label>
                                     <div className='relative'>
                                         <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                                            <span className='text-gray-500 sm:text-sm font-medium'>
+                                            <span className='text-base-content/60 sm:text-sm font-medium'>
                                                 $
                                             </span>
                                         </div>
@@ -550,7 +549,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             }
                                         />
                                     </div>
-                                    <p className='mt-2 text-xs text-gray-500 font-medium'>
+                                    <p className='mt-2 text-xs text-base-content/60 font-medium'>
                                         Optional - for tracking unrealized
                                         gains/losses
                                     </p>
@@ -558,7 +557,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                         {(msg) => (
                                             <span
                                                 id='current_price-error'
-                                                className='mt-1 text-sm text-red-600 font-medium'
+                                                className='mt-1 text-sm text-error font-medium'
                                                 role='alert'
                                             >
                                                 {msg}
@@ -573,10 +572,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     <div>
                                         <label
                                             htmlFor='interest_rate'
-                                            className='block text-sm font-semibold text-gray-800 mb-2'
+                                            className='block text-sm font-semibold text-base-content mb-2'
                                         >
                                             Interest Rate (%){' '}
-                                            <span className='text-red-500'>
+                                            <span className='text-error'>
                                                 *
                                             </span>
                                         </label>
@@ -604,7 +603,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                                 }
                                             />
                                             <div className='absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none'>
-                                                <span className='text-gray-500 sm:text-sm font-medium'>
+                                                <span className='text-base-content/60 sm:text-sm font-medium'>
                                                     %
                                                 </span>
                                             </div>
@@ -613,7 +612,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             {(msg) => (
                                                 <span
                                                     id='interest_rate-error'
-                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    className='mt-2 text-sm text-error font-medium'
                                                     role='alert'
                                                 >
                                                     {msg}
@@ -625,10 +624,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     <div>
                                         <label
                                             htmlFor='compounding_frequency'
-                                            className='block text-sm font-semibold text-gray-800 mb-2'
+                                            className='block text-sm font-semibold text-base-content mb-2'
                                         >
                                             Compounding Frequency{' '}
-                                            <span className='text-red-500'>
+                                            <span className='text-error'>
                                                 *
                                             </span>
                                         </label>
@@ -667,7 +666,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             {(msg) => (
                                                 <span
                                                     id='compounding_frequency-error'
-                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    className='mt-2 text-sm text-error font-medium'
                                                     role='alert'
                                                 >
                                                     {msg}
@@ -679,10 +678,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     <div>
                                         <label
                                             htmlFor='term_years'
-                                            className='block text-sm font-semibold text-gray-800 mb-2'
+                                            className='block text-sm font-semibold text-base-content mb-2'
                                         >
                                             Term (Years){' '}
-                                            <span className='text-red-500'>
+                                            <span className='text-error'>
                                                 *
                                             </span>
                                         </label>
@@ -711,7 +710,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                             {(msg) => (
                                                 <span
                                                     id='term_years-error'
-                                                    className='mt-2 text-sm text-red-600 font-medium'
+                                                    className='mt-2 text-sm text-error font-medium'
                                                     role='alert'
                                                 >
                                                     {msg}
@@ -725,10 +724,10 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                             <div className='sm:col-span-2'>
                                 <label
                                     htmlFor='purchase_date'
-                                    className='block text-sm font-semibold text-gray-800 mb-2'
+                                    className='block text-sm font-semibold text-base-content mb-2'
                                 >
                                     Purchase Date{' '}
-                                    <span className='text-red-500'>*</span>
+                                    <span className='text-error'>*</span>
                                 </label>
                                 <Field
                                     type='date'
@@ -752,7 +751,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                     {(msg) => (
                                         <span
                                             id='purchase_date-error'
-                                            className='mt-2 text-sm text-red-600 font-medium'
+                                            className='mt-2 text-sm text-error font-medium'
                                             role='alert'
                                         >
                                             {msg}
@@ -766,9 +765,9 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                     {/* Additional Notes Section */}
                     <div className='bg-base-200 rounded-lg p-6 border border-base-300'>
                         <div className='flex items-center mb-4'>
-                            <div className='flex-shrink-0 w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                            <div className='flex-shrink-0 w-8 h-8 bg-base-200 rounded-lg flex items-center justify-center'>
                                 <svg
-                                    className='w-4 h-4 text-gray-600'
+                                    className='w-4 h-4 text-base-content/70'
                                     fill='none'
                                     stroke='currentColor'
                                     viewBox='0 0 24 24'
@@ -809,7 +808,7 @@ function InvestmentForm({ investment, onClose }: InvestmentFormProps) {
                                 {(msg) => (
                                     <span
                                         id='notes-error'
-                                        className='mt-2 text-sm text-red-600 font-medium'
+                                        className='mt-2 text-sm text-error font-medium'
                                         role='alert'
                                     >
                                         {msg}

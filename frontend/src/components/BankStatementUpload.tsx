@@ -111,8 +111,8 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                     <div
                         className={`flex-1 border-2 border-dashed rounded-lg px-4 py-3 flex items-center gap-3 cursor-pointer transition-colors ${
                             dragActive
-                                ? 'border-blue-400 bg-blue-50'
-                                : 'border-base-300 hover:bg-gray-50'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-base-300 hover:bg-base-200'
                         }`}
                         onDrop={handleDrop}
                         onDragOver={handleDragOver}
@@ -120,7 +120,7 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                         onClick={handleClick}
                     >
                         <svg
-                            className='h-6 w-6 text-gray-400 flex-shrink-0'
+                            className='h-6 w-6 text-base-content/50 flex-shrink-0'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -133,12 +133,12 @@ const BankStatementUpload: React.FC<{ accountId?: number }> = ({
                             />
                         </svg>
                         <div className='min-w-0'>
-                            <p className='text-sm font-medium text-gray-700'>
+                            <p className='text-sm font-medium text-base-content/80'>
                                 {loading
                                     ? 'Uploading…'
                                     : 'Drop CSV here or click to browse'}
                             </p>
-                            <p className='text-xs text-gray-400 truncate'>
+                            <p className='text-xs text-base-content/50 truncate'>
                                 Credit Card: Date,Description,Amount &nbsp;|
                                 &nbsp; Account: Details,PostingDate,Amount,Type
                             </p>

@@ -204,7 +204,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                                 className='block text-sm font-medium mb-1'
                             >
                                 Account Number
-                                <span className='text-xs text-gray-400 ml-1'>
+                                <span className='text-xs text-base-content/50 ml-1'>
                                     (last 4 digits)
                                 </span>
                             </label>
@@ -337,7 +337,7 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
                             />
                             <label
                                 htmlFor='is_active'
-                                className='text-sm font-medium text-gray-700'
+                                className='text-sm font-medium text-base-content/80'
                             >
                                 Active account
                             </label>

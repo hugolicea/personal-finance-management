@@ -66,7 +66,7 @@ const DashboardFilters = memo(
                             onMonthChange(parseInt(e.target.value))
                         }
                         disabled={filterByYear}
-                        className='select select-bordered select-sm disabled:bg-gray-100 disabled:cursor-not-allowed'
+                        className='select select-bordered select-sm disabled:bg-base-200 disabled:cursor-not-allowed'
                     >
                         {[
                             'January',

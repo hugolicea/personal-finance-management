@@ -12,12 +12,12 @@ import {
 } from 'recharts';
 
 import { Heritage } from '../types/heritage';
+import { CHART_COLORS } from '../utils/chartColors';
 import {
     aggregateData,
     formatDateLabel,
     getAggregationLevel,
 } from '../utils/dataAggregation';
-import { CHART_COLORS } from '../utils/chartColors';
 import { formatCurrency } from '../utils/formatters';
 import ChartEmptyState from './ChartEmptyState';
 
@@ -153,7 +153,7 @@ function HeritageChart({ heritages, startDate, endDate }: HeritageChartProps) {
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
                 {/* Property Types Pie Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Properties by Type
                     </h4>
                     <ResponsiveContainer
@@ -200,7 +200,7 @@ function HeritageChart({ heritages, startDate, endDate }: HeritageChartProps) {
 
                 {/* Top Properties Bar Chart */}
                 <div className='bg-base-100 p-4 rounded-lg shadow-sm'>
-                    <h4 className='text-lg font-medium text-gray-900 mb-4'>
+                    <h4 className='text-lg font-medium text-base-content mb-4'>
                         Property Value Over Time
                     </h4>
                     <ResponsiveContainer

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
     createColumnHelper,
@@ -40,7 +40,7 @@ function Reports() {
     const { categories } = useAppSelector((state) => state.categories);
     const { transactions } = useAppSelector((state) => state.transactions);
 
-    // Lazy init — new Date() is called only on first render
+    // Lazy init � new Date() is called only on first render
     const [selectedYear, setSelectedYear] = useState<string>(() =>
         String(new Date().getFullYear())
     );
@@ -89,14 +89,14 @@ function Reports() {
         );
     }, [dispatch, selectedYear, selectedMonth, selectedCategory]);
 
-    // Static year range — no longer derived from loaded transactions
+    // Static year range � no longer derived from loaded transactions
     const availableYears = useMemo(() => {
         const current = new Date().getFullYear();
         return Array.from({ length: 8 }, (_, i) => current - i);
     }, []);
 
     // Type filter applied client-side on the already server-filtered dataset.
-    // Only affects the table — summary cards intentionally show full period totals.
+    // Only affects the table � summary cards intentionally show full period totals.
     const tableTransactions = useMemo(() => {
         if (selectedType === 'all') return transactions;
         if (selectedType === 'income')
@@ -104,7 +104,7 @@ function Reports() {
         return transactions.filter((t) => t.amount < 0);
     }, [transactions, selectedType]);
 
-    // Summary totals — computed from all server-filtered transactions (ignores type)
+    // Summary totals � computed from all server-filtered transactions (ignores type)
     const { totalIncome, totalExpenses, netBalance } = useMemo(() => {
         let income = 0;
         let expenses = 0;
@@ -132,7 +132,7 @@ function Reports() {
 
     const budgetRemaining = budgetTotal - totalExpenses + totalIncome;
 
-    // lookup map — build once per categories change, not per rendered row
+    // lookup map � build once per categories change, not per rendered row
     const catMap = useMemo(
         () => new Map(categories.map((c) => [c.id, c.name])),
         [categories]
@@ -158,11 +158,11 @@ function Reports() {
             }),
             columnHelper.accessor('category', {
                 header: 'Category',
-                cell: (info) => catMap.get(info.getValue()) ?? '—',
+                cell: (info) => catMap.get(info.getValue()) ?? '�',
             }),
             columnHelper.accessor('account_name', {
                 header: 'Account',
-                cell: (info) => info.getValue() ?? '—',
+                cell: (info) => info.getValue() ?? '�',
             }),
             columnHelper.accessor('amount', {
                 header: 'Amount',
@@ -206,7 +206,7 @@ function Reports() {
                 <div className='card bg-base-100 shadow-sm p-4 mb-6'>
                     <div className='grid grid-cols-2 sm:grid-cols-4 gap-4'>
                         <div>
-                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                            <label className='block text-xs font-medium text-base-content/60 mb-1'>
                                 Year
                             </label>
                             <select
@@ -227,7 +227,7 @@ function Reports() {
                         </div>
 
                         <div>
-                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                            <label className='block text-xs font-medium text-base-content/60 mb-1'>
                                 Month
                             </label>
                             <select
@@ -248,7 +248,7 @@ function Reports() {
                         </div>
 
                         <div>
-                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                            <label className='block text-xs font-medium text-base-content/60 mb-1'>
                                 Category
                             </label>
                             <select
@@ -269,7 +269,7 @@ function Reports() {
                         </div>
 
                         <div>
-                            <label className='block text-xs font-medium text-gray-500 mb-1'>
+                            <label className='block text-xs font-medium text-base-content/60 mb-1'>
                                 Type
                             </label>
                             <select
@@ -306,10 +306,10 @@ function Reports() {
                             }`}
                             aria-hidden='true'
                         >
-                            {budgetRemaining >= 0 ? '🎯' : '⚠️'}
+                            {budgetRemaining >= 0 ? '??' : '??'}
                         </div>
                         <div>
-                            <p className='text-xs text-gray-500'>
+                            <p className='text-xs text-base-content/60'>
                                 Budget remaining
                             </p>
                             <p
@@ -321,17 +321,19 @@ function Reports() {
                             >
                                 {formatCurrency(budgetRemaining)}
                             </p>
-                            <p className='text-xs text-gray-400'>
+                            <p className='text-xs text-base-content/50'>
                                 of {formatCurrency(budgetTotal)}
                             </p>
                         </div>
                     </div>
                     <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-xl'>
-                            💰
+                            ??
                         </div>
                         <div>
-                            <p className='text-xs text-gray-500'>Income</p>
+                            <p className='text-xs text-base-content/60'>
+                                Income
+                            </p>
                             <p className='text-lg font-bold text-success'>
                                 {formatCurrency(totalIncome)}
                             </p>
@@ -339,10 +341,12 @@ function Reports() {
                     </div>
                     <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xl'>
-                            💸
+                            ??
                         </div>
                         <div>
-                            <p className='text-xs text-gray-500'>Expenses</p>
+                            <p className='text-xs text-base-content/60'>
+                                Expenses
+                            </p>
                             <p className='text-lg font-bold text-error'>
                                 {formatCurrency(totalExpenses)}
                             </p>
@@ -352,14 +356,14 @@ function Reports() {
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
                                 netBalance >= 0
-                                    ? 'bg-blue-100'
+                                    ? 'bg-primary/10'
                                     : 'bg-orange-100'
                             }`}
                         >
-                            {netBalance >= 0 ? '📈' : '📉'}
+                            {netBalance >= 0 ? '??' : '??'}
                         </div>
                         <div>
-                            <p className='text-xs text-gray-500'>
+                            <p className='text-xs text-base-content/60'>
                                 Net ({transactions.length} transactions)
                             </p>
                             <p
@@ -396,7 +400,7 @@ function Reports() {
                                                           ? 'descending'
                                                           : 'none'
                                                 }
-                                                className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-gray-100'
+                                                className='px-4 py-3 text-left text-xs font-medium opacity-60 uppercase cursor-pointer select-none hover:bg-base-200'
                                             >
                                                 <div className='flex items-center gap-1'>
                                                     {
@@ -404,9 +408,9 @@ function Reports() {
                                                             .header as string
                                                     }
                                                     {header.column.getIsSorted() ===
-                                                        'asc' && ' ↑'}
+                                                        'asc' && ' ?'}
                                                     {header.column.getIsSorted() ===
-                                                        'desc' && ' ↓'}
+                                                        'desc' && ' ?'}
                                                 </div>
                                             </th>
                                         ))}
@@ -418,7 +422,7 @@ function Reports() {
                                     <tr>
                                         <td
                                             colSpan={5}
-                                            className='px-4 py-12 text-center text-gray-400'
+                                            className='px-4 py-12 text-center text-base-content/50'
                                         >
                                             No transactions match the selected
                                             filters.

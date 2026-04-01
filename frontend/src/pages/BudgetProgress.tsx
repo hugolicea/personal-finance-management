@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Link } from 'react-router-dom';
 
@@ -163,28 +163,80 @@ function BudgetCard({ category }: { category: SpendingSummaryItem }) {
 
 function BudgetProgress() {
     const dispatch = useAppDispatch();
-    const { month, categories } = useAppSelector(selectSpendingSummary);
+    const { categories } = useAppSelector(selectSpendingSummary);
     const isLoading = useAppSelector(selectBudgetProgressLoading);
     const error = useAppSelector(selectBudgetProgressError);
 
-    useEffect(() => {
-        const currentMonthStr = `${new Date().getFullYear()}-${String(
-            new Date().getMonth() + 1
-        ).padStart(2, '0')}`;
-        if (categories.length === 0 || month !== currentMonthStr) {
-            dispatch(fetchSpendingSummary());
+    const [selectedYear, setSelectedYear] = useState(() =>
+        new Date().getFullYear()
+    );
+    const [selectedMonth, setSelectedMonth] = useState(
+        () => new Date().getMonth() + 1
+    );
+
+    const selectedMonthStr = `${selectedYear}-${String(selectedMonth).padStart(
+        2,
+        '0'
+    )}`;
+
+    const isCurrentMonth =
+        selectedYear === new Date().getFullYear() &&
+        selectedMonth === new Date().getMonth() + 1;
+
+    function goToPrevMonth() {
+        if (selectedMonth === 1) {
+            setSelectedYear((y) => y - 1);
+            setSelectedMonth(12);
+        } else {
+            setSelectedMonth((m) => m - 1);
         }
-    }, [dispatch, month, categories.length]);
+    }
+
+    function goToNextMonth() {
+        if (selectedMonth === 12) {
+            setSelectedYear((y) => y + 1);
+            setSelectedMonth(1);
+        } else {
+            setSelectedMonth((m) => m + 1);
+        }
+    }
+
+    useEffect(() => {
+        dispatch(fetchSpendingSummary(selectedMonthStr));
+    }, [dispatch, selectedMonthStr]);
 
     return (
-        <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl'>
-            <header>
-                <h1 className='text-3xl font-bold tracking-tight text-base-content mb-2'>
-                    Budget Progress
-                </h1>
-                <p className='text-base text-base-content/60 mb-8'>
-                    {formatMonthLabel(month)}
-                </p>
+        <div className='space-y-6'>
+            <header className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+                <div>
+                    <h1 className='text-2xl font-bold text-base-content'>
+                        Budget Progress
+                    </h1>
+                    <p className='text-base-content/60 text-sm mt-1'>
+                        Track spending against budget limits
+                    </p>
+                </div>
+
+                <div className='flex items-center gap-2'>
+                    <button
+                        className='btn btn-ghost btn-sm btn-square'
+                        onClick={goToPrevMonth}
+                        aria-label='Previous month'
+                    >
+                        ‹
+                    </button>
+                    <span className='text-base font-semibold min-w-36 text-center text-base-content'>
+                        {formatMonthLabel(selectedMonthStr)}
+                    </span>
+                    <button
+                        className='btn btn-ghost btn-sm btn-square'
+                        onClick={goToNextMonth}
+                        disabled={isCurrentMonth}
+                        aria-label='Next month'
+                    >
+                        ›
+                    </button>
+                </div>
             </header>
 
             {error ? (

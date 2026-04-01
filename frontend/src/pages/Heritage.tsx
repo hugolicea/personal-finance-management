@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -118,7 +118,7 @@ function Heritage() {
                         {row.original.area ? (
                             `${row.original.area} ${row.original.area_unit}`
                         ) : (
-                            <span className='text-gray-400'>-</span>
+                            <span className='text-base-content/50'>-</span>
                         )}
                     </div>
                 ),
@@ -140,7 +140,9 @@ function Heritage() {
                         {row.original.current_value ? (
                             formatCurrency(row.original.current_value)
                         ) : (
-                            <span className='text-gray-400'>Not set</span>
+                            <span className='text-base-content/50'>
+                                Not set
+                            </span>
                         )}
                     </div>
                 ),
@@ -324,7 +326,7 @@ function Heritage() {
                                         className='text-white text-sm font-bold'
                                         aria-hidden='true'
                                     >
-                                        🏠
+                                        ??
                                     </span>
                                 </div>
                             </div>
@@ -391,7 +393,7 @@ function Heritage() {
                                         className='text-white text-sm font-bold'
                                         aria-hidden='true'
                                     >
-                                        💰
+                                        ??
                                     </span>
                                 </div>
                             </div>
@@ -420,7 +422,7 @@ function Heritage() {
                                         className='text-white text-sm font-bold'
                                         aria-hidden='true'
                                     >
-                                        📈
+                                        ??
                                     </span>
                                 </div>
                             </div>
@@ -451,7 +453,7 @@ function Heritage() {
                             className='block w-full max-w-md px-3 py-2 border border-base-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm'
                         />
                     </div>
-                    <div className='text-sm text-gray-500 lg:hidden'>
+                    <div className='text-sm text-base-content/60 lg:hidden'>
                         <span className='inline-flex items-center'>
                             <svg
                                 className='w-4 h-4 mr-1'
@@ -500,7 +502,7 @@ function Heritage() {
                                                         Address:
                                                     </span>
                                                     <span
-                                                        className='ml-2 text-gray-900 truncate block max-w-32'
+                                                        className='ml-2 text-base-content truncate block max-w-32'
                                                         title={heritage.address}
                                                     >
                                                         {heritage.address}
@@ -510,7 +512,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Purchase Price:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 tabular-nums'>
+                                                    <span className='ml-2 text-base-content tabular-nums'>
                                                         {formatCurrency(
                                                             heritage.purchase_price
                                                         )}
@@ -520,7 +522,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Current Value:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 font-semibold text-success tabular-nums'>
+                                                    <span className='ml-2 text-base-content font-semibold text-success tabular-nums'>
                                                         {heritage.current_value
                                                             ? formatCurrency(
                                                                   heritage.current_value
@@ -532,7 +534,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Monthly Rent:
                                                     </span>
-                                                    <span className='ml-2 text-gray-900 tabular-nums'>
+                                                    <span className='ml-2 text-base-content tabular-nums'>
                                                         {formatCurrency(
                                                             heritage.monthly_rental_income
                                                         )}
@@ -565,7 +567,7 @@ function Heritage() {
                                                 onClick={() =>
                                                     handleEditHeritage(heritage)
                                                 }
-                                                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
+                                                className='inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-primary/10 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200'
                                             >
                                                 <svg
                                                     className='w-4 h-4 mr-1.5'
@@ -628,7 +630,7 @@ function Heritage() {
                                                         <th
                                                             key={header.id}
                                                             scope='col'
-                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-gray-100'
+                                                            className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase cursor-pointer hover:bg-base-200'
                                                             onClick={header.column.getToggleSortingHandler()}
                                                             aria-sort={
                                                                 header.column.getIsSorted() ===
@@ -732,10 +734,10 @@ function Heritage() {
                                     Delete Property
                                 </h3>
                                 <div className='mt-2'>
-                                    <p className='text-sm text-gray-500'>
+                                    <p className='text-sm text-base-content/60'>
                                         You are about to permanently delete the
                                         property{' '}
-                                        <span className='font-semibold text-gray-700'>
+                                        <span className='font-semibold text-base-content/80'>
                                             "{deletingHeritage?.name}"
                                         </span>
                                         . This action cannot be undone.
@@ -749,7 +751,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Type:
                                                     </span>{' '}
-                                                    <span className='text-gray-900 capitalize'>
+                                                    <span className='text-base-content capitalize'>
                                                         {deletingHeritage.heritage_type.replace(
                                                             /_/g,
                                                             ' '
@@ -760,7 +762,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Address:
                                                     </span>{' '}
-                                                    <span className='text-gray-900'>
+                                                    <span className='text-base-content'>
                                                         {
                                                             deletingHeritage.address
                                                         }
@@ -770,7 +772,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Current Value:
                                                     </span>{' '}
-                                                    <span className='text-gray-900 font-semibold tabular-nums'>
+                                                    <span className='text-base-content font-semibold tabular-nums'>
                                                         {formatCurrency(
                                                             deletingHeritage.current_value ||
                                                                 deletingHeritage.purchase_price
@@ -781,7 +783,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Monthly Rental Income:
                                                     </span>{' '}
-                                                    <span className='text-gray-900 tabular-nums'>
+                                                    <span className='text-base-content tabular-nums'>
                                                         {formatCurrency(
                                                             deletingHeritage.monthly_rental_income
                                                         )}
@@ -813,7 +815,7 @@ function Heritage() {
                                                     <span className='font-medium'>
                                                         Rental Yield:
                                                     </span>{' '}
-                                                    <span className='text-gray-900 font-semibold text-primary'>
+                                                    <span className='text-base-content font-semibold text-primary'>
                                                         {deletingHeritage.rental_yield_percentage.toFixed(
                                                             2
                                                         )}
@@ -826,7 +828,7 @@ function Heritage() {
                                 )}
                                 <div className='mt-3'>
                                     <p className='text-sm text-error font-medium'>
-                                        <span aria-hidden='true'>⚠️</span> This
+                                        <span aria-hidden='true'>??</span> This
                                         will permanently remove all data
                                         associated with this property.
                                     </p>

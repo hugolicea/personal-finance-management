@@ -1,4 +1,4 @@
-﻿import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
@@ -7,7 +7,7 @@ import {
     restoreBackup,
 } from '../store/slices/backupSlice';
 
-// Hoisted to module level — never recreated on render (rendering-hoist-jsx)
+// Hoisted to module level � never recreated on render (rendering-hoist-jsx)
 // Regular models: governed by the "All" toggle, available to every user.
 const REGULAR_MODEL_KEYS = [
     'categories',
@@ -51,7 +51,7 @@ function DatabaseBackup() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [confirmReplace, setConfirmReplace] = useState(false);
     const [confirmError, setConfirmError] = useState<string | null>(null);
-    // Lazy init — Set is non-primitive (rerender-lazy-state-init)
+    // Lazy init � Set is non-primitive (rerender-lazy-state-init)
     // Staff-only models ('users') are excluded from the default selection.
     const [selectedModels, setSelectedModels] = useState<Set<BackupModel>>(
         () => new Set(REGULAR_MODEL_KEYS)
@@ -74,7 +74,7 @@ function DatabaseBackup() {
     }, [someRegularSelected]);
 
     const handleToggleAll = useCallback(() => {
-        // Only toggles regular (non-staff) models — never auto-selects 'users'.
+        // Only toggles regular (non-staff) models � never auto-selects 'users'.
         setSelectedModels((prev) => {
             const next = new Set(prev);
             if (allRegularSelected) {
@@ -99,7 +99,7 @@ function DatabaseBackup() {
     }, []);
 
     const handleDownload = useCallback(() => {
-        // Always send explicit list — never rely on backend "all" default
+        // Always send explicit list � never rely on backend "all" default
         // which would include users and cause 403 for non-staff.
         dispatch(downloadBackup(Array.from(selectedModels)));
     }, [dispatch, selectedModels]);
@@ -160,7 +160,7 @@ function DatabaseBackup() {
             {/* Backup section */}
             <div className='card bg-base-100 shadow-sm p-6 space-y-4'>
                 <h2 className='text-lg font-medium mb-1'>Export Backup</h2>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-base-content/60'>
                     Downloads a JSON file containing your selected data. Choose
                     which models to include below.
                 </p>
@@ -170,8 +170,8 @@ function DatabaseBackup() {
                     <legend className='text-sm font-medium mb-2'>
                         Include in backup
                     </legend>
-                    <div className='rounded-md border border-base-300 divide-y divide-gray-100'>
-                        {/* "All" master toggle — controls regular models only */}
+                    <div className='rounded-md border border-base-300 divide-y divide-base-200'>
+                        {/* "All" master toggle � controls regular models only */}
                         <label className='flex items-center gap-3 px-4 py-2.5 cursor-pointer rounded-t-md'>
                             <input
                                 ref={allCheckboxRef}
@@ -181,10 +181,10 @@ function DatabaseBackup() {
                                 className='h-4 w-4 rounded border-base-300 text-indigo-600'
                                 aria-label='Select all data types'
                             />
-                            <span className='text-sm font-semibold text-gray-800'>
+                            <span className='text-sm font-semibold text-base-content'>
                                 All
                             </span>
-                            <span className='ml-auto text-xs text-gray-400'>
+                            <span className='ml-auto text-xs text-base-content/50'>
                                 {
                                     REGULAR_MODEL_KEYS.filter((k) =>
                                         selectedModels.has(k)
@@ -212,7 +212,7 @@ function DatabaseBackup() {
                             </label>
                         ))}
 
-                        {/* Staff-only model checkboxes — only rendered for staff users */}
+                        {/* Staff-only model checkboxes � only rendered for staff users */}
                         {isStaff &&
                             STAFF_MODEL_KEYS.map((model) => (
                                 <label
@@ -265,7 +265,7 @@ function DatabaseBackup() {
                             />
                         </svg>
                     ) : (
-                        <span aria-hidden='true'>⬇️</span>
+                        <span aria-hidden='true'>??</span>
                     )}
                     Download Backup
                 </button>
@@ -279,7 +279,7 @@ function DatabaseBackup() {
             {/* Restore section */}
             <div className='card bg-base-100 shadow-sm p-6 space-y-4'>
                 <h2 className='text-lg font-medium'>Restore from Backup</h2>
-                <p className='text-sm text-gray-500'>
+                <p className='text-sm text-base-content/60'>
                     Upload a <code>.json</code> backup file exported from this
                     application. Duplicate transactions (same reference ID) will
                     be skipped automatically.
@@ -298,7 +298,7 @@ function DatabaseBackup() {
                         type='file'
                         accept='.json'
                         onChange={handleFileSelect}
-                        className='block table table-zebra w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
+                        className='block table table-zebra w-full text-base-content/60 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'
                     />
                 </div>
 
@@ -363,7 +363,7 @@ function DatabaseBackup() {
                             />
                         </svg>
                     ) : (
-                        <span aria-hidden='true'>⬆️</span>
+                        <span aria-hidden='true'>??</span>
                     )}
                     Restore Backup
                 </button>
@@ -378,7 +378,7 @@ function DatabaseBackup() {
             {error && (
                 <div className='rounded-md bg-red-50 border border-red-200 p-4'>
                     <p className='text-sm text-red-700'>
-                        <span aria-hidden='true'>❌ </span>
+                        <span aria-hidden='true'>? </span>
                         {error}
                     </p>
                 </div>
@@ -388,7 +388,7 @@ function DatabaseBackup() {
             {restoreResult && (
                 <div className='rounded-md bg-green-50 border border-green-200 p-4 space-y-3'>
                     <p className='text-sm font-medium text-green-800'>
-                        <span aria-hidden='true'>✅ </span>
+                        <span aria-hidden='true'>? </span>
                         {restoreResult.message}
                     </p>
                     <table className='min-table table-zebra w-full'>
@@ -396,10 +396,10 @@ function DatabaseBackup() {
                             {Object.entries(restoreResult.summary).map(
                                 ([key, value]) => (
                                     <tr key={key}>
-                                        <td className='pr-4 py-0.5 capitalize text-gray-600'>
+                                        <td className='pr-4 py-0.5 capitalize text-base-content/70'>
                                             {key.replace(/_/g, ' ')}
                                         </td>
-                                        <td className='font-semibold text-gray-900'>
+                                        <td className='font-semibold text-base-content'>
                                             {value} imported
                                         </td>
                                     </tr>
