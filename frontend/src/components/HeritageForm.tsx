@@ -1,8 +1,10 @@
 ﻿import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch } from '../hooks/redux';
-import { createHeritage, updateHeritage } from '../store/slices/heritagesSlice';
+import {
+    useCreateHeritage,
+    useUpdateHeritage,
+} from '../hooks/queries/useHeritagesQuery';
 import { Heritage } from '../types/heritage';
 import { getTodayDate, toDateInputValue } from '../utils/dateHelpers';
 import FormAutoSave from './FormAutoSave';
@@ -55,7 +57,8 @@ const validationSchema = Yup.object({
 });
 
 function HeritageForm({ heritage, onClose }: HeritageFormProps) {
-    const dispatch = useAppDispatch();
+    const createMutation = useCreateHeritage();
+    const updateMutation = useUpdateHeritage();
 
     const initialValues = {
         name: heritage?.name || '',
@@ -102,14 +105,12 @@ function HeritageForm({ heritage, onClose }: HeritageFormProps) {
             };
 
             if (heritage) {
-                await dispatch(
-                    updateHeritage({
-                        id: heritage.id,
-                        data,
-                    })
-                );
+                await updateMutation.mutateAsync({
+                    id: heritage.id,
+                    data,
+                });
             } else {
-                await dispatch(createHeritage(data));
+                await createMutation.mutateAsync(data);
             }
             onClose();
         } catch (error) {

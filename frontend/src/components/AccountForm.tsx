@@ -3,8 +3,10 @@
 import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch } from '../hooks/redux';
-import { createAccount, updateAccount } from '../store/slices/accountsSlice';
+import {
+    useCreateAccount,
+    useUpdateAccount,
+} from '../hooks/queries/useAccountsQuery';
 import type { BankAccount } from '../types/accounts';
 import FormAutoSave from './FormAutoSave';
 
@@ -14,7 +16,8 @@ interface AccountFormProps {
 }
 
 const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
-    const dispatch = useAppDispatch();
+    const createMutation = useCreateAccount();
+    const updateMutation = useUpdateAccount();
 
     const initialValues = {
         name: account?.name ?? '',
@@ -46,11 +49,9 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onClose }) => {
     const handleSubmit = async (values: typeof initialValues) => {
         try {
             if (account?.id) {
-                await dispatch(
-                    updateAccount({ id: account.id, ...values })
-                ).unwrap();
+                await updateMutation.mutateAsync({ id: account.id, ...values });
             } else {
-                await dispatch(createAccount(values)).unwrap();
+                await createMutation.mutateAsync(values);
             }
             onClose();
         } catch (error) {

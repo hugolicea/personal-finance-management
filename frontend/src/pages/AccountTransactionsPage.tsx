@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+﻿import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import BankStatementUpload from '../components/BankStatementUpload';
@@ -7,13 +7,12 @@ import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
 import TransactionForm from '../components/TransactionForm';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchAccounts } from '../store/slices/accountsSlice';
-import { fetchCategories } from '../store/slices/categoriesSlice';
+import { useAccountsQuery } from '../hooks/queries/useAccountsQuery';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
 import {
-    deleteTransaction,
-    fetchTransactions,
-} from '../store/slices/transactionsSlice';
+    useDeleteTransaction,
+    useTransactionsQuery,
+} from '../hooks/queries/useTransactionsQuery';
 import { ACCOUNT_TYPE_ICONS } from '../types/accounts';
 import type { Transaction } from '../types/transactions';
 import { formatDateForDisplay } from '../utils/dateHelpers';
@@ -21,16 +20,11 @@ import { formatCurrency } from '../utils/formatters';
 
 function AccountTransactionsPage() {
     const { accountId } = useParams<{ accountId: string }>();
-    const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const { accounts } = useAppSelector((state) => state.accounts);
-    const { categories } = useAppSelector((state) => state.categories);
-    const {
-        transactions,
-        loading: transactionsLoading,
-        deleting,
-    } = useAppSelector((state) => state.transactions);
+    const { data: accounts = [] } = useAccountsQuery();
+    const { data: categories = [] } = useCategoriesQuery();
+    const deleteTransactionMutation = useDeleteTransaction();
 
     const accountIdNum = accountId ? parseInt(accountId) : null;
     const account = accounts.find((a) => a.id === accountIdNum);
@@ -59,6 +53,47 @@ function AccountTransactionsPage() {
     const [filtersOpen, setFiltersOpen] = useState(true);
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
+    const queryFilters = useMemo(() => {
+        if (!accountIdNum) {
+            return {
+                ordering: '-date',
+            };
+        }
+
+        const dateAfter = filterByYear
+            ? `${selectedYear}-01-01`
+            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+
+        const lastDay = new Date(
+            selectedYear,
+            filterByYear ? 12 : selectedMonth,
+            0
+        ).getDate();
+        const dateBefore = `${selectedYear}-${String(
+            filterByYear ? 12 : selectedMonth
+        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        return {
+            account: accountIdNum,
+            category: selectedCategory || undefined,
+            search: searchTerm || undefined,
+            date_after: dateAfter,
+            date_before: dateBefore,
+            ordering: '-date',
+        };
+    }, [
+        accountIdNum,
+        filterByYear,
+        selectedYear,
+        selectedMonth,
+        selectedCategory,
+        searchTerm,
+    ]);
+
+    const { data: transactionData, isLoading: transactionsLoading } =
+        useTransactionsQuery(queryFilters);
+    const transactions = transactionData?.results ?? [];
+
     const activeFilterCount = [
         searchTerm !== '',
         selectedCategory !== '',
@@ -73,51 +108,6 @@ function AccountTransactionsPage() {
         setSelectedMonth(new Date().getMonth() + 1);
     };
 
-    useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchAccounts());
-    }, [dispatch]);
-
-    // Re-fetch transactions when filters or account changes
-    useEffect(() => {
-        if (!accountIdNum) return;
-
-        const dateAfter = filterByYear
-            ? `${selectedYear}-01-01`
-            : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
-
-        const lastDay = new Date(
-            filterByYear ? selectedYear : selectedYear,
-            filterByYear ? 12 : selectedMonth,
-            0
-        ).getDate();
-        const dateBefore = `${
-            filterByYear ? selectedYear : selectedYear
-        }-${String(filterByYear ? 12 : selectedMonth).padStart(
-            2,
-            '0'
-        )}-${String(lastDay).padStart(2, '0')}`;
-
-        dispatch(
-            fetchTransactions({
-                account: accountIdNum,
-                category: selectedCategory || undefined,
-                search: searchTerm || undefined,
-                date_after: dateAfter,
-                date_before: dateBefore,
-                ordering: '-date',
-            })
-        );
-    }, [
-        dispatch,
-        accountIdNum,
-        filterByYear,
-        selectedYear,
-        selectedMonth,
-        selectedCategory,
-        searchTerm,
-    ]);
-
     const handleEditTransaction = (transaction: Transaction) => {
         setEditingTransaction(transaction);
         setShowTransactionModal(true);
@@ -131,7 +121,7 @@ function AccountTransactionsPage() {
     const confirmDeleteTransaction = async () => {
         if (!deletingTransaction) return;
         try {
-            await dispatch(deleteTransaction(deletingTransaction.id)).unwrap();
+            await deleteTransactionMutation.mutateAsync(deletingTransaction.id);
             setShowDeleteTransactionDialog(false);
             setDeletingTransaction(null);
         } catch (error) {
@@ -156,7 +146,7 @@ function AccountTransactionsPage() {
         try {
             await Promise.all(
                 selectedTransactions.map((id) =>
-                    dispatch(deleteTransaction(id)).unwrap()
+                    deleteTransactionMutation.mutateAsync(id)
                 )
             );
             setSelectedTransactions([]);
@@ -673,7 +663,7 @@ function AccountTransactionsPage() {
                 onConfirm={confirmDeleteTransaction}
                 title='Delete Transaction'
                 message={`Delete "${deletingTransaction?.description ?? ''}"?`}
-                isConfirming={deleting}
+                isConfirming={deleteTransactionMutation.isPending}
             />
 
             {/* Bulk delete */}

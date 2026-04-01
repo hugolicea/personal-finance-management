@@ -4,11 +4,14 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 
 import * as Sentry from '@sentry/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import axios from 'axios';
 
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+import { queryClient } from './lib/queryClient';
 import { store } from './store';
 
 // Initialize Sentry for error tracking
@@ -124,11 +127,16 @@ const root = ReactDOM.createRoot(
 root.render(
     <React.StrictMode>
         <ErrorBoundary>
-            <Provider store={store}>
-                <BrowserRouter>
-                    <App />
-                </BrowserRouter>
-            </Provider>
+            <QueryClientProvider client={queryClient}>
+                <Provider store={store}>
+                    <BrowserRouter>
+                        <App />
+                    </BrowserRouter>
+                </Provider>
+                {import.meta.env.DEV && (
+                    <ReactQueryDevtools initialIsOpen={false} />
+                )}
+            </QueryClientProvider>
         </ErrorBoundary>
     </React.StrictMode>
 );

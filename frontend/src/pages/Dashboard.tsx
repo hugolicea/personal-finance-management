@@ -1,4 +1,11 @@
-﻿import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+﻿import {
+    memo,
+    useCallback,
+    useDeferredValue,
+    useMemo,
+    useState,
+    useTransition,
+} from 'react';
 
 import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
@@ -7,12 +14,11 @@ import MonthlySpendingChart from '../components/MonthlySpendingChart';
 import NetWorthView from '../components/NetWorthView';
 import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchCategories } from '../store/slices/categoriesSlice';
-import { fetchHeritages } from '../store/slices/heritagesSlice';
-import { fetchInvestments } from '../store/slices/investmentsSlice';
-import { fetchRetirementAccounts } from '../store/slices/retirementAccountsSlice';
-import { fetchTransactions } from '../store/slices/transactionsSlice';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
+import { useHeritagesQuery } from '../hooks/queries/useHeritagesQuery';
+import { useInvestmentsQuery } from '../hooks/queries/useInvestmentsQuery';
+import { useRetirementAccountsQuery } from '../hooks/queries/useRetirementAccountsQuery';
+import { useTransactionsQuery } from '../hooks/queries/useTransactionsQuery';
 
 // Memoized filter component to prevent unnecessary re-renders
 interface DashboardFiltersProps {
@@ -135,14 +141,10 @@ const DashboardFilters = memo(
 DashboardFilters.displayName = 'DashboardFilters';
 
 function Dashboard() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector((state) => state.categories);
-    const { transactions } = useAppSelector((state) => state.transactions);
-    const { investments } = useAppSelector((state) => state.investments);
-    const { heritages } = useAppSelector((state) => state.heritages);
-    const { retirementAccounts } = useAppSelector(
-        (state) => state.retirementAccounts
-    );
+    const { data: categories = [] } = useCategoriesQuery();
+    const { data: investments = [] } = useInvestmentsQuery();
+    const { data: heritages = [] } = useHeritagesQuery();
+    const { data: retirementAccounts = [] } = useRetirementAccountsQuery();
 
     // Filter states
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -150,6 +152,7 @@ function Dashboard() {
         new Date().getMonth() + 1
     );
     const [filterByYear, setFilterByYear] = useState(false);
+    const [isPending, startTransition] = useTransition();
 
     const { chartStartDate, chartEndDate } = useMemo(() => {
         const chartStartDate = filterByYear
@@ -163,50 +166,56 @@ function Dashboard() {
     }, [filterByYear, selectedMonth, selectedYear]);
 
     // Memoize handlers to prevent unnecessary re-renders
-    const handleYearChange = useCallback((year: number) => {
-        setSelectedYear(year);
-    }, []);
+    const handleYearChange = useCallback(
+        (year: number) => {
+            startTransition(() => setSelectedYear(year));
+        },
+        [startTransition]
+    );
 
-    const handleMonthChange = useCallback((month: number) => {
-        setSelectedMonth(month);
-    }, []);
+    const handleMonthChange = useCallback(
+        (month: number) => {
+            startTransition(() => setSelectedMonth(month));
+        },
+        [startTransition]
+    );
 
-    const handleFilterToggle = useCallback((byYear: boolean) => {
-        setFilterByYear(byYear);
-    }, []);
+    const handleFilterToggle = useCallback(
+        (byYear: boolean) => {
+            startTransition(() => setFilterByYear(byYear));
+        },
+        [startTransition]
+    );
 
-    useEffect(() => {
-        dispatch(fetchCategories());
-        dispatch(fetchInvestments());
-        dispatch(fetchHeritages());
-        dispatch(fetchRetirementAccounts());
-    }, [dispatch]);
-
-    // Fetch transactions when filters change
-    useEffect(() => {
+    const transactionFilters = useMemo(() => {
         const dateAfter = filterByYear
             ? `${selectedYear}-01-01`
             : `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
 
-        const dateBeforeYear = filterByYear ? selectedYear : selectedYear;
         const dateBeforeMonth = filterByYear ? 12 : selectedMonth;
-        const lastDay = new Date(dateBeforeYear, dateBeforeMonth, 0).getDate();
-        const dateBefore = `${dateBeforeYear}-${String(
-            dateBeforeMonth
-        ).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const lastDay = new Date(selectedYear, dateBeforeMonth, 0).getDate();
+        const dateBefore = `${selectedYear}-${String(dateBeforeMonth).padStart(
+            2,
+            '0'
+        )}-${String(lastDay).padStart(2, '0')}`;
 
-        dispatch(
-            fetchTransactions({
-                date_after: dateAfter,
-                date_before: dateBefore,
-                ordering: '-date',
-            })
-        );
-    }, [dispatch, filterByYear, selectedYear, selectedMonth]);
+        return {
+            date_after: dateAfter,
+            date_before: dateBefore,
+            ordering: '-date',
+        };
+    }, [filterByYear, selectedYear, selectedMonth]);
+
+    const { data: transactionData, isFetching: transactionsFetching } =
+        useTransactionsQuery(transactionFilters);
+    const transactions = transactionData?.results ?? [];
+    const deferredTransactions = useDeferredValue(transactions);
+    const isStale = transactions !== deferredTransactions;
+    const isUpdating = transactionsFetching || isPending || isStale;
 
     const activeCategoryIds = useMemo(
-        () => new Set(transactions.map((t) => t.category)),
-        [transactions]
+        () => new Set(deferredTransactions.map((t) => t.category)),
+        [deferredTransactions]
     );
     const filteredCategories = useMemo(
         () => categories.filter((c) => activeCategoryIds.has(c.id)),
@@ -252,7 +261,7 @@ function Dashboard() {
                         selectedYear={selectedYear}
                         selectedMonth={selectedMonth}
                         filterByYear={filterByYear}
-                        transactionCount={transactions.length}
+                        transactionCount={deferredTransactions.length}
                         onYearChange={handleYearChange}
                         onMonthChange={handleMonthChange}
                         onFilterToggle={handleFilterToggle}
@@ -260,11 +269,15 @@ function Dashboard() {
                 </div>
             </div>
 
+            {isUpdating && (
+                <div className='h-1 bg-primary/30 animate-pulse w-full' />
+            )}
+
             <main className='py-8'>
                 <div className='space-y-8'>
                     {/* Balance Overview */}
                     <div className='transform transition-all duration-200 hover:scale-[1.01]'>
-                        <BalanceOverview transactions={transactions} />
+                        <BalanceOverview transactions={deferredTransactions} />
                     </div>
                     {/* First Row - 2 Spending Charts */}
                     <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
@@ -298,14 +311,17 @@ function Dashboard() {
                                         </h3>
                                     </div>
                                     <span className='text-sm text-white/80'>
-                                        {transactions.length} transaction
-                                        {transactions.length !== 1 ? 's' : ''}
+                                        {deferredTransactions.length}{' '}
+                                        transaction
+                                        {deferredTransactions.length !== 1
+                                            ? 's'
+                                            : ''}
                                     </span>
                                 </div>
                             </div>
                             <div className='p-6'>
                                 <MonthlySpendingChart
-                                    transactions={transactions}
+                                    transactions={deferredTransactions}
                                     year={selectedYear}
                                     startDate={chartStartDate}
                                     endDate={chartEndDate}
@@ -343,7 +359,7 @@ function Dashboard() {
                             </div>
                             <div className='p-6'>
                                 <SpendingChart
-                                    transactions={transactions}
+                                    transactions={deferredTransactions}
                                     categories={filteredCategories}
                                 />
                             </div>

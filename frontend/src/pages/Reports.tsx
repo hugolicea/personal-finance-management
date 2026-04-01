@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState, useTransition } from 'react';
 
 import {
     createColumnHelper,
@@ -10,9 +10,8 @@ import {
 } from '@tanstack/react-table';
 
 import Paginator from '../components/Paginator';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { fetchCategories } from '../store/slices/categoriesSlice';
-import { fetchTransactions } from '../store/slices/transactionsSlice';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
+import { useTransactionsQuery } from '../hooks/queries/useTransactionsQuery';
 import type { Transaction } from '../types/transactions';
 import { formatDateLong } from '../utils/dateHelpers';
 import { formatCurrency } from '../utils/formatters';
@@ -36,9 +35,7 @@ const MONTHS = [
 ];
 
 function Reports() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector((state) => state.categories);
-    const { transactions } = useAppSelector((state) => state.transactions);
+    const { data: categories = [] } = useCategoriesQuery();
 
     // Lazy init � new Date() is called only on first render
     const [selectedYear, setSelectedYear] = useState<string>(() =>
@@ -51,16 +48,9 @@ function Reports() {
     const [selectedType, setSelectedType] = useState<
         'all' | 'income' | 'expense'
     >('all');
+    const [isPending, startTransition] = useTransition();
 
-    // Fetch categories once on mount
-    useEffect(() => {
-        dispatch(fetchCategories());
-    }, [dispatch]);
-
-    // Re-fetch transactions from the backend whenever year/month/category change.
-    // Type (income/expense) is kept client-side so the summary cards always reflect
-    // the full period/category totals regardless of the table type filter.
-    useEffect(() => {
+    const transactionFilters = useMemo(() => {
         let dateAfter: string | undefined;
         let dateBefore: string | undefined;
 
@@ -79,15 +69,20 @@ function Reports() {
             }
         }
 
-        dispatch(
-            fetchTransactions({
-                category: selectedCategory || undefined,
-                date_after: dateAfter,
-                date_before: dateBefore,
-                ordering: '-date',
-            })
-        );
-    }, [dispatch, selectedYear, selectedMonth, selectedCategory]);
+        return {
+            category: selectedCategory || undefined,
+            date_after: dateAfter,
+            date_before: dateBefore,
+            ordering: '-date',
+        };
+    }, [selectedYear, selectedMonth, selectedCategory]);
+
+    const { data: transactionData, isFetching: transactionsFetching } =
+        useTransactionsQuery(transactionFilters);
+    const transactions = transactionData?.results ?? [];
+    const deferredTransactions = useDeferredValue(transactions);
+    const isStale = transactions !== deferredTransactions;
+    const isUpdating = transactionsFetching || isPending || isStale;
 
     // Static year range � no longer derived from loaded transactions
     const availableYears = useMemo(() => {
@@ -98,17 +93,17 @@ function Reports() {
     // Type filter applied client-side on the already server-filtered dataset.
     // Only affects the table � summary cards intentionally show full period totals.
     const tableTransactions = useMemo(() => {
-        if (selectedType === 'all') return transactions;
+        if (selectedType === 'all') return deferredTransactions;
         if (selectedType === 'income')
-            return transactions.filter((t) => t.amount > 0);
-        return transactions.filter((t) => t.amount < 0);
-    }, [transactions, selectedType]);
+            return deferredTransactions.filter((t) => t.amount > 0);
+        return deferredTransactions.filter((t) => t.amount < 0);
+    }, [deferredTransactions, selectedType]);
 
     // Summary totals � computed from all server-filtered transactions (ignores type)
     const { totalIncome, totalExpenses, netBalance } = useMemo(() => {
         let income = 0;
         let expenses = 0;
-        for (const t of transactions) {
+        for (const t of deferredTransactions) {
             if (t.amount > 0) income += t.amount;
             else expenses += Math.abs(t.amount);
         }
@@ -117,7 +112,7 @@ function Reports() {
             totalExpenses: expenses,
             netBalance: income - expenses,
         };
-    }, [transactions]);
+    }, [deferredTransactions]);
 
     // Budget for the selected category filter (or sum of all categories)
     const budgetTotal = useMemo(() => {
@@ -212,8 +207,10 @@ function Reports() {
                             <select
                                 value={selectedYear}
                                 onChange={(e) => {
-                                    setSelectedYear(e.target.value);
-                                    table.setPageIndex(0);
+                                    startTransition(() => {
+                                        setSelectedYear(e.target.value);
+                                        table.setPageIndex(0);
+                                    });
                                 }}
                                 className='select select-bordered w-full'
                             >
@@ -233,8 +230,10 @@ function Reports() {
                             <select
                                 value={selectedMonth}
                                 onChange={(e) => {
-                                    setSelectedMonth(e.target.value);
-                                    table.setPageIndex(0);
+                                    startTransition(() => {
+                                        setSelectedMonth(e.target.value);
+                                        table.setPageIndex(0);
+                                    });
                                 }}
                                 className='select select-bordered w-full'
                             >
@@ -254,8 +253,10 @@ function Reports() {
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => {
-                                    setSelectedCategory(e.target.value);
-                                    table.setPageIndex(0);
+                                    startTransition(() => {
+                                        setSelectedCategory(e.target.value);
+                                        table.setPageIndex(0);
+                                    });
                                 }}
                                 className='select select-bordered w-full'
                             >
@@ -275,13 +276,15 @@ function Reports() {
                             <select
                                 value={selectedType}
                                 onChange={(e) => {
-                                    setSelectedType(
-                                        e.target.value as
-                                            | 'all'
-                                            | 'income'
-                                            | 'expense'
-                                    );
-                                    table.setPageIndex(0);
+                                    startTransition(() => {
+                                        setSelectedType(
+                                            e.target.value as
+                                                | 'all'
+                                                | 'income'
+                                                | 'expense'
+                                        );
+                                        table.setPageIndex(0);
+                                    });
                                 }}
                                 className='select select-bordered w-full'
                             >
@@ -296,7 +299,11 @@ function Reports() {
                 </div>
 
                 {/* Summary totals */}
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+                <div
+                    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 transition-opacity duration-200 ${
+                        isUpdating ? 'opacity-50' : ''
+                    }`}
+                >
                     <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
@@ -306,7 +313,7 @@ function Reports() {
                             }`}
                             aria-hidden='true'
                         >
-                            {budgetRemaining >= 0 ? '??' : '??'}
+                            {budgetRemaining >= 0 ? '🎯' : '⚠️'}
                         </div>
                         <div>
                             <p className='text-xs text-base-content/60'>
@@ -328,7 +335,7 @@ function Reports() {
                     </div>
                     <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-xl'>
-                            ??
+                            💰
                         </div>
                         <div>
                             <p className='text-xs text-base-content/60'>
@@ -341,7 +348,7 @@ function Reports() {
                     </div>
                     <div className='card bg-base-100 shadow-sm p-4 flex items-center gap-4'>
                         <div className='w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-xl'>
-                            ??
+                            💸
                         </div>
                         <div>
                             <p className='text-xs text-base-content/60'>
@@ -360,11 +367,11 @@ function Reports() {
                                     : 'bg-orange-100'
                             }`}
                         >
-                            {netBalance >= 0 ? '??' : '??'}
+                            {netBalance >= 0 ? '📈' : '📉'}
                         </div>
                         <div>
                             <p className='text-xs text-base-content/60'>
-                                Net ({transactions.length} transactions)
+                                Net ({deferredTransactions.length} transactions)
                             </p>
                             <p
                                 className={`text-lg font-bold ${
@@ -381,7 +388,14 @@ function Reports() {
 
                 {/* Transactions table */}
                 <div className='card bg-base-100 shadow-sm overflow-hidden'>
-                    <div className='overflow-x-auto'>
+                    {isUpdating && (
+                        <div className='h-1 bg-primary/30 animate-pulse rounded-full mx-4 mt-2' />
+                    )}
+                    <div
+                        className={`overflow-x-auto transition-opacity duration-200 ${
+                            isUpdating ? 'opacity-50' : ''
+                        }`}
+                    >
                         <table className='table table-zebra w-full'>
                             <thead>
                                 {table.getHeaderGroups().map((headerGroup) => (
@@ -408,9 +422,9 @@ function Reports() {
                                                             .header as string
                                                     }
                                                     {header.column.getIsSorted() ===
-                                                        'asc' && ' ?'}
+                                                        'asc' && ' 🔼'}
                                                     {header.column.getIsSorted() ===
-                                                        'desc' && ' ?'}
+                                                        'desc' && ' 🔽'}
                                                 </div>
                                             </th>
                                         ))}

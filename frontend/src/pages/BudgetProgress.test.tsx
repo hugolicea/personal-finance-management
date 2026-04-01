@@ -1,30 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { type Mock, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mock, describe, expect, it, vi } from 'vitest';
 
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { useSpendingSummaryQuery } from '../hooks/queries/useSpendingSummaryQuery';
 import type { SpendingSummaryItem } from '../types/categories';
 import BudgetProgress from './BudgetProgress';
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
-vi.mock('../hooks/redux', () => ({
-    useAppDispatch: vi.fn(),
-    useAppSelector: vi.fn(),
+vi.mock('../hooks/queries/useSpendingSummaryQuery', () => ({
+    useSpendingSummaryQuery: vi.fn(),
 }));
-
-// fetchSpendingSummary returns a thunk; since dispatch is mocked as vi.fn()
-// the thunk is captured but never executed, so no real API calls fire.
-vi.mock('../store/slices/budgetProgressSlice', async (importOriginal) => {
-    const actual =
-        await importOriginal<
-            typeof import('../store/slices/budgetProgressSlice')
-        >();
-    return {
-        ...actual,
-        fetchSpendingSummary: vi.fn(() => ({ type: 'budgetProgress/noop' })),
-    };
-});
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -66,34 +52,28 @@ const NO_BUDGET_CATEGORY: SpendingSummaryItem = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-interface MockBudgetProgressState {
-    month: string;
+interface MockQueryState {
     categories: SpendingSummaryItem[];
-    loading: boolean;
-    error: string | null;
+    isLoading: boolean;
+    error: Error | null;
 }
 
-const DEFAULT_STATE: MockBudgetProgressState = {
-    month: '2026-03',
+const DEFAULT_QUERY_STATE: MockQueryState = {
     categories: [],
-    loading: false,
+    isLoading: false,
     error: null,
 };
 
 /**
- * Wire up useAppSelector so that each real selector function receives a mock
- * state object. Real selector implementations are preserved — only the Redux
- * store is replaced.
+ * Wire up useSpendingSummaryQuery with deterministic data/loading/error states.
  */
-function setupSelectorMock(
-    overrides: Partial<MockBudgetProgressState> = {}
-): void {
-    const state = {
-        budgetProgress: { ...DEFAULT_STATE, ...overrides },
-    };
-    (useAppSelector as Mock).mockImplementation(
-        (selector: (s: typeof state) => unknown) => selector(state)
-    );
+function setupQueryMock(overrides: Partial<MockQueryState> = {}): void {
+    const state = { ...DEFAULT_QUERY_STATE, ...overrides };
+    (useSpendingSummaryQuery as Mock).mockReturnValue({
+        data: state.isLoading ? undefined : { categories: state.categories },
+        isLoading: state.isLoading,
+        error: state.error,
+    });
 }
 
 function renderBudgetProgress() {
@@ -106,19 +86,12 @@ function renderBudgetProgress() {
 
 // ─── Suite ───────────────────────────────────────────────────────────────────
 
-const mockDispatch = vi.fn();
-
-beforeEach(() => {
-    (useAppDispatch as Mock).mockReturnValue(mockDispatch);
-    mockDispatch.mockClear();
-});
-
 describe('BudgetProgress', () => {
     // ── Loading state ─────────────────────────────────────────────────────────
 
     describe('Loading state', () => {
         it('renders skeleton cards when loading is true', () => {
-            setupSelectorMock({ loading: true });
+            setupQueryMock({ isLoading: true });
             const { container } = renderBudgetProgress();
 
             // Each of the 8 skeleton cards contains 5 animate-pulse divs
@@ -129,7 +102,7 @@ describe('BudgetProgress', () => {
         });
 
         it('does not render category card articles while loading', () => {
-            setupSelectorMock({ loading: true, categories: [GREEN_CATEGORY] });
+            setupQueryMock({ isLoading: true, categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             // BudgetCard renders <article>; skeleton renders <div>
@@ -141,14 +114,16 @@ describe('BudgetProgress', () => {
 
     describe('Error state', () => {
         it('renders an error alert when error is set', () => {
-            setupSelectorMock({ error: 'Failed to fetch spending summary' });
+            setupQueryMock({
+                error: new Error('Failed to fetch spending summary'),
+            });
             renderBudgetProgress();
 
             expect(screen.getByRole('alert')).toBeInTheDocument();
         });
 
         it('displays the error message text in the alert', () => {
-            setupSelectorMock({ error: 'Something went wrong' });
+            setupQueryMock({ error: new Error('Something went wrong') });
             renderBudgetProgress();
 
             expect(
@@ -161,7 +136,7 @@ describe('BudgetProgress', () => {
 
     describe('Empty state', () => {
         it('renders the empty-state card when categories is empty', () => {
-            setupSelectorMock({ categories: [] });
+            setupQueryMock({ categories: [] });
             renderBudgetProgress();
 
             expect(
@@ -170,7 +145,7 @@ describe('BudgetProgress', () => {
         });
 
         it('empty state includes a link to the categories page', () => {
-            setupSelectorMock({ categories: [] });
+            setupQueryMock({ categories: [] });
             renderBudgetProgress();
 
             const link = screen.getByRole('link', {
@@ -184,7 +159,7 @@ describe('BudgetProgress', () => {
 
     describe('Category display', () => {
         it('renders the correct number of category cards from mock data', () => {
-            setupSelectorMock({
+            setupQueryMock({
                 categories: [GREEN_CATEGORY, YELLOW_CATEGORY, RED_CATEGORY],
             });
             renderBudgetProgress();
@@ -193,7 +168,7 @@ describe('BudgetProgress', () => {
         });
 
         it('displays each category name', () => {
-            setupSelectorMock({
+            setupQueryMock({
                 categories: [GREEN_CATEGORY, YELLOW_CATEGORY],
             });
             renderBudgetProgress();
@@ -204,7 +179,7 @@ describe('BudgetProgress', () => {
 
         it('formats amounts correctly using formatCurrency', () => {
             // total_spent: 300 → "$300.00", budget_limit: 500 → "of $500.00"
-            setupSelectorMock({ categories: [GREEN_CATEGORY] });
+            setupQueryMock({ categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByText('$300.00')).toBeInTheDocument();
@@ -216,21 +191,21 @@ describe('BudgetProgress', () => {
 
     describe('Progress bar colors', () => {
         it('applies green fill (bg-success) for categories at 0–74% usage', () => {
-            setupSelectorMock({ categories: [GREEN_CATEGORY] }); // 60 %
+            setupQueryMock({ categories: [GREEN_CATEGORY] }); // 60 %
             const { container } = renderBudgetProgress();
 
             expect(container.querySelector('.bg-success')).toBeInTheDocument();
         });
 
         it('applies yellow fill (bg-warning) for categories at 75–99% usage', () => {
-            setupSelectorMock({ categories: [YELLOW_CATEGORY] }); // 95 %
+            setupQueryMock({ categories: [YELLOW_CATEGORY] }); // 95 %
             const { container } = renderBudgetProgress();
 
             expect(container.querySelector('.bg-warning')).toBeInTheDocument();
         });
 
         it('applies red fill (bg-error) for categories at 100%+ usage', () => {
-            setupSelectorMock({ categories: [RED_CATEGORY] }); // 125 %
+            setupQueryMock({ categories: [RED_CATEGORY] }); // 125 %
             const { container } = renderBudgetProgress();
 
             // The progress fill div carries bg-error (distinct from badge-error on the badge)
@@ -245,14 +220,14 @@ describe('BudgetProgress', () => {
 
     describe('Over-budget treatment', () => {
         it('shows an "Over Budget" badge for over-budget categories', () => {
-            setupSelectorMock({ categories: [RED_CATEGORY] });
+            setupQueryMock({ categories: [RED_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByText('Over Budget')).toBeInTheDocument();
         });
 
         it('applies red left border (border-l-error) to over-budget cards', () => {
-            setupSelectorMock({ categories: [RED_CATEGORY] });
+            setupQueryMock({ categories: [RED_CATEGORY] });
             const { container } = renderBudgetProgress();
 
             const article = container.querySelector('article');
@@ -261,7 +236,7 @@ describe('BudgetProgress', () => {
 
         it('shows "$X.XX over budget" text in the card footer', () => {
             // spent: 250, budget: 200 → $50.00 over budget
-            setupSelectorMock({ categories: [RED_CATEGORY] });
+            setupQueryMock({ categories: [RED_CATEGORY] });
             renderBudgetProgress();
 
             expect(
@@ -274,14 +249,14 @@ describe('BudgetProgress', () => {
 
     describe('No budget set', () => {
         it('shows "No budget set" text when budget_limit is 0', () => {
-            setupSelectorMock({ categories: [NO_BUDGET_CATEGORY] });
+            setupQueryMock({ categories: [NO_BUDGET_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByText(/no budget set/i)).toBeInTheDocument();
         });
 
         it('progress bar has no fill element when budget_limit is 0', () => {
-            setupSelectorMock({ categories: [NO_BUDGET_CATEGORY] });
+            setupQueryMock({ categories: [NO_BUDGET_CATEGORY] });
             const { container } = renderBudgetProgress();
 
             const progressbar = container.querySelector('[role="progressbar"]');
@@ -294,14 +269,14 @@ describe('BudgetProgress', () => {
 
     describe('Accessibility', () => {
         it('progress bars have role="progressbar"', () => {
-            setupSelectorMock({ categories: [GREEN_CATEGORY] });
+            setupQueryMock({ categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByRole('progressbar')).toBeInTheDocument();
         });
 
         it('progress bar aria-valuenow is capped at 100 for over-budget categories', () => {
-            setupSelectorMock({ categories: [RED_CATEGORY] }); // 125 %
+            setupQueryMock({ categories: [RED_CATEGORY] }); // 125 %
             renderBudgetProgress();
 
             const bar = screen.getByRole('progressbar');
@@ -311,7 +286,7 @@ describe('BudgetProgress', () => {
         });
 
         it('progress bars have aria-valuemin of 0', () => {
-            setupSelectorMock({ categories: [GREEN_CATEGORY] });
+            setupQueryMock({ categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByRole('progressbar')).toHaveAttribute(
@@ -321,7 +296,7 @@ describe('BudgetProgress', () => {
         });
 
         it('progress bars have aria-valuemax of 100', () => {
-            setupSelectorMock({ categories: [GREEN_CATEGORY] });
+            setupQueryMock({ categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             expect(screen.getByRole('progressbar')).toHaveAttribute(
@@ -331,7 +306,7 @@ describe('BudgetProgress', () => {
         });
 
         it('progress bars have a descriptive aria-label containing the category name', () => {
-            setupSelectorMock({ categories: [GREEN_CATEGORY] });
+            setupQueryMock({ categories: [GREEN_CATEGORY] });
             renderBudgetProgress();
 
             const bar = screen.getByRole('progressbar');

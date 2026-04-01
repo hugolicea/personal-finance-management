@@ -380,7 +380,7 @@ function MortgageCalculatorPanel() {
                 </FieldRow>
                 <FieldRow
                     label='Down Payment'
-                    description={`${downPct}% of home price � Loan: ${fmt(
+                    description={`${downPct}% of home price � Loan: ${fmt(
                         loanAmount
                     )}`}
                 >
@@ -923,8 +923,8 @@ function AutoLoanCalculatorPanel() {
 type Tab = 'mortgage' | 'auto';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'mortgage', label: 'Mortgage', icon: '??' },
-    { id: 'auto', label: 'Auto Loan', icon: '??' },
+    { id: 'mortgage', label: 'Mortgage', icon: '🏠' },
+    { id: 'auto', label: 'Auto Loan', icon: '🚗' },
 ];
 
 function LoanCalculator() {
@@ -940,11 +940,11 @@ function LoanCalculator() {
                     className='btn btn-ghost btn-sm'
                     aria-label='Back to Financial Tools'
                 >
-                    ? Back
+                    ← Back
                 </button>
                 <div>
                     <h1 className='text-2xl font-bold text-base-content'>
-                        ?? Loan Calculator
+                        🏦 Loan Calculator
                     </h1>
                     <p className='mt-0.5 text-sm text-base-content/60'>
                         Estimate your monthly payment, total interest, and

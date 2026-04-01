@@ -1,10 +1,9 @@
 import { memo, useMemo } from 'react';
 
-import { useAppSelector } from '../hooks/redux';
-import { selectTotalBalance } from '../store/slices/accountsSlice';
-import { selectPropertyValue } from '../store/slices/heritagesSlice';
-import { selectPortfolioValue } from '../store/slices/investmentsSlice';
-import { selectRetirementValue } from '../store/slices/retirementAccountsSlice';
+import { useAccountsQuery } from '../hooks/queries/useAccountsQuery';
+import { useHeritagesQuery } from '../hooks/queries/useHeritagesQuery';
+import { useInvestmentsQuery } from '../hooks/queries/useInvestmentsQuery';
+import { useRetirementAccountsQuery } from '../hooks/queries/useRetirementAccountsQuery';
 
 interface BreakdownItem {
     label: string;
@@ -26,19 +25,32 @@ function formatSignedCurrency(value: number): string {
 }
 
 const NetWorthView = memo(function NetWorthView() {
-    const cashBalance = useAppSelector(selectTotalBalance);
-    const investmentsValue = useAppSelector(selectPortfolioValue);
-    const heritageValue = useAppSelector(selectPropertyValue);
-    const retirementValue = useAppSelector(selectRetirementValue);
-    const liabilities = useAppSelector((state) =>
-        state.accounts.accounts.reduce((total, account) => {
-            if (account.account_type !== 'credit_card') {
-                return total;
-            }
-
-            return total + Math.abs(account.total_balance || 0);
-        }, 0)
+    const { data: accounts = [] } = useAccountsQuery();
+    const { data: investments = [] } = useInvestmentsQuery();
+    const { data: heritages = [] } = useHeritagesQuery();
+    const { data: retirementAccounts = [] } = useRetirementAccountsQuery();
+    const cashBalance = accounts
+        .filter((a) => a.account_type !== 'credit_card')
+        .reduce((sum, a) => sum + (a.total_balance || 0), 0);
+    const investmentsValue = investments.reduce(
+        (sum, inv) => sum + (inv.current_value || 0),
+        0
     );
+    const heritageValue = heritages.reduce(
+        (sum, h) => sum + (h.current_value || h.purchase_price || 0),
+        0
+    );
+    const retirementValue = retirementAccounts.reduce(
+        (sum, a) => sum + (a.current_balance || 0),
+        0
+    );
+    const liabilities = accounts.reduce((total, account) => {
+        if (account.account_type !== 'credit_card') {
+            return total;
+        }
+
+        return total + Math.abs(account.total_balance || 0);
+    }, 0);
 
     const netWorth =
         cashBalance +

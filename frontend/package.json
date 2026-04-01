@@ -15,6 +15,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.5",
     "@sentry/react": "^8.42.0",
+    "@tanstack/react-query": "^5.62.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/yup": "^0.29.14",
     "axios": "^1.7.2",
@@ -28,6 +29,7 @@
     "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.62.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

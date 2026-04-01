@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useMemo, useState } from 'react';
 
 import {
     ColumnDef,
@@ -16,11 +16,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
 import {
-    deleteCategory,
-    fetchCategories,
-} from '../store/slices/categoriesSlice';
+    useCategoriesQuery,
+    useDeleteCategory,
+} from '../hooks/queries/useCategoriesQuery';
 import { Category } from '../types/categories';
 import { formatCurrency } from '../utils/formatters';
 
@@ -112,8 +111,9 @@ function CategoryPanel({
 }
 
 function Categories() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector((state) => state.categories);
+    const { data: categories = [] } = useCategoriesQuery();
+    const deleteMutation = useDeleteCategory();
+    const deleting = deleteMutation.isPending;
 
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(
@@ -125,10 +125,6 @@ function Categories() {
         null
     );
     const [deleteError, setDeleteError] = useState<string | null>(null);
-
-    useEffect(() => {
-        dispatch(fetchCategories());
-    }, [dispatch]);
 
     const handleAddCategory = useCallback(() => {
         setEditingCategory(null);
@@ -149,14 +145,14 @@ function Categories() {
         if (!deletingCategory) return;
         setDeleteError(null);
         try {
-            await dispatch(deleteCategory(deletingCategory.id)).unwrap();
+            await deleteMutation.mutateAsync(deletingCategory.id);
             setShowDeleteCategoryDialog(false);
             setDeletingCategory(null);
         } catch (error) {
             console.error('Failed to delete category:', error);
             setDeleteError('Failed to delete category. Please try again.');
         }
-    }, [deletingCategory, dispatch]);
+    }, [deletingCategory, deleteMutation]);
 
     const closeModals = useCallback(() => {
         setShowCategoryModal(false);
@@ -315,6 +311,7 @@ function Categories() {
                 }
                 confirmLabel='Delete'
                 cancelLabel='Cancel'
+                isConfirming={deleting}
                 isDanger
             />
         </div>

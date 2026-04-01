@@ -21,6 +21,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/src/lib/*.js
 lib64/
 parts/
 sdist/

@@ -1,4 +1,10 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import {
+    useCallback,
+    useDeferredValue,
+    useMemo,
+    useState,
+    useTransition,
+} from 'react';
 
 import {
     ColumnDef,
@@ -15,12 +21,8 @@ import {
 
 import Modal from '../components/Modal';
 import Paginator from '../components/Paginator';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import {
-    fetchCategories,
-    fetchCategorySpending,
-} from '../store/slices/categoriesSlice';
-import { fetchTransactions } from '../store/slices/transactionsSlice';
+import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
+import { useTransactionsQuery } from '../hooks/queries/useTransactionsQuery';
 import { Category } from '../types/categories';
 import type { Transaction } from '../types/transactions';
 import { formatDateLong } from '../utils/dateHelpers';
@@ -95,10 +97,6 @@ const MODAL_COLUMNS = [
 ];
 
 function Balance() {
-    const dispatch = useAppDispatch();
-    const { categories } = useAppSelector((state) => state.categories);
-    const { transactions } = useAppSelector((state) => state.transactions);
-
     // Lazy init — new Date() called only once on mount (vercel rerender-lazy-state-init)
     const [selectedYear, setSelectedYear] = useState(() =>
         new Date().getFullYear()
@@ -106,7 +104,35 @@ function Balance() {
     const [selectedMonth, setSelectedMonth] = useState(
         () => new Date().getMonth() + 1
     );
+    const { data: categories = [] } = useCategoriesQuery();
     const [filtersOpen, setFiltersOpen] = useState(true);
+    const [isPending, startTransition] = useTransition();
+
+    const { dateAfter, dateBefore } = useMemo(() => {
+        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+        return {
+            dateAfter: `${selectedYear}-${String(selectedMonth).padStart(
+                2,
+                '0'
+            )}-01`,
+            dateBefore: `${selectedYear}-${String(selectedMonth).padStart(
+                2,
+                '0'
+            )}-${String(lastDay).padStart(2, '0')}`,
+        };
+    }, [selectedYear, selectedMonth]);
+
+    const txParams = useMemo(
+        () => ({ date_after: dateAfter, date_before: dateBefore }),
+        [dateAfter, dateBefore]
+    );
+
+    const { data: transactionData, isFetching: transactionsFetching } =
+        useTransactionsQuery(txParams);
+    const transactions = transactionData?.results ?? [];
+    const deferredTransactions = useDeferredValue(transactions);
+    const isStale = transactions !== deferredTransactions;
+    const isUpdating = transactionsFetching || isPending || isStale;
 
     const activeFilterCount = useMemo(() => {
         const currentYear = new Date().getFullYear();
@@ -117,31 +143,6 @@ function Balance() {
         ].filter(Boolean).length;
     }, [selectedYear, selectedMonth]);
 
-    useEffect(() => {
-        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
-        const dateAfter = `${selectedYear}-${String(selectedMonth).padStart(
-            2,
-            '0'
-        )}-01`;
-        const dateBefore = `${selectedYear}-${String(selectedMonth).padStart(
-            2,
-            '0'
-        )}-${String(lastDay).padStart(2, '0')}`;
-
-        dispatch(fetchCategories());
-        dispatch(
-            fetchTransactions({
-                date_after: dateAfter,
-                date_before: dateBefore,
-            })
-        );
-        dispatch(
-            fetchCategorySpending(
-                `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`
-            )
-        );
-    }, [dispatch, selectedYear, selectedMonth]);
-
     // Build a per-category stats map in a single pass over transactions.
     // The backend already filters to the selected month via date_after/date_before.
     const categoryStatsMap = useMemo(() => {
@@ -149,7 +150,7 @@ function Balance() {
         for (const cat of categories) {
             map.set(cat.id, { ...EMPTY_STATS });
         }
-        for (const t of transactions) {
+        for (const t of deferredTransactions) {
             const stats = map.get(t.category);
             if (!stats) continue;
             stats.count++;
@@ -164,7 +165,7 @@ function Balance() {
             stats.average = stats.count > 0 ? stats.total / stats.count : 0;
         }
         return map;
-    }, [transactions, categories]);
+    }, [deferredTransactions, categories]);
 
     // Separate categories into spends and incomes
     const spendCategories = useMemo(
@@ -243,9 +244,11 @@ function Balance() {
     const modalTransactions = useMemo(
         () =>
             modalCategory
-                ? transactions.filter((t) => t.category === modalCategory.id)
+                ? deferredTransactions.filter(
+                      (t) => t.category === modalCategory.id
+                  )
                 : [],
-        [transactions, modalCategory]
+        [deferredTransactions, modalCategory]
     );
 
     const modalTable = useReactTable({
@@ -553,8 +556,10 @@ function Balance() {
                                     id='year-select'
                                     value={selectedYear}
                                     onChange={(e) =>
-                                        setSelectedYear(
-                                            parseInt(e.target.value)
+                                        startTransition(() =>
+                                            setSelectedYear(
+                                                parseInt(e.target.value)
+                                            )
                                         )
                                     }
                                     className='select select-bordered select-sm'
@@ -576,8 +581,10 @@ function Balance() {
                                     id='month-select'
                                     value={selectedMonth}
                                     onChange={(e) =>
-                                        setSelectedMonth(
-                                            parseInt(e.target.value)
+                                        startTransition(() =>
+                                            setSelectedMonth(
+                                                parseInt(e.target.value)
+                                            )
                                         )
                                     }
                                     className='select select-bordered select-sm'
@@ -650,7 +657,15 @@ function Balance() {
                             </div>
                         </div>
 
-                        <div className='overflow-x-auto'>
+                        {isUpdating && (
+                            <div className='h-1 bg-primary/30 animate-pulse rounded-full mx-4 mb-2' />
+                        )}
+
+                        <div
+                            className={`overflow-x-auto transition-opacity duration-200 ${
+                                isUpdating ? 'opacity-50' : ''
+                            }`}
+                        >
                             <table className='table table-zebra w-full'>
                                 <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                                     {spendTable
@@ -774,7 +789,15 @@ function Balance() {
                             </div>
                         </div>
 
-                        <div className='overflow-x-auto'>
+                        {isUpdating && (
+                            <div className='h-1 bg-primary/30 animate-pulse rounded-full mx-4 mb-2' />
+                        )}
+
+                        <div
+                            className={`overflow-x-auto transition-opacity duration-200 ${
+                                isUpdating ? 'opacity-50' : ''
+                            }`}
+                        >
                             <table className='table table-zebra w-full'>
                                 <thead className='sticky top-0 bg-base-100 z-10 shadow-sm'>
                                     {incomeTable

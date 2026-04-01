@@ -1,11 +1,10 @@
 ﻿import { ErrorMessage, Field, Form, Formik } from 'formik';
 import * as Yup from 'yup';
 
-import { useAppDispatch } from '../hooks/redux';
 import {
-    createCategory,
-    updateCategory,
-} from '../store/slices/categoriesSlice';
+    useCreateCategory,
+    useUpdateCategory,
+} from '../hooks/queries/useCategoriesQuery';
 import { Category } from '../types/categories';
 import FormAutoSave from './FormAutoSave';
 
@@ -28,7 +27,8 @@ const validationSchema = Yup.object({
 });
 
 function CategoryForm({ category, onClose }: CategoryFormProps) {
-    const dispatch = useAppDispatch();
+    const createCategoryMutation = useCreateCategory();
+    const updateCategoryMutation = useUpdateCategory();
 
     const initialValues = {
         name: category?.name || '',
@@ -39,22 +39,18 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
     const handleSubmit = async (values: typeof initialValues) => {
         try {
             if (category) {
-                await dispatch(
-                    updateCategory({
-                        id: category.id,
-                        name: values.name,
-                        classification: values.classification,
-                        monthly_budget: values.monthly_budget,
-                    })
-                ).unwrap();
+                await updateCategoryMutation.mutateAsync({
+                    id: category.id,
+                    name: values.name,
+                    classification: values.classification,
+                    monthly_budget: values.monthly_budget,
+                });
             } else {
-                await dispatch(
-                    createCategory({
-                        name: values.name,
-                        classification: values.classification,
-                        monthly_budget: values.monthly_budget,
-                    })
-                ).unwrap();
+                await createCategoryMutation.mutateAsync({
+                    name: values.name,
+                    classification: values.classification,
+                    monthly_budget: values.monthly_budget,
+                });
             }
             onClose();
         } catch (error) {

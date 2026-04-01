@@ -1,22 +1,23 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import AccountForm from '../components/AccountForm';
 import ConfirmModal from '../components/ConfirmModal';
 import EditDeleteIconButtons from '../components/EditDeleteIconButtons';
 import Modal from '../components/Modal';
-import { useAppDispatch, useAppSelector } from '../hooks/redux';
-import { deleteAccount, fetchAccounts } from '../store/slices/accountsSlice';
+import {
+    useAccountsQuery,
+    useDeleteAccount,
+} from '../hooks/queries/useAccountsQuery';
 import type { BankAccount } from '../types/accounts';
 import { ACCOUNT_TYPE_ICONS, ACCOUNT_TYPE_LABELS } from '../types/accounts';
 import { formatCurrency } from '../utils/formatters';
 
 function AccountsList() {
-    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { accounts, loading, deleting } = useAppSelector(
-        (state) => state.accounts
-    );
+    const { data: accounts = [], isLoading: loading } = useAccountsQuery();
+    const deleteMutation = useDeleteAccount();
+    const deleting = deleteMutation.isPending;
 
     const [showModal, setShowModal] = useState(false);
     const [editingAccount, setEditingAccount] = useState<BankAccount | null>(
@@ -25,10 +26,6 @@ function AccountsList() {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [deletingAccountItem, setDeletingAccountItem] =
         useState<BankAccount | null>(null);
-
-    useEffect(() => {
-        dispatch(fetchAccounts());
-    }, [dispatch]);
 
     const handleEdit = (account: BankAccount) => {
         setEditingAccount(account);
@@ -42,7 +39,7 @@ function AccountsList() {
 
     const handleDeleteConfirm = async () => {
         if (!deletingAccountItem) return;
-        await dispatch(deleteAccount(deletingAccountItem.id));
+        await deleteMutation.mutateAsync(deletingAccountItem.id);
         setShowDeleteDialog(false);
         setDeletingAccountItem(null);
     };
