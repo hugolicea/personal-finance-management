@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
@@ -28,30 +29,26 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.backup import backup_all, register_backup_provider, restore_all
+
 from .models import (
     BankAccount,
     Category,
     CategoryDeletionRule,
-    Heritage,
-    Investment,
     ReclassificationRule,
-    RetirementAccount,
     Transaction,
 )
 from .serializers import (
     BankAccountSerializer,
     CategoryDeletionRuleSerializer,
     CategorySerializer,
-    HeritageSerializer,
-    InvestmentSerializer,
     ReclassificationRuleSerializer,
-    RetirementAccountSerializer,
     TransactionSerializer,
 )
 from .throttles import BulkOperationThrottle, UploadRateThrottle
 
 # Resolved once at import time — avoids N806 and repeated calls
-User = get_user_model()
+user_model = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -64,56 +61,6 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return (
             Category.objects.filter(user=self.request.user)
-            .select_related("user")
-            .order_by("name")
-        )
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-@extend_schema(tags=["Investments"])
-class InvestmentViewSet(viewsets.ModelViewSet):
-    queryset = Investment.objects.all()
-    serializer_class = InvestmentSerializer
-    ordering = ["-purchase_date"]
-
-    def get_queryset(self):
-        return (
-            Investment.objects.filter(user=self.request.user)
-            .select_related("user")
-            .order_by("-purchase_date")
-        )
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-@extend_schema(tags=["Heritage"])
-class HeritageViewSet(viewsets.ModelViewSet):
-    queryset = Heritage.objects.all()
-    serializer_class = HeritageSerializer
-    ordering = ["-purchase_date"]
-
-    def get_queryset(self):
-        return (
-            Heritage.objects.filter(user=self.request.user)
-            .select_related("user")
-            .order_by("-purchase_date")
-        )
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-
-class RetirementAccountViewSet(viewsets.ModelViewSet):
-    queryset = RetirementAccount.objects.all()
-    serializer_class = RetirementAccountSerializer
-    ordering = ["name"]
-
-    def get_queryset(self):
-        return (
-            RetirementAccount.objects.filter(user=self.request.user)
             .select_related("user")
             .order_by("name")
         )
@@ -1405,12 +1352,293 @@ BACKUP_ENTITIES = (
     "categories",
     "bank_accounts",
     "transactions",
-    "investments",
-    "heritages",
-    "retirement_accounts",
     "reclassification_rules",
     "category_deletion_rules",
 )
+
+
+def _backup_budget_domain(
+    user: Any,
+    *,
+    include: set[str] | None = None,
+    multi_user_mode: bool = False,
+    user_filter: dict[str, Any] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    include = include or set(BACKUP_ENTITIES)
+    user_filter = user_filter or {"user": user}
+
+    def _values(*fields: str) -> tuple[str, ...]:
+        return (*fields, "user_id") if multi_user_mode else fields
+
+    domain_data: dict[str, list[dict[str, Any]]] = {}
+
+    if "categories" in include:
+        domain_data["categories"] = list(
+            Category.objects.filter(**user_filter).values(
+                *_values("id", "name", "classification", "monthly_budget")
+            )
+        )
+
+    if "bank_accounts" in include:
+        domain_data["bank_accounts"] = list(
+            BankAccount.objects.filter(**user_filter).values(
+                *_values(
+                    "id",
+                    "name",
+                    "account_type",
+                    "institution",
+                    "account_number",
+                    "currency",
+                    "notes",
+                    "is_active",
+                )
+            )
+        )
+
+    if "transactions" in include:
+        domain_data["transactions"] = list(
+            Transaction.objects.filter(**user_filter).values(
+                *_values(
+                    "id",
+                    "date",
+                    "amount",
+                    "description",
+                    "account_id",
+                    "import_source",
+                    "reference_id",
+                    "category_id",
+                )
+            )
+        )
+
+    if "reclassification_rules" in include:
+        domain_data["reclassification_rules"] = list(
+            ReclassificationRule.objects.filter(**user_filter).values(
+                *_values(
+                    "id",
+                    "rule_name",
+                    "from_category_id",
+                    "to_category_id",
+                    "conditions",
+                    "is_active",
+                    "created_at",
+                )
+            )
+        )
+
+    if "category_deletion_rules" in include:
+        domain_data["category_deletion_rules"] = list(
+            CategoryDeletionRule.objects.filter(**user_filter).values(
+                *_values("id", "category_id", "is_active", "created_at")
+            )
+        )
+
+    return domain_data
+
+
+def _restore_budget_domain(
+    requester: Any,
+    data: dict[str, Any],
+    *,
+    clear_existing: bool = False,
+) -> dict[str, int]:
+    multi_user_mode = "users" in data
+    old_id_to_user: dict[int, Any] = {}
+    users_created = 0
+
+    if multi_user_mode:
+        for u in data.get("users", []):
+            obj, created = user_model.objects.get_or_create(
+                username=u["username"],
+                defaults={
+                    "email": u.get("email", ""),
+                    "first_name": u.get("first_name", ""),
+                    "last_name": u.get("last_name", ""),
+                    "is_active": u.get("is_active", True),
+                },
+            )
+            if created:
+                # Restored users cannot log in until they reset their password.
+                obj.set_unusable_password()
+                obj.save(update_fields=["password"])
+                users_created += 1
+            old_id_to_user[u["id"]] = obj
+
+    def resolve_user(entity: dict[str, Any]) -> Any | None:
+        """Return the live User for an entity, or None to skip it."""
+        uid = entity.get("user_id")
+        if uid is not None:
+            return old_id_to_user.get(uid)
+        return requester
+
+    if clear_existing:
+        targets = list(old_id_to_user.values()) if old_id_to_user else [requester]
+        for target in targets:
+            CategoryDeletionRule.objects.filter(user=target).delete()
+            ReclassificationRule.objects.filter(user=target).delete()
+            Transaction.objects.filter(user=target).delete()
+            BankAccount.objects.filter(user=target).delete()
+            Category.objects.filter(user=target).delete()
+
+    old_id_to_category: dict[tuple[int, int], Category] = {}
+    categories_created = 0
+
+    for cat in data.get("categories", []):
+        target = resolve_user(cat)
+        if target is None:
+            continue
+        obj, created = Category.objects.get_or_create(
+            name=cat["name"],
+            user=target,
+            defaults={
+                "classification": cat.get("classification", Category.SPEND),
+                "monthly_budget": cat.get("monthly_budget", 0),
+            },
+        )
+        old_id_to_category[(target.id, cat["id"])] = obj
+        if created:
+            categories_created += 1
+
+    old_id_to_bank_account: dict[tuple[int, int], BankAccount] = {}
+    bank_accounts_created = 0
+
+    for ba in data.get("bank_accounts", []):
+        target = resolve_user(ba)
+        if target is None:
+            continue
+        obj, created = BankAccount.objects.get_or_create(
+            user=target,
+            name=ba["name"],
+            defaults={
+                "account_type": ba.get("account_type", BankAccount.CHECKING),
+                "institution": ba.get("institution", ""),
+                "account_number": ba.get("account_number") or None,
+                "currency": ba.get("currency", "USD"),
+                "notes": ba.get("notes") or None,
+                "is_active": ba.get("is_active", True),
+            },
+        )
+        old_id_to_bank_account[(target.id, ba["id"])] = obj
+        if created:
+            bank_accounts_created += 1
+
+    transactions_created = 0
+    for t in data.get("transactions", []):
+        target = resolve_user(t)
+        if target is None:
+            continue
+
+        old_cat_id = t.get("category_id")
+        category = old_id_to_category.get((target.id, old_cat_id))
+        if not category:
+            continue
+
+        ref_id = t.get("reference_id") or ""
+        if (
+            ref_id
+            and Transaction.objects.filter(reference_id=ref_id, user=target).exists()
+        ):
+            continue
+
+        try:
+            date = datetime.fromisoformat(t["date"]).date() if t.get("date") else None
+        except ValueError:
+            continue
+
+        account_id = t.get("account_id") or t.get("account")
+        account = None
+        if account_id:
+            account = old_id_to_bank_account.get((target.id, account_id))
+            if account is None:
+                try:
+                    account = BankAccount.objects.get(id=int(account_id), user=target)
+                except (BankAccount.DoesNotExist, ValueError):
+                    pass
+        if account is None:
+            account, _ = BankAccount.objects.get_or_create(
+                user=target,
+                account_type=BankAccount.CHECKING,
+                defaults={
+                    "name": "My Checking Account",
+                    "currency": "USD",
+                },
+            )
+
+        Transaction.objects.create(
+            date=date,
+            amount=t.get("amount", 0),
+            description=t.get("description", ""),
+            account=account,
+            import_source=t.get("import_source", "backup"),
+            reference_id=ref_id or None,
+            category=category,
+            user=target,
+        )
+        transactions_created += 1
+
+    def resolve_category(target: Any, old_cat_id: Any) -> Category | None:
+        """Look up a category by old backup ID, falling back to the live DB."""
+        if old_cat_id is None:
+            return None
+        cat = old_id_to_category.get((target.id, old_cat_id))
+        if cat is None:
+            try:
+                cat = Category.objects.get(id=old_cat_id, user=target)
+            except Category.DoesNotExist:
+                pass
+        return cat
+
+    rules_created = 0
+    for rule in data.get("reclassification_rules", []):
+        target = resolve_user(rule)
+        if target is None:
+            continue
+        old_from_id = rule.get("from_category_id")
+        from_cat = resolve_category(target, old_from_id)
+        if old_from_id and not from_cat:
+            continue
+        to_cat = resolve_category(target, rule.get("to_category_id"))
+        if not to_cat:
+            continue
+        ReclassificationRule.objects.create(
+            rule_name=rule.get("rule_name", ""),
+            from_category=from_cat,
+            to_category=to_cat,
+            conditions=rule.get("conditions") or {},
+            is_active=rule.get("is_active", True),
+            user=target,
+        )
+        rules_created += 1
+
+    deletion_rules_created = 0
+    for rule in data.get("category_deletion_rules", []):
+        target = resolve_user(rule)
+        if target is None:
+            continue
+        cat = resolve_category(target, rule.get("category_id"))
+        if not cat:
+            continue
+        CategoryDeletionRule.objects.get_or_create(
+            category=cat,
+            user=target,
+            defaults={"is_active": rule.get("is_active", True)},
+        )
+        deletion_rules_created += 1
+
+    summary: dict[str, int] = {
+        "categories": categories_created,
+        "bank_accounts": bank_accounts_created,
+        "transactions": transactions_created,
+        "reclassification_rules": rules_created,
+        "category_deletion_rules": deletion_rules_created,
+    }
+    if multi_user_mode:
+        summary["users"] = users_created
+
+    return summary
+
+
+register_backup_provider("budget", _backup_budget_domain, _restore_budget_domain)
 
 
 @extend_schema(
@@ -1486,7 +1714,7 @@ def backup_database(request):
 
     # In multi-user mode query all regular users; otherwise scope to requester
     if multi_user_mode:
-        target_users_qs = User.objects.filter(is_staff=False, is_superuser=False)
+        target_users_qs = user_model.objects.filter(is_staff=False, is_superuser=False)
         user_filter: dict = {"user__in": target_users_qs}
         backup_data["users"] = list(
             target_users_qs.values(
@@ -1502,130 +1730,14 @@ def backup_database(request):
     else:
         user_filter = {"user": user}
 
-    # Helper: optionally append user_id to a values() query
-    def _values(*fields: str) -> tuple:
-        return (*fields, "user_id") if multi_user_mode else fields
-
-    if "categories" in include:
-        backup_data["categories"] = list(
-            Category.objects.filter(**user_filter).values(
-                *_values("id", "name", "classification", "monthly_budget")
-            )
+    backup_data.update(
+        backup_all(
+            user,
+            include=include,
+            multi_user_mode=multi_user_mode,
+            user_filter=user_filter,
         )
-
-    if "bank_accounts" in include:
-        backup_data["bank_accounts"] = list(
-            BankAccount.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "name",
-                    "account_type",
-                    "institution",
-                    "account_number",
-                    "currency",
-                    "notes",
-                    "is_active",
-                )
-            )
-        )
-
-    if "transactions" in include:
-        backup_data["transactions"] = list(
-            Transaction.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "date",
-                    "amount",
-                    "description",
-                    "account_id",
-                    "import_source",
-                    "reference_id",
-                    "category_id",
-                )
-            )
-        )
-
-    if "investments" in include:
-        backup_data["investments"] = list(
-            Investment.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "name",
-                    "symbol",
-                    "investment_type",
-                    "quantity",
-                    "purchase_price",
-                    "current_price",
-                    "purchase_date",
-                    "principal_amount",
-                    "interest_rate",
-                    "compounding_frequency",
-                    "term_years",
-                    "notes",
-                )
-            )
-        )
-
-    if "heritages" in include:
-        backup_data["heritages"] = list(
-            Heritage.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "name",
-                    "heritage_type",
-                    "address",
-                    "area",
-                    "area_unit",
-                    "purchase_price",
-                    "current_value",
-                    "purchase_date",
-                    "monthly_rental_income",
-                    "notes",
-                )
-            )
-        )
-
-    if "retirement_accounts" in include:
-        backup_data["retirement_accounts"] = list(
-            RetirementAccount.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "name",
-                    "account_type",
-                    "provider",
-                    "account_number",
-                    "current_balance",
-                    "monthly_contribution",
-                    "employer_match_percentage",
-                    "employer_match_limit",
-                    "risk_level",
-                    "target_retirement_age",
-                    "notes",
-                )
-            )
-        )
-
-    if "reclassification_rules" in include:
-        backup_data["reclassification_rules"] = list(
-            ReclassificationRule.objects.filter(**user_filter).values(
-                *_values(
-                    "id",
-                    "rule_name",
-                    "from_category_id",
-                    "to_category_id",
-                    "conditions",
-                    "is_active",
-                    "created_at",
-                )
-            )
-        )
-
-    if "category_deletion_rules" in include:
-        backup_data["category_deletion_rules"] = list(
-            CategoryDeletionRule.objects.filter(**user_filter).values(
-                *_values("id", "category_id", "is_active", "created_at")
-            )
-        )
+    )
 
     filename = f"backup_{user.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     response = HttpResponse(
@@ -1730,318 +1842,7 @@ def restore_database(request):
         )
 
     try:
-        from django.db import transaction as db_transaction
-
-        with db_transaction.atomic():
-            # ----------------------------------------------------------------
-            # Step 1 — build old_backup_user_id → live User object map
-            # ----------------------------------------------------------------
-            old_id_to_user: dict[int, object] = {}
-            users_created = 0
-
-            if multi_user_mode:
-                for u in data.get("users", []):
-                    obj, created = User.objects.get_or_create(
-                        username=u["username"],
-                        defaults={
-                            "email": u.get("email", ""),
-                            "first_name": u.get("first_name", ""),
-                            "last_name": u.get("last_name", ""),
-                            "is_active": u.get("is_active", True),
-                        },
-                    )
-                    if created:
-                        # Restored users cannot log in until they reset their
-                        # password — avoids shipping credential hashes.
-                        obj.set_unusable_password()
-                        obj.save(update_fields=["password"])
-                        users_created += 1
-                    old_id_to_user[u["id"]] = obj
-
-            def resolve_user(entity: dict):
-                """Return the live User for an entity, or None to skip it."""
-                uid = entity.get("user_id")
-                if uid is not None:
-                    return old_id_to_user.get(uid)  # None → user not in map
-                return requester  # old single-user backup format
-
-            # ----------------------------------------------------------------
-            # Step 2 — optionally delete existing data
-            # ----------------------------------------------------------------
-            if replace_existing:
-                targets = (
-                    list(old_id_to_user.values()) if old_id_to_user else [requester]
-                )
-                for target in targets:
-                    CategoryDeletionRule.objects.filter(user=target).delete()
-                    ReclassificationRule.objects.filter(user=target).delete()
-                    Transaction.objects.filter(user=target).delete()
-                    BankAccount.objects.filter(user=target).delete()
-                    Investment.objects.filter(user=target).delete()
-                    Heritage.objects.filter(user=target).delete()
-                    RetirementAccount.objects.filter(user=target).delete()
-                    Category.objects.filter(user=target).delete()
-
-            # ----------------------------------------------------------------
-            # Step 3 — restore entities
-            # Category map keyed by (target_user_id, old_backup_cat_id) to
-            # handle collisions across users in multi-user mode.
-            # ----------------------------------------------------------------
-            old_id_to_category: dict[tuple, object] = {}
-            categories_created = 0
-
-            for cat in data.get("categories", []):
-                target = resolve_user(cat)
-                if target is None:
-                    continue
-                obj, created = Category.objects.get_or_create(
-                    name=cat["name"],
-                    user=target,
-                    defaults={
-                        "classification": cat.get("classification", Category.SPEND),
-                        "monthly_budget": cat.get("monthly_budget", 0),
-                    },
-                )
-                old_id_to_category[(target.id, cat["id"])] = obj
-                if created:
-                    categories_created += 1
-
-            # --- Bank Accounts ---
-            old_id_to_bank_account: dict[tuple, object] = {}
-            bank_accounts_created = 0
-
-            for ba in data.get("bank_accounts", []):
-                target = resolve_user(ba)
-                if target is None:
-                    continue
-                obj, created = BankAccount.objects.get_or_create(
-                    user=target,
-                    name=ba["name"],
-                    defaults={
-                        "account_type": ba.get("account_type", BankAccount.CHECKING),
-                        "institution": ba.get("institution", ""),
-                        "account_number": ba.get("account_number") or None,
-                        "currency": ba.get("currency", "USD"),
-                        "notes": ba.get("notes") or None,
-                        "is_active": ba.get("is_active", True),
-                    },
-                )
-                old_id_to_bank_account[(target.id, ba["id"])] = obj
-                if created:
-                    bank_accounts_created += 1
-
-            # --- Transactions ---
-            transactions_created = 0
-            for t in data.get("transactions", []):
-                target = resolve_user(t)
-                if target is None:
-                    continue
-
-                old_cat_id = t.get("category_id")
-                category = old_id_to_category.get((target.id, old_cat_id))
-                if not category:
-                    continue
-
-                ref_id = t.get("reference_id") or ""
-                if (
-                    ref_id
-                    and Transaction.objects.filter(
-                        reference_id=ref_id, user=target
-                    ).exists()
-                ):
-                    continue
-
-                try:
-                    date = (
-                        datetime.fromisoformat(t["date"]).date()
-                        if t.get("date")
-                        else None
-                    )
-                except ValueError:
-                    continue
-
-                account_id = t.get("account_id") or t.get("account")
-                account = None
-                if account_id:
-                    # First try restored bank accounts map, then fall back to DB lookup
-                    account = old_id_to_bank_account.get((target.id, account_id))
-                    if account is None:
-                        try:
-                            account = BankAccount.objects.get(
-                                id=int(account_id), user=target
-                            )
-                        except (BankAccount.DoesNotExist, ValueError):
-                            pass
-                if account is None:
-                    account, _ = BankAccount.objects.get_or_create(
-                        user=target,
-                        account_type=BankAccount.CHECKING,
-                        defaults={
-                            "name": "My Checking Account",
-                            "currency": "USD",
-                        },
-                    )
-
-                Transaction.objects.create(
-                    date=date,
-                    amount=t.get("amount", 0),
-                    description=t.get("description", ""),
-                    account=account,
-                    import_source=t.get("import_source", "backup"),
-                    reference_id=ref_id or None,
-                    category=category,
-                    user=target,
-                )
-                transactions_created += 1
-
-            # --- Investments ---
-            investments_created = 0
-            for inv in data.get("investments", []):
-                target = resolve_user(inv)
-                if target is None:
-                    continue
-                try:
-                    purchase_date = (
-                        datetime.fromisoformat(inv["purchase_date"]).date()
-                        if inv.get("purchase_date")
-                        else None
-                    )
-                except ValueError:
-                    purchase_date = None
-                Investment.objects.create(
-                    name=inv.get("name", ""),
-                    symbol=inv.get("symbol", ""),
-                    investment_type=inv.get("investment_type", Investment.STOCK),
-                    quantity=inv.get("quantity", 0),
-                    purchase_price=inv.get("purchase_price", 0),
-                    current_price=inv.get("current_price") or None,
-                    purchase_date=purchase_date,
-                    principal_amount=inv.get("principal_amount") or None,
-                    interest_rate=inv.get("interest_rate") or None,
-                    compounding_frequency=inv.get("compounding_frequency") or None,
-                    term_years=inv.get("term_years") or None,
-                    notes=inv.get("notes", ""),
-                    user=target,
-                )
-                investments_created += 1
-
-            # --- Heritages ---
-            heritages_created = 0
-            for h in data.get("heritages", []):
-                target = resolve_user(h)
-                if target is None:
-                    continue
-                try:
-                    purchase_date = (
-                        datetime.fromisoformat(h["purchase_date"]).date()
-                        if h.get("purchase_date")
-                        else None
-                    )
-                except ValueError:
-                    purchase_date = None
-                Heritage.objects.create(
-                    name=h.get("name", ""),
-                    heritage_type=h.get("heritage_type", Heritage.HOUSE),
-                    address=h.get("address", ""),
-                    area=h.get("area") or None,
-                    area_unit=h.get("area_unit", "sq_m"),
-                    purchase_price=h.get("purchase_price", 0),
-                    current_value=h.get("current_value") or None,
-                    purchase_date=purchase_date,
-                    monthly_rental_income=h.get("monthly_rental_income", 0),
-                    notes=h.get("notes", ""),
-                    user=target,
-                )
-                heritages_created += 1
-
-            # --- Retirement Accounts ---
-            retirement_created = 0
-            for r in data.get("retirement_accounts", []):
-                target = resolve_user(r)
-                if target is None:
-                    continue
-                RetirementAccount.objects.create(
-                    name=r.get("name", ""),
-                    account_type=r.get(
-                        "account_type", RetirementAccount.TRADITIONAL_401K
-                    ),
-                    provider=r.get("provider", ""),
-                    account_number=r.get("account_number") or None,
-                    current_balance=r.get("current_balance", 0),
-                    monthly_contribution=r.get("monthly_contribution", 0),
-                    employer_match_percentage=r.get("employer_match_percentage", 0),
-                    employer_match_limit=r.get("employer_match_limit", 0),
-                    risk_level=r.get("risk_level", RetirementAccount.MODERATE),
-                    target_retirement_age=r.get("target_retirement_age", 65),
-                    notes=r.get("notes", ""),
-                    user=target,
-                )
-                retirement_created += 1
-
-            def resolve_category(target, old_cat_id):
-                """Look up a category by old backup ID, falling back to the live DB."""
-                if old_cat_id is None:
-                    return None
-                cat = old_id_to_category.get((target.id, old_cat_id))
-                if cat is None:
-                    try:
-                        cat = Category.objects.get(id=old_cat_id, user=target)
-                    except Category.DoesNotExist:
-                        pass
-                return cat
-
-            # --- Reclassification Rules ---
-            rules_created = 0
-            for rule in data.get("reclassification_rules", []):
-                target = resolve_user(rule)
-                if target is None:
-                    continue
-                old_from_id = rule.get("from_category_id")
-                from_cat = resolve_category(target, old_from_id)
-                if old_from_id and not from_cat:
-                    continue
-                to_cat = resolve_category(target, rule.get("to_category_id"))
-                if not to_cat:
-                    continue
-                ReclassificationRule.objects.create(
-                    rule_name=rule.get("rule_name", ""),
-                    from_category=from_cat,
-                    to_category=to_cat,
-                    conditions=rule.get("conditions") or {},
-                    is_active=rule.get("is_active", True),
-                    user=target,
-                )
-                rules_created += 1
-
-            # --- Category Deletion Rules ---
-            deletion_rules_created = 0
-            for rule in data.get("category_deletion_rules", []):
-                target = resolve_user(rule)
-                if target is None:
-                    continue
-                cat = resolve_category(target, rule.get("category_id"))
-                if not cat:
-                    continue
-                CategoryDeletionRule.objects.get_or_create(
-                    category=cat,
-                    user=target,
-                    defaults={"is_active": rule.get("is_active", True)},
-                )
-                deletion_rules_created += 1
-
-        summary: dict = {
-            "categories": categories_created,
-            "bank_accounts": bank_accounts_created,
-            "transactions": transactions_created,
-            "investments": investments_created,
-            "heritages": heritages_created,
-            "retirement_accounts": retirement_created,
-            "reclassification_rules": rules_created,
-            "category_deletion_rules": deletion_rules_created,
-        }
-        if multi_user_mode:
-            summary["users"] = users_created
-
+        summary = restore_all(request.user, data, clear_existing=replace_existing)
         return Response({"message": "Backup restored successfully", "summary": summary})
 
     except Exception:
