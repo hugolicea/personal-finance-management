@@ -115,8 +115,10 @@ export function useDeleteHeritage() {
                 'heritages',
             ]);
 
-            queryClient.setQueryData<Heritage[]>(['heritages'], (old) =>
-                (old ?? []).filter((h) => h.id !== id)
+            queryClient.setQueryData<Heritage[]>(
+                ['heritages'],
+                (old: Heritage[] | undefined) =>
+                    (old ?? []).filter((h) => h.id !== id)
             );
 
             return { previous };

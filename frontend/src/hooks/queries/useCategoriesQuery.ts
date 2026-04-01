@@ -118,8 +118,10 @@ export function useDeleteCategory() {
             const previous = queryClient.getQueryData<Category[]>([
                 'categories',
             ]);
-            queryClient.setQueryData<Category[]>(['categories'], (old) =>
-                (old ?? []).filter((c) => c.id !== id)
+            queryClient.setQueryData<Category[]>(
+                ['categories'],
+                (old: Category[] | undefined) =>
+                    (old ?? []).filter((c) => c.id !== id)
             );
             return { previous };
         },

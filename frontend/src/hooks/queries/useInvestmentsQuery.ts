@@ -184,7 +184,8 @@ export function useDeleteInvestment() {
 
             queryClient.setQueryData<Investment[]>(
                 INVESTMENTS_QUERY_KEY,
-                (old) => (old ?? []).filter((inv) => inv.id !== id)
+                (old: Investment[] | undefined) =>
+                    (old ?? []).filter((inv) => inv.id !== id)
             );
 
             return { previous };

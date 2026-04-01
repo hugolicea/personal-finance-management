@@ -203,7 +203,8 @@ export function useDeleteRetirementAccount() {
 
                 queryClient.setQueryData<RetirementAccount[]>(
                     RETIREMENT_ACCOUNTS_QUERY_KEY,
-                    (old) => (old ?? []).filter((account) => account.id !== id)
+                    (old: RetirementAccount[] | undefined) =>
+                        (old ?? []).filter((account) => account.id !== id)
                 );
 
                 return { previous };

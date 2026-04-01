@@ -76,7 +76,8 @@ export function useDeleteAccount() {
 
             queryClient.setQueriesData<BankAccount[]>(
                 { queryKey: ['accounts'] },
-                (old) => (old ?? []).filter((a) => a.id !== id)
+                (old: BankAccount[] | undefined) =>
+                    (old ?? []).filter((a) => a.id !== id)
             );
 
             return { allAccountCaches };

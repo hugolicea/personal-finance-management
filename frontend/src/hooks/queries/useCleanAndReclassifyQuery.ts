@@ -149,7 +149,8 @@ export function useDeleteReclassificationRule() {
 
             queryClient.setQueryData<ReclassificationRule[]>(
                 RECLASSIFICATION_RULES_QUERY_KEY,
-                (old) => (old ?? []).filter((rule) => rule.id !== id)
+                (old: ReclassificationRule[] | undefined) =>
+                    (old ?? []).filter((rule) => rule.id !== id)
             );
 
             return { previous };
@@ -284,7 +285,8 @@ export function useDeleteCategoryDeletionRule() {
 
             queryClient.setQueryData<CategoryDeletionRule[]>(
                 DELETION_RULES_QUERY_KEY,
-                (old) => (old ?? []).filter((rule) => rule.id !== id)
+                (old: CategoryDeletionRule[] | undefined) =>
+                    (old ?? []).filter((rule) => rule.id !== id)
             );
 
             return { previous };
