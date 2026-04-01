@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import ConfirmModal from './ConfirmModal';
@@ -71,7 +72,7 @@ const Modal: React.FC<ModalProps> = ({
         }
     };
 
-    return (
+    return createPortal(
         <>
             <div className='modal modal-open' onClick={handleBackdropClick}>
                 <div
@@ -113,7 +114,8 @@ const Modal: React.FC<ModalProps> = ({
                 confirmLabel='Close'
                 cancelLabel='Keep editing'
             />
-        </>
+        </>,
+        document.body
     );
 };
 
