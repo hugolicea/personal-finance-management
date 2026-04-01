@@ -31,9 +31,9 @@ export const fetchAccounts = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const month = getCurrentMonthStr();
-            const response = await apiClient.get(
-                `/api/v1/bank-accounts/?page_size=10000&month=${month}`
-            );
+            const response = await apiClient.get('/api/v1/bank-accounts/', {
+                params: { page_size: 10000, month },
+            });
             return response.data.results || response.data;
         } catch (err: unknown) {
             if (isAxiosError(err)) {

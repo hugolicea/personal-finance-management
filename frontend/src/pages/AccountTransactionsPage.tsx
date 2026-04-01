@@ -510,7 +510,7 @@ function AccountTransactionsPage() {
                                             parseInt(e.target.value)
                                         )
                                     }
-                                    className='input input-bordered w-full'
+                                    className='select select-bordered w-full disabled:cursor-not-allowed'
                                 >
                                     {Array.from({ length: 5 }, (_, i) => {
                                         const y =
@@ -539,7 +539,7 @@ function AccountTransactionsPage() {
                                         )
                                     }
                                     disabled={filterByYear}
-                                    className='w-full px-3 py-2 border border-base-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary disabled:bg-base-200 disabled:cursor-not-allowed'
+                                    className='select select-bordered w-full disabled:cursor-not-allowed'
                                 >
                                     {[
                                         'January',

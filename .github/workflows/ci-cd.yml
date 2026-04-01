@@ -69,7 +69,7 @@ jobs:
                   DB_PORT: 5432
               run: |
                   mkdir -p logs
-                  pytest --cov=budget --cov=wealth --cov-report=xml --cov-report=term
+                  pytest --cov=budget --cov=core --cov=wealth --cov-report=xml --cov-report=term
 
             - name: Upload coverage
               uses: codecov/codecov-action@v5

@@ -40,8 +40,8 @@ function CategoryPanel({
     const [searchValue, setSearchValue] = useState('');
     const isRed = colorScheme === 'red';
     const headerCls = isRed
-        ? 'bg-red-50 border-b border-red-200 text-red-900'
-        : 'bg-green-50 border-b border-green-200 text-green-900';
+        ? 'bg-error/10 border-b border-error/30 text-error'
+        : 'bg-success/10 border-b border-success/30 text-success';
     const ringCls = isRed ? 'focus:ring-red-500' : 'focus:ring-green-500';
     const searchPlaceholder = isRed
         ? 'Search spending categories...'
@@ -74,7 +74,7 @@ function CategoryPanel({
                                 {hg.headers.map((h) => (
                                     <th
                                         key={h.id}
-                                        className='px-4 py-2 text-left text-xs font-medium opacity-60 uppercase'
+                                        className='px-4 py-2 text-left text-xs font-medium text-base-content/70 uppercase'
                                     >
                                         {h.isPlaceholder
                                             ? null
