@@ -44,9 +44,14 @@ function Navigation({ onMenuClick }: NavigationProps) {
             </div>
 
             {/* Logo */}
-            <div className='flex-1'>
-                <h1 className='text-xl font-bold px-2 text-base-content'>
-                    💰 Personal Finance 360
+            <div className='flex-1 flex items-center'>
+                <img
+                    src='/pf360_logo.png'
+                    alt='PF360 Logo'
+                    className='h-16 w-16 mr-2'
+                />
+                <h1 className='text-xl font-bold text-base-content'>
+                    Personal Finance 360
                 </h1>
             </div>
 
