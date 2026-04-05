@@ -37,6 +37,13 @@ function Login() {
         <div className='min-h-screen flex items-center justify-center bg-base-200 py-12 px-4 sm:px-6 lg:px-8'>
             <div className='card w-full max-w-sm bg-base-100 shadow-xl'>
                 <div className='card-body'>
+                    <div className='flex justify-center mb-2'>
+                        <img
+                            src='/pf360_logo.png'
+                            alt='PF360 Logo'
+                            className='h-32 w-32 object-contain'
+                        />
+                    </div>
                     <h2 className='card-title justify-center text-2xl font-extrabold'>
                         Sign in to your account
                     </h2>
