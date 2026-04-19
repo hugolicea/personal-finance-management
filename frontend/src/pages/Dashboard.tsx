@@ -7,16 +7,20 @@
     useTransition,
 } from 'react';
 
+import BalanceLineChart from '../components/BalanceLineChart';
 import BalanceOverview from '../components/BalanceOverview';
 import HeritageChart from '../components/HeritageChart';
+import IncomeVsExpensesChart from '../components/IncomeVsExpensesChart';
 import InvestmentsChart from '../components/InvestmentsChart';
 import MonthlySpendingChart from '../components/MonthlySpendingChart';
 import NetWorthView from '../components/NetWorthView';
+import RecentTransactionsList from '../components/RecentTransactionsList';
 import RetirementChart from '../components/RetirementChart';
 import SpendingChart from '../components/SpendingChart';
 import { useCategoriesQuery } from '../hooks/queries/useCategoriesQuery';
 import { useHeritagesQuery } from '../hooks/queries/useHeritagesQuery';
 import { useInvestmentsQuery } from '../hooks/queries/useInvestmentsQuery';
+import { useMonthlyIncomeExpensesQuery } from '../hooks/queries/useMonthlyIncomeExpensesQuery';
 import { useRetirementAccountsQuery } from '../hooks/queries/useRetirementAccountsQuery';
 import { useTransactionsQuery } from '../hooks/queries/useTransactionsQuery';
 
@@ -213,6 +217,14 @@ function Dashboard() {
     const isStale = transactions !== deferredTransactions;
     const isUpdating = transactionsFetching || isPending || isStale;
 
+    const { data: monthlyIncomeExpenses = [], isFetching: monthlyFetching } =
+        useMonthlyIncomeExpensesQuery(selectedYear);
+
+    const investmentsValue = useMemo(
+        () => investments.reduce((sum, inv) => sum + inv.current_value, 0),
+        [investments]
+    );
+
     const activeCategoryIds = useMemo(
         () => new Set(deferredTransactions.map((t) => t.category)),
         [deferredTransactions]
@@ -226,10 +238,10 @@ function Dashboard() {
         <div className='min-h-screen'>
             {/* Header */}
             <header className='bg-base-100 border-b border-base-300'>
-                <div className='py-4'>
+                <div className='py-2'>
                     <div className='flex items-center justify-between'>
                         <div>
-                            <h1 className='text-2xl font-bold mb-4'>
+                            <h1 className='text-2xl font-bold mb-0'>
                                 Dashboard
                             </h1>
                             <p className='mt-1 text-sm opacity-60'>
@@ -250,13 +262,13 @@ function Dashboard() {
                 </div>
             </header>
 
-            <div className='space-y-6 py-6'>
+            <div className='py-2'>
                 <NetWorthView />
             </div>
 
             {/* Filters */}
-            <div className='bg-base-100 border-b border-base-300'>
-                <div className='py-5'>
+            <div className='bg-base-100 border border-base-300 rounded-xl'>
+                <div className='py-2'>
                     <DashboardFilters
                         selectedYear={selectedYear}
                         selectedMonth={selectedMonth}
@@ -273,17 +285,34 @@ function Dashboard() {
                 <div className='h-1 bg-primary/30 animate-pulse w-full' />
             )}
 
-            <main className='py-8'>
-                <div className='space-y-8'>
+            <main className='py-4'>
+                <div className='space-y-4'>
                     {/* Balance Overview */}
                     <div className='transform transition-all duration-200 hover:scale-[1.01]'>
-                        <BalanceOverview transactions={deferredTransactions} />
+                        <BalanceOverview
+                            transactions={deferredTransactions}
+                            investmentsValue={investmentsValue}
+                        />
+                    </div>
+                    {/* Income vs Expenses + Balance Line Charts */}
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
+                        <IncomeVsExpensesChart
+                            data={monthlyIncomeExpenses}
+                            isLoading={monthlyFetching}
+                        />
+                        <BalanceLineChart
+                            transactions={deferredTransactions}
+                            isLoading={
+                                transactionsFetching &&
+                                deferredTransactions.length === 0
+                            }
+                        />
                     </div>
                     {/* First Row - 2 Spending Charts */}
-                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                         {/* Monthly/Yearly Spending Chart */}
                         <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
-                            <div className='bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4'>
+                            <div className='bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4 rounded-t-2xl'>
                                 <div className='flex items-center justify-between'>
                                     <div className='flex items-center'>
                                         <svg
@@ -319,7 +348,7 @@ function Dashboard() {
                                     </span>
                                 </div>
                             </div>
-                            <div className='p-6'>
+                            <div className='p-4'>
                                 <MonthlySpendingChart
                                     transactions={deferredTransactions}
                                     year={selectedYear}
@@ -331,7 +360,7 @@ function Dashboard() {
 
                         {/* Spending by Category */}
                         <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
-                            <div className='bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4'>
+                            <div className='bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4 rounded-t-2xl'>
                                 <div className='flex items-center'>
                                     <svg
                                         className='h-6 w-6 text-white'
@@ -357,7 +386,7 @@ function Dashboard() {
                                     </h3>
                                 </div>
                             </div>
-                            <div className='p-6'>
+                            <div className='p-4'>
                                 <SpendingChart
                                     transactions={deferredTransactions}
                                     categories={filteredCategories}
@@ -367,10 +396,10 @@ function Dashboard() {
                     </div>
 
                     {/* Second Row - Investments and Heritage (Full Width) */}
-                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+                    <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
                         {/* Investments Chart */}
                         <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
-                            <div className='bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4'>
+                            <div className='bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 rounded-t-2xl'>
                                 <div className='flex items-center'>
                                     <svg
                                         className='h-6 w-6 text-white'
@@ -390,7 +419,7 @@ function Dashboard() {
                                     </h3>
                                 </div>
                             </div>
-                            <div className='p-6'>
+                            <div className='p-3'>
                                 <InvestmentsChart
                                     investments={investments}
                                     startDate={chartStartDate}
@@ -401,7 +430,7 @@ function Dashboard() {
 
                         {/* Heritage Chart */}
                         <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
-                            <div className='bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4'>
+                            <div className='bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4 rounded-t-2xl'>
                                 <div className='flex items-center'>
                                     <svg
                                         className='h-6 w-6 text-white'
@@ -421,7 +450,7 @@ function Dashboard() {
                                     </h3>
                                 </div>
                             </div>
-                            <div className='p-6'>
+                            <div className='p-3'>
                                 <HeritageChart
                                     heritages={heritages}
                                     startDate={chartStartDate}
@@ -433,7 +462,7 @@ function Dashboard() {
 
                     {/* Third Row - Retirement (Full Width) */}
                     <div className='card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1'>
-                        <div className='bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4'>
+                        <div className='bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4 rounded-t-2xl'>
                             <div className='flex items-center'>
                                 <svg
                                     className='h-6 w-6 text-white'
@@ -453,7 +482,7 @@ function Dashboard() {
                                 </h3>
                             </div>
                         </div>
-                        <div className='p-6'>
+                        <div className='p-3'>
                             <RetirementChart
                                 retirementAccounts={retirementAccounts}
                                 startDate={chartStartDate}
@@ -461,6 +490,13 @@ function Dashboard() {
                             />
                         </div>
                     </div>
+
+                    {/* Recent Transactions */}
+                    <RecentTransactionsList
+                        transactions={deferredTransactions}
+                        categories={filteredCategories}
+                        maxItems={8}
+                    />
                 </div>
             </main>
         </div>

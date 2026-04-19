@@ -158,7 +158,7 @@ function HeritageChart({ heritages, startDate, endDate }: HeritageChartProps) {
                     </h4>
                     <ResponsiveContainer
                         width='100%'
-                        height={300}
+                        height={220}
                         minWidth={200}
                         minHeight={200}
                     >
@@ -205,7 +205,7 @@ function HeritageChart({ heritages, startDate, endDate }: HeritageChartProps) {
                     </h4>
                     <ResponsiveContainer
                         width='100%'
-                        height={300}
+                        height={220}
                         minWidth={200}
                         minHeight={200}
                     >

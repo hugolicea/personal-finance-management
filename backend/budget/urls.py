@@ -14,6 +14,7 @@ from .views import (
     bulk_execute_reclassification_rules,
     bulk_reclassify_transactions,
     category_spending_by_period,
+    monthly_income_expenses,
     preview_reclassification_rule,
     restore_database,
     spending_summary,
@@ -63,4 +64,9 @@ urlpatterns = [
     ),
     path("backup/", backup_database, name="backup_database"),
     path("restore/", restore_database, name="restore_database"),
+    path(
+        "monthly-income-expenses/",
+        monthly_income_expenses,
+        name="monthly_income_expenses",
+    ),
 ]

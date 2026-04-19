@@ -16,12 +16,12 @@ function ChartEmptyState({
     onAction,
 }: ChartEmptyStateProps) {
     return (
-        <div className='flex min-h-[300px] flex-col items-center justify-center p-8 text-center'>
-            {icon ? <div className='mb-group text-6xl'>{icon}</div> : null}
-            <h3 className='mb-2 text-xl font-semibold text-base-content'>
+        <div className='flex min-h-[140px] flex-col items-center justify-center p-4 text-center'>
+            {icon ? <div className='mb-2 text-4xl'>{icon}</div> : null}
+            <h3 className='mb-1 text-base font-semibold text-base-content'>
                 {title}
             </h3>
-            <p className='mb-group max-w-md text-base-content/60'>
+            <p className='mb-2 max-w-md text-sm text-base-content/60'>
                 {description}
             </p>
             {actionLabel && onAction ? (
