@@ -1,7 +1,7 @@
 ---
 name: Coder
 description: Writes code following mandatory coding principles.
-model: GPT-5.3-Codex (copilot)
+model: Claude Sonnet 4.6 (copilot)
 tools:
     [
         'vscode',

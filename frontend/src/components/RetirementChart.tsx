@@ -176,7 +176,7 @@ function RetirementChart({
                     </h4>
                     <ResponsiveContainer
                         width='100%'
-                        height={300}
+                        height={220}
                         minWidth={200}
                         minHeight={200}
                     >
@@ -224,7 +224,7 @@ function RetirementChart({
                     </h4>
                     <ResponsiveContainer
                         width='100%'
-                        height={300}
+                        height={220}
                         minWidth={200}
                         minHeight={200}
                     >

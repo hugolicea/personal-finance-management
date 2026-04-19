@@ -99,30 +99,30 @@ function MonthlySpendingChart({
     }
 
     return (
-        <div className='space-y-6'>
+        <div className='space-y-1'>
             {/* Summary Stats */}
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                <div className='bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white'>
-                    <div className='text-sm font-medium opacity-90'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-2'>
+                <div className='bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-2 text-white'>
+                    <div className='text-xs font-medium opacity-90'>
                         Total Annual Spending
                     </div>
-                    <div className='text-2xl font-bold tabular-nums'>
+                    <div className='text-base font-bold tabular-nums'>
                         {formatCurrency(totalSpending)}
                     </div>
                 </div>
-                <div className='bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 text-white'>
-                    <div className='text-sm font-medium opacity-90'>
+                <div className='bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-2 text-white'>
+                    <div className='text-xs font-medium opacity-90'>
                         Average Monthly
                     </div>
-                    <div className='text-2xl font-bold tabular-nums'>
+                    <div className='text-base font-bold tabular-nums'>
                         {formatCurrency(avgMonthlySpending)}
                     </div>
                 </div>
-                <div className='bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-4 text-white'>
-                    <div className='text-sm font-medium opacity-90'>
+                <div className='bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg p-2 text-white'>
+                    <div className='text-xs font-medium opacity-90'>
                         Highest Month
                     </div>
-                    <div className='text-2xl font-bold tabular-nums'>
+                    <div className='text-base font-bold tabular-nums'>
                         {maxSpendingPeriod ? (
                             <>
                                 {formatDateLabel(maxSpendingPeriod.date, level)}
@@ -136,57 +136,50 @@ function MonthlySpendingChart({
             </div>
 
             {/* Monthly Spending Bar Chart */}
-            <div
-                className='bg-base-100 p-4 rounded-lg shadow-sm'
-                style={{ minHeight: '400px' }}
+            <ResponsiveContainer
+                width='100%'
+                height={320}
+                minWidth={200}
+                minHeight={200}
             >
-                <ResponsiveContainer
-                    width='100%'
-                    height={400}
-                    minWidth={200}
-                    minHeight={200}
+                <BarChart
+                    data={chartData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                    <BarChart
-                        data={chartData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                        <XAxis
-                            dataKey='date'
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(date) =>
-                                formatDateLabel(String(date), level)
-                            }
-                        />
-                        <YAxis
-                            domain={[0, 'auto']}
-                            tick={{ fontSize: 12 }}
-                            tickFormatter={(value) =>
-                                `$${(value / 1000).toFixed(0)}k`
-                            }
-                        />
-                        <Tooltip
-                            formatter={(value, _name, item) => {
-                                const numericValue = Number(value) || 0;
-                                const count = item?.payload?.count ?? 0;
-                                const countLabel =
-                                    count === 1
-                                        ? 'transaction'
-                                        : 'transactions';
-                                return [
-                                    `${formatCurrency(
-                                        numericValue
-                                    )} (${count} ${countLabel})`,
-                                    'Spending',
-                                ];
-                            }}
-                            labelFormatter={(label) =>
-                                formatDateLabel(String(label), level)
-                            }
-                        />
-                        <Bar dataKey='spending' fill='#FF8042' />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
+                    <XAxis
+                        dataKey='date'
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(date) =>
+                            formatDateLabel(String(date), level)
+                        }
+                    />
+                    <YAxis
+                        domain={[0, 'auto']}
+                        tick={{ fontSize: 12 }}
+                        tickFormatter={(value) =>
+                            `$${(value / 1000).toFixed(0)}k`
+                        }
+                    />
+                    <Tooltip
+                        formatter={(value, _name, item) => {
+                            const numericValue = Number(value) || 0;
+                            const count = item?.payload?.count ?? 0;
+                            const countLabel =
+                                count === 1 ? 'transaction' : 'transactions';
+                            return [
+                                `${formatCurrency(
+                                    numericValue
+                                )} (${count} ${countLabel})`,
+                                'Spending',
+                            ];
+                        }}
+                        labelFormatter={(label) =>
+                            formatDateLabel(String(label), level)
+                        }
+                    />
+                    <Bar dataKey='spending' fill='#FF8042' />
+                </BarChart>
+            </ResponsiveContainer>
         </div>
     );
 }

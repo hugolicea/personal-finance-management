@@ -5,10 +5,12 @@ import { formatCurrency } from '../utils/formatters';
 
 interface BalanceOverviewProps {
     transactions: Transaction[];
+    investmentsValue?: number;
 }
 
 const BalanceOverview = memo(function BalanceOverview({
     transactions,
+    investmentsValue = 0,
 }: BalanceOverviewProps) {
     const { totalBalance, totalIncome, totalExpenses } = useMemo(() => {
         let balance = 0;
@@ -28,7 +30,7 @@ const BalanceOverview = memo(function BalanceOverview({
     }, [transactions]);
 
     return (
-        <div className='stats stats-vertical md:stats-horizontal shadow w-full bg-base-100'>
+        <div className='stats stats-vertical md:stats-horizontal shadow w-full bg-base-100 rounded-2xl overflow-hidden'>
             <div className='stat'>
                 <div className='stat-title'>Net Balance</div>
                 <div
@@ -58,6 +60,36 @@ const BalanceOverview = memo(function BalanceOverview({
                     {formatCurrency(totalExpenses)}
                 </div>
                 <div className='stat-desc'>Current Period</div>
+            </div>
+
+            <div className='stat'>
+                <div className='stat-title'>Savings Rate</div>
+                <div
+                    className={`stat-value text-2xl tabular-nums ${
+                        totalIncome === 0
+                            ? 'text-base-content'
+                            : totalIncome - totalExpenses >= 0
+                              ? 'text-success'
+                              : 'text-error'
+                    }`}
+                >
+                    {totalIncome > 0
+                        ? (
+                              ((totalIncome - Math.abs(totalExpenses)) /
+                                  totalIncome) *
+                              100
+                          ).toFixed(1) + '%'
+                        : '0%'}
+                </div>
+                <div className='stat-desc'>Current Period</div>
+            </div>
+
+            <div className='stat'>
+                <div className='stat-title'>Investments Value</div>
+                <div className='stat-value text-2xl tabular-nums'>
+                    {formatCurrency(investmentsValue)}
+                </div>
+                <div className='stat-desc'>Portfolio Total</div>
             </div>
         </div>
     );

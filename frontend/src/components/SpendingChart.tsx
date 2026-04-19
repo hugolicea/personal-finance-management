@@ -107,7 +107,7 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
     }
 
     return (
-        <div className='h-96'>
+        <div className='h-80 w-full'>
             <ResponsiveContainer
                 width='100%'
                 height='100%'
@@ -117,11 +117,11 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
                 <PieChart>
                     <Pie
                         data={chartData}
-                        cx='38%'
-                        cy='50%'
+                        cx='50%'
+                        cy='45%'
                         labelLine={false}
                         label={renderCustomizedLabel}
-                        outerRadius='72%'
+                        outerRadius='80%'
                         fill='#8884d8'
                         dataKey='value'
                     >
@@ -139,11 +139,11 @@ function SpendingChart({ transactions, categories }: SpendingChartProps) {
                         ]}
                     />
                     <Legend
-                        layout='vertical'
-                        align='right'
-                        verticalAlign='middle'
+                        layout='horizontal'
+                        align='center'
+                        verticalAlign='bottom'
                         iconSize={10}
-                        wrapperStyle={{ fontSize: '12px', lineHeight: '1.6' }}
+                        wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
                     />
                 </PieChart>
             </ResponsiveContainer>

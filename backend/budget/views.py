@@ -9,7 +9,7 @@ from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q, Sum
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncMonth
 from django.http import JsonResponse
 from django.utils import timezone
 
@@ -1873,3 +1873,98 @@ def restore_database(request):
             {"error": "An unexpected error occurred while restoring the backup"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@extend_schema(
+    tags=["Transactions"],
+    parameters=[
+        OpenApiParameter(
+            name="year",
+            type=OpenApiTypes.INT,
+            location=OpenApiParameter.QUERY,
+            description="Year to retrieve monthly income vs expenses for (defaults to current year)",
+            required=False,
+        )
+    ],
+    responses={
+        200: {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "month": {"type": "string", "example": "2026-01"},
+                    "income": {"type": "number"},
+                    "expenses": {"type": "number"},
+                    "net": {"type": "number"},
+                },
+            },
+        },
+        400: {"type": "object", "properties": {"error": {"type": "string"}}},
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([BulkOperationThrottle])
+def monthly_income_expenses(request):
+    """Get monthly income vs expenses for a given year.
+
+    Returns a 12-element array with income, expenses (positive), and net
+    for each month. Months with no transactions are filled with zeros.
+    """
+    year_param = request.query_params.get("year", "")
+    if year_param:
+        try:
+            year = int(year_param)
+        except ValueError:
+            return Response(
+                {"error": "Invalid year parameter. Must be a valid integer."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not (1900 <= year <= 2100):
+            return Response(
+                {"error": "Year must be between 1900 and 2100."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
+        year = timezone.now().year
+
+    rows = (
+        Transaction.objects.filter(user=request.user, date__year=year)
+        .annotate(month=TruncMonth("date"))
+        .values("month")
+        .annotate(
+            income=Coalesce(Sum("amount", filter=Q(amount__gt=0)), Decimal("0.00")),
+            expenses=Coalesce(Sum("amount", filter=Q(amount__lte=0)), Decimal("0.00")),
+        )
+        .order_by("month")
+    )
+
+    # Build a lookup keyed by month number
+    data_by_month: dict[int, dict] = {}
+    for row in rows:
+        month_num = row["month"].month
+        income = float(row["income"])
+        expenses = abs(float(row["expenses"]))
+        data_by_month[month_num] = {
+            "income": income,
+            "expenses": expenses,
+            "net": income - expenses,
+        }
+
+    # Fill in all 12 months with zeros where there are no transactions
+    result = []
+    for month_num in range(1, 13):
+        month_str = f"{year:04d}-{month_num:02d}"
+        entry = data_by_month.get(
+            month_num, {"income": 0.0, "expenses": 0.0, "net": 0.0}
+        )
+        result.append(
+            {
+                "month": month_str,
+                "income": entry["income"],
+                "expenses": entry["expenses"],
+                "net": entry["net"],
+            }
+        )
+
+    return Response(result)
